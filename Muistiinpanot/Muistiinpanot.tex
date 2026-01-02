@@ -1,0 +1,33 @@
+\documentclass[a4paper, 12pt]{article}
+
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+
+\usepackage{lipsum}
+\usepackage{xcolor}
+
+
+\title{Generating open source chess puzzles - notes}
+\author{Aatu Selkee}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{RL}
+
+Compute the log-probability of the models in the same way as with autoregressive models (sum the log probabilities of the chosen tokens). The model must be called $K$ times where $K$ is the amount of tokens (the latter tokens depend on the previous tokens and teacher forcing is not possible I think?). Hence the computational complexity is a lot higher with masked diffusion than with an autoregressive model.
+
+\bibliography{references.bib}
+\bibliographystyle{ieeetr}
+
+\end{document}

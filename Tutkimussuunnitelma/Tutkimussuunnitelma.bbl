@@ -1,0 +1,20 @@
+\begin{thebibliography}{1}
+
+\bibitem{feng2025generatingcreativechesspuzzles}
+X.~Feng, V.~Veeriah, M.~Chiam, M.~Dennis, R.~Pachauri, T.~Tumiel, F.~Barbero,
+  J.~Obando-Ceron, J.~Shi, S.~Singh, S.~Hou, N.~Tomašev, and T.~Zahavy,
+  ``Generating creative chess puzzles,'' 2025.
+
+\bibitem{lichesspuzzledatabase}
+lichess.org, ``Lichess puzzle dataset,'' 2025.
+
+\bibitem{ruoss2024amortizedplanninglargescaletransformers}
+A.~Ruoss, G.~Delétang, S.~Medapati, J.~Grau-Moya, L.~K. Wenliang, E.~Catt,
+  J.~Reid, C.~A. Lewis, J.~Veness, and T.~Genewein, ``Amortized planning with
+  large-scale transformers: A case study on chess,'' 2024.
+
+\bibitem{shi2025simplifiedgeneralizedmaskeddiffusion}
+J.~Shi, K.~Han, Z.~Wang, A.~Doucet, and M.~K. Titsias, ``Simplified and
+  generalized masked diffusion for discrete data,'' 2025.
+
+\end{thebibliography}
