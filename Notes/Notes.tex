@@ -23,9 +23,43 @@
 \tableofcontents
 \newpage
 
+\section{Tokenization}
+
+Tokenization v1
+
+\begin{itemize}
+    \item Board\begin{itemize}
+        \item PNBRQKpnbrqk. = 13 tokens
+    \end{itemize}
+    \item Side to move\begin{itemize}
+        \item wb = 1 tokens (b already counted)
+    \end{itemize}
+    \item Castling\begin{itemize}
+        \item KQkq. = 0 tokens (already counted)
+    \end{itemize}
+    \item En passant\begin{itemize}
+        \item abcdefgh = 7 tokens (b already counted)
+        \item 12345678 = 8 tokens
+        \item -. = 1 tokens (. already counter)
+        \item = 16 tokens
+    \end{itemize}
+    \item Half move counter\begin{itemize}
+        \item 0123456789 = 2 (0 and 9 new tokens)
+    \end{itemize}
+    \item Full move counter\begin{itemize}
+        \item 0123456789 = 0 (already counted)
+    \end{itemize}
+\end{itemize}
+
+= 32 tokens
+
+Total tokens do not match the number of tokens in the paper 31 (the most obvious is that "-" might be replaced with a "."). The length of the produced string is also 76 instead of 77 for some reason. This tokenization feels bad, as e.g. side to move b is completely different to board b (black to move vs black bishop).
+
+Tokenization v2 (my current choice): Length 76, number of tokens 48 (own tokens e.g. for black bishop and black to move)
+
 \section{RL}
 
-Compute the log-probability of the models in the same way as with autoregressive models (sum the log probabilities of the chosen tokens). The model must be called $K$ times where $K$ is the amount of tokens (the latter tokens depend on the previous tokens and teacher forcing is not possible I think?). Hence the computational complexity is a lot higher with masked diffusion than with an autoregressive model.
+Compute the log-probability of the models in the same way as with autoregressive models (sum the log probabilities of the chosen tokens). The model must be called $K$ times where $K$ is the amount of tokens (the latter tokens depend on the previous tokens and teacher forcing is not possible I think?). Hence, the computational complexity is a lot higher with masked diffusion than with an autoregressive model.
 
 \bibliography{references.bib}
 \bibliographystyle{ieeetr}
