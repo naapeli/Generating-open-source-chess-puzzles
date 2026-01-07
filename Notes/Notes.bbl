@@ -1,0 +1,33 @@
+\begin{thebibliography}{1}
+
+\bibitem{feng2025generatingcreativechesspuzzles}
+X.~Feng, V.~Veeriah, M.~Chiam, M.~Dennis, R.~Pachauri, T.~Tumiel, F.~Barbero,
+  J.~Obando-Ceron, J.~Shi, S.~Singh, S.~Hou, N.~Tomašev, and T.~Zahavy,
+  ``Generating creative chess puzzles,'' 2025.
+
+\bibitem{touvron2023llamaopenefficientfoundation}
+H.~Touvron, T.~Lavril, G.~Izacard, X.~Martinet, M.-A. Lachaux, T.~Lacroix,
+  B.~Rozière, N.~Goyal, E.~Hambro, F.~Azhar, A.~Rodriguez, A.~Joulin,
+  E.~Grave, and G.~Lample, ``Llama: Open and efficient foundation language
+  models,'' 2023.
+
+\bibitem{touvron2023llama2openfoundation}
+H.~Touvron, L.~Martin, K.~Stone, P.~Albert, A.~Almahairi, Y.~Babaei,
+  N.~Bashlykov, S.~Batra, P.~Bhargava, S.~Bhosale, D.~Bikel, L.~Blecher, C.~C.
+  Ferrer, M.~Chen, G.~Cucurull, D.~Esiobu, J.~Fernandes, J.~Fu, W.~Fu,
+  B.~Fuller, C.~Gao, V.~Goswami, N.~Goyal, A.~Hartshorn, S.~Hosseini, R.~Hou,
+  H.~Inan, M.~Kardas, V.~Kerkez, M.~Khabsa, I.~Kloumann, A.~Korenev, P.~S.
+  Koura, M.-A. Lachaux, T.~Lavril, J.~Lee, D.~Liskovich, Y.~Lu, Y.~Mao,
+  X.~Martinet, T.~Mihaylov, P.~Mishra, I.~Molybog, Y.~Nie, A.~Poulton,
+  J.~Reizenstein, R.~Rungta, K.~Saladi, A.~Schelten, R.~Silva, E.~M. Smith,
+  R.~Subramanian, X.~E. Tan, B.~Tang, R.~Taylor, A.~Williams, J.~X. Kuan,
+  P.~Xu, Z.~Yan, I.~Zarov, Y.~Zhang, A.~Fan, M.~Kambadur, S.~Narang,
+  A.~Rodriguez, R.~Stojnic, S.~Edunov, and T.~Scialom, ``Llama 2: Open
+  foundation and fine-tuned chat models,'' 2023.
+
+\bibitem{ruoss2024amortizedplanninglargescaletransformers}
+A.~Ruoss, G.~Delétang, S.~Medapati, J.~Grau-Moya, L.~K. Wenliang, E.~Catt,
+  J.~Reid, C.~A. Lewis, J.~Veness, and T.~Genewein, ``Amortized planning with
+  large-scale transformers: A case study on chess,'' 2024.
+
+\end{thebibliography}

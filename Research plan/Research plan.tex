@@ -33,6 +33,8 @@ Google DeepMind released a paper about generating novel chess puzzles with gener
 The research goals of this project are:
 \begin{itemize}
     \item Train a generative model that performs on par with the masked diffusion model in \cite{feng2025generatingcreativechesspuzzles} in terms of legality, uniqueness, counter intuitiveness and puzzle scores, as well as novelty metrics. Additionally, train a model that generates puzzles that are indistinguishable from human generated ones.
+    \item Use the masked diffusion model for the whole pipeline (supervised and reinforcement learning). Masked diffusion is not used in the RL phase in \cite{feng2025generatingcreativechesspuzzles} and only the autoregressive model is used in RL.
+    \item Condition the generation on the theme and the rating of a puzzle.
     \item Publish the model and perhaps build a website for people to use it.
 \end{itemize}
 

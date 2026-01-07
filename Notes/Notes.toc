@@ -1,2 +1,3 @@
 \contentsline {section}{\numberline {1}Tokenization}{2}{}%
-\contentsline {section}{\numberline {2}RL}{2}{}%
+\contentsline {section}{\numberline {2}Model architecture}{2}{}%
+\contentsline {section}{\numberline {3}RL}{3}{}%

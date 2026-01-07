@@ -11,7 +11,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 class FENTokens(IntEnum):
     # 48 tokens
-    no_piece = auto()
+    no_piece = 0
     white_pawn = auto()
     white_knight = auto()
     white_bishop = auto()
@@ -63,6 +63,8 @@ class FENTokens(IntEnum):
     counter_7 = auto()
     counter_8 = auto()
     counter_9 = auto()
+
+    mask = auto()
 
 
 board_tokens = [
@@ -118,7 +120,7 @@ def tokenize_fen(fen):
 
     castling_characters = "KQkq"
     castling_tokens = [FENTokens.castle_white_king, FENTokens.castle_white_queen, FENTokens.castle_black_king, FENTokens.castle_black_queen]
-    castling = [castling_tokens[i] if char in castling else FENTokens.no_castle for i, char in enumerate(castling_characters)]
+    castling = [token if char in castling else FENTokens.no_castle for token, char in zip(castling_tokens, castling_characters)]
     
     enpassant = [enpassant_str_2_token[enpassant[0]], enpassant_str_2_token[enpassant[1]]] if enpassant != "-" else [FENTokens.no_en_passant, FENTokens.no_en_passant]
 
@@ -162,25 +164,30 @@ def tokenize(df: pd.DataFrame) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor
     return torch.from_numpy(fens), torch.from_numpy(themes), torch.from_numpy(ratings)
 
 def tokens_to_fen(tokens: torch.Tensor) -> str:
-    tokens = tokens.squeeze()
-    if tokens.ndim != 1 and tokens.size(0) != 76:
-        raise RuntimeError()
-    
-    tokens = tokens.tolist()
-    board = "".join(board_token_2_str[token] for token in tokens[:64])
-    board = "/".join(board[i:i + 8] for i in range(0, len(board), 8))
-    board = re.sub(r"\.+", lambda string: str(len(string.group())), board)
-    side = side_token_2_str[tokens[64]]
-    castling = "".join(castling_token_2_str[token] for token in tokens[65:69])
-    castling = "-" if castling == "----" else re.sub("-", "", castling)
-    en_passant = "".join([enpassant_token_2_str[token] for token in tokens[69:71]])
-    en_passant = "-" if en_passant == "--" else en_passant  # maybe check that one is not - and the other something else in the future (if the generative model generates an illegal puzzle)
-    halfmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[71:73]))
-    fullmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[73:76]))
+    try:
+        tokens = tokens.squeeze()
+        if tokens.ndim != 1 and tokens.size(0) != 76:
+            raise RuntimeError()
+        
+        tokens = tokens.tolist()
+        board = "".join(board_token_2_str[token] for token in tokens[:64])
+        board = "/".join(board[i:i + 8] for i in range(0, len(board), 8))
+        board = re.sub(r"\.+", lambda string: str(len(string.group())), board)
+        side = side_token_2_str[tokens[64]]
+        castling = "".join(castling_token_2_str[token] for token in tokens[65:69])
+        castling = "-" if castling == "----" else re.sub("-", "", castling)
+        en_passant = "".join([enpassant_token_2_str[token] for token in tokens[69:71]])
+        en_passant = "-" if en_passant == "--" else en_passant  # maybe check that one is not - and the other something else in the future (if the generative model generates an illegal puzzle)
+        halfmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[71:73]))
+        fullmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[73:76]))
 
-    return " ".join([board, side, castling, en_passant, halfmove_counter, fullmove_counter])
+        return " ".join([board, side, castling, en_passant, halfmove_counter, fullmove_counter])
+    except KeyError:
+        raise NotLegalPositionError("The tokens do not yield a legal position")
 
 
+class NotLegalPositionError(Exception):
+    pass
 
 
 # def pad_fen(fen: str) -> str:
