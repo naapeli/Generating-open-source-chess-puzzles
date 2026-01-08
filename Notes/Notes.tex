@@ -62,6 +62,8 @@ Tokenization v2 (my current choice): Length 76, number of tokens 48 (own tokens 
 
 What should be used, pre- or post-normalization (\cite{feng2025generatingcreativechesspuzzles} says post (it says that the llama papers use post, but I think they use pre), but \cite{touvron2023llamaopenefficientfoundation} and \cite{touvron2023llama2openfoundation} use pre-normalization to improve stability.)
 
+\textcolor{red}{If we want some new experiments, we can find out what masking schedule produces the best results after supervised learning and then apply RL to that model.}
+
 \section{RL}
 
 \cite{feng2025generatingcreativechesspuzzles} did not use the masked diffusion for the RL, and it will probably be harder than with the autoregressive model.
