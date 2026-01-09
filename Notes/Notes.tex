@@ -9,7 +9,7 @@
 \usepackage{graphicx}
 
 \usepackage{lipsum}
-\usepackage{xcolor}
+\usepackage[svgnames]{xcolor}
 
 
 \title{Generating open source chess puzzles - notes}
@@ -69,6 +69,8 @@ What should be used, pre- or post-normalization (\cite{feng2025generatingcreativ
 \cite{feng2025generatingcreativechesspuzzles} did not use the masked diffusion for the RL, and it will probably be harder than with the autoregressive model.
 
 Compute the log-probability of the models in the same way as with autoregressive models (sum the log probabilities of the chosen tokens). The model must be called $K$ times, where $K$ is the amount of tokens (the latter tokens depend on the previous tokens and teacher forcing is not possible I think?). Hence, the computational complexity is a lot higher with masked diffusion than with an autoregressive model. \textcolor{red}{I may be wrong based on algorithm 2 of \cite{ruoss2024amortizedplanninglargescaletransformers}, as we call the model as many times as we have discretized the range [0, 1].}
+
+\textcolor{Green}{Computation of the log-probability is intractable for these diffusion models. Therefore, as it is needed in RL, we will use the ELBO as a replacement as was done in \cite{ou2025principledrldiffusionllms}. We should compute the ELBO in exactly the same way as in SFT (for a fen, sample $t$, compute $\alpha_t$ and mask with probability, then compute the ELBO as in the paper, finally apply RL with the log probabilities replaced with the negative ELBOs). This paper may also be useful \cite{rojas2025improvingreasoningdiffusionlanguage}.}
 
 \bibliography{references.bib}
 \bibliographystyle{ieeetr}

@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
-from MaskingSchedule.MaskingSchedule import CosineSchedule
+from MaskingSchedule.MaskingSchedule import MaskingSchedule, CosineSchedule
 from tokenization.tokenization import FENTokens
 
 
 @dataclass
 class Config:
-    masking_schedule = CosineSchedule()
+    masking_schedule: MaskingSchedule = CosineSchedule()
 
     # tokenization
     n_fen_tokens: int = 48  # 48 real tokens and one mask token
@@ -15,7 +15,7 @@ class Config:
     fen_length: int = 76
     mask_token: FENTokens = FENTokens.mask
 
-    # model
+    # model architecture
     n_heads: int = 8
     n_layers: int = 16
     embed_dim: int = 1024

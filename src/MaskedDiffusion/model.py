@@ -6,7 +6,7 @@ import torch.nn.functional as F
 class SwiGLU(nn.Module):
     def __init__(self, config):
         super().__init__()
-        hidden_dim = int((2 / 3) * (4 * config.embed_dim))  # Llama1 paper
+        hidden_dim = int((2 / 3) * (4 * config.embed_dim))
 
         self.linear1 = nn.Linear(config.embed_dim, hidden_dim, bias=False)
         self.linear2 = nn.Linear(config.embed_dim, hidden_dim, bias=False)
@@ -41,14 +41,11 @@ class MaskedDiffusion(nn.Module):
 
         self.FEN_embedding = nn.Embedding(config.n_fen_tokens + 1, config.embed_dim)  # one additional mask token
         self.theme_embedding = nn.Linear(config.n_themes, config.embed_dim, bias=False)
-        self.ratings_embedding = nn.Linear(config.rating_dim, config.embed_dim, bias=False)  # look at how this should be added to the fen
-
+        self.ratings_embedding = nn.Linear(config.rating_dim, config.embed_dim, bias=False)  # TODO: perhaps should use bias here
         self.positional_embedding = nn.Parameter(torch.zeros(1, config.fen_length, config.embed_dim))
 
         self.blocks = nn.ModuleList([Block(config) for _ in range(config.n_layers)])
-
         self.classifier = nn.Linear(config.embed_dim, config.n_fen_tokens, bias=False)
-        # self.classifier.weight = self.FEN_embedding.weight  # should we do this?
 
         self.config = config
 
@@ -69,12 +66,12 @@ class MaskedDiffusion(nn.Module):
         loss = torch.sum(mask * weight * F.cross_entropy(logits.transpose(1, 2), true_fen_tokens, reduction="none"))
         return loss / len(logits)
     
-    def log_prob(self, true_fen_tokens, theme_tokens, ratings):
-        fen_tokens = torch.full_like(true_fen_tokens, self.config.mask_token)
-        logits = self(fen_tokens, theme_tokens, ratings)
-        log_probs = F.log_softmax(logits, dim=2)
-        target_log_probs = torch.gather(log_probs, dim=2, index=true_fen_tokens.unsqueeze(-1))
-        return torch.sum(target_log_probs, dim=1).squeeze(1)
+    # def log_prob(self, true_fen_tokens, theme_tokens, ratings):
+    #     fen_tokens = torch.full_like(true_fen_tokens, self.config.mask_token)
+    #     logits = self(fen_tokens, theme_tokens, ratings)
+    #     log_probs = F.log_softmax(logits, dim=2)
+    #     target_log_probs = torch.gather(log_probs, dim=2, index=true_fen_tokens.unsqueeze(-1))
+    #     return torch.sum(target_log_probs, dim=1).squeeze(1)
 
     @torch.no_grad()
     def sample(self, theme_tokens, ratings, steps=256):

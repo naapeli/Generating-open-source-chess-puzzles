@@ -30,4 +30,13 @@ A.~Ruoss, G.~Delétang, S.~Medapati, J.~Grau-Moya, L.~K. Wenliang, E.~Catt,
   J.~Reid, C.~A. Lewis, J.~Veness, and T.~Genewein, ``Amortized planning with
   large-scale transformers: A case study on chess,'' 2024.
 
+\bibitem{ou2025principledrldiffusionllms}
+J.~Ou, J.~Han, M.~Xu, S.~Xu, J.~Xie, S.~Ermon, Y.~Wu, and C.~Li, ``Principled
+  rl for diffusion llms emerges from a sequence-level perspective,'' 2025.
+
+\bibitem{rojas2025improvingreasoningdiffusionlanguage}
+K.~Rojas, J.~Lin, K.~Rasul, A.~Schneider, Y.~Nevmyvaka, M.~Tao, and W.~Deng,
+  ``Improving reasoning for diffusion language models via group diffusion
+  policy optimization,'' 2025.
+
 \end{thebibliography}
