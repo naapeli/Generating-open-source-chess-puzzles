@@ -41,8 +41,9 @@ class MaskedDiffusion(nn.Module):
 
         self.FEN_embedding = nn.Embedding(config.n_fen_tokens + 1, config.embed_dim)  # one additional mask token
         self.theme_embedding = nn.Linear(config.n_themes, config.embed_dim, bias=False)
-        self.ratings_embedding = nn.Linear(config.rating_dim, config.embed_dim, bias=False)  # TODO: perhaps should use bias here
-        self.positional_embedding = nn.Parameter(torch.zeros(1, config.fen_length, config.embed_dim))
+        self.ratings_embedding = nn.Linear(config.rating_dim, config.embed_dim, bias=True)
+        # self.positional_embedding = nn.Parameter(torch.randn((1, config.fen_length, config.embed_dim)))
+        self.positional_embedding = nn.Embedding(config.fen_length, config.embed_dim)
 
         self.blocks = nn.ModuleList([Block(config) for _ in range(config.n_layers)])
         self.classifier = nn.Linear(config.embed_dim, config.n_fen_tokens, bias=False)
@@ -50,7 +51,8 @@ class MaskedDiffusion(nn.Module):
         self.config = config
 
     def forward(self, fen_tokens, theme_tokens, ratings):
-        x = self.positional_embedding + self.FEN_embedding(fen_tokens)
+        pos = torch.arange(0, self.config.fen_length, dtype=torch.long, device=fen_tokens.device)
+        x = self.positional_embedding(pos) + self.FEN_embedding(fen_tokens)
         x = x + self.theme_embedding(theme_tokens).unsqueeze(1) + self.ratings_embedding(ratings.unsqueeze(1)).unsqueeze(1)
 
         for block in self.blocks:
@@ -64,15 +66,8 @@ class MaskedDiffusion(nn.Module):
         assert weight.ndim == 2
         mask = masked_fen_tokens == self.config.mask_token
         loss = torch.sum(mask * weight * F.cross_entropy(logits.transpose(1, 2), true_fen_tokens, reduction="none"))
-        return loss / len(logits)
+        return -loss / len(logits)  # negative sign, as F.cross_entropy inserts an additional negative sign compared to paper implementation
     
-    # def log_prob(self, true_fen_tokens, theme_tokens, ratings):
-    #     fen_tokens = torch.full_like(true_fen_tokens, self.config.mask_token)
-    #     logits = self(fen_tokens, theme_tokens, ratings)
-    #     log_probs = F.log_softmax(logits, dim=2)
-    #     target_log_probs = torch.gather(log_probs, dim=2, index=true_fen_tokens.unsqueeze(-1))
-    #     return torch.sum(target_log_probs, dim=1).squeeze(1)
-
     @torch.no_grad()
     def sample(self, theme_tokens, ratings, steps=256):
         batch_size = len(ratings)
@@ -103,5 +98,5 @@ class MaskedDiffusion(nn.Module):
                 fen = torch.where(is_masked, new_samples, fen)
             else:
                 break
-                
+        
         return fen
