@@ -37,8 +37,8 @@ muon = Muon(params_muon, lr=config.lr, weight_decay=config.weight_decay)
 def compute_loss(model: MaskedDiffusion, fens, themes, ratings):
     batch_size = len(ratings)
     t = (torch.rand(1) + torch.arange(1, batch_size + 1, 1) / batch_size) % 1
-    alpha_t = model.config.masking_schedule(t).unsqueeze(1)
-    random_mask = torch.rand(fens.size()) < alpha_t
+    alpha_t = model.config.masking_schedule(t).unsqueeze(1).to(device)
+    random_mask = torch.rand(fens.size(), device=device) < alpha_t
     masked_fens = torch.where(random_mask, fens, model.config.mask_token)
 
     logits = model(masked_fens, themes, ratings)
@@ -101,10 +101,10 @@ while not ended:
                                           "fullmove": logits[73:76, ((all_indices >= FENTokens.pad_counter) & (all_indices <= FENTokens.counter_9))].mean()}, step)
             validation_writer.add_image("Logits", logits.unsqueeze(0) / 10 + 0.5, step)
 
-            validation_themes = torch.zeros((config.n_validation_generations, config.n_themes), dtype=torch.float32)
+            validation_themes = torch.zeros((config.n_validation_generations, config.n_themes), dtype=torch.float32, device=device)
             indices = torch.randint(0, config.n_themes, (config.n_validation_generations,))
             validation_themes[:, indices] = 1
-            validation_ratings = scale_ratings(3000 * torch.rand(config.n_validation_generations, dtype=torch.float32) + 300)
+            validation_ratings = scale_ratings(3000 * torch.rand(config.n_validation_generations, dtype=torch.float32, device=device) + 300)
             fens = model.sample(validation_themes, validation_ratings, steps=128)
             # print(fens.squeeze().numpy())
             for generated_fen in fens:
