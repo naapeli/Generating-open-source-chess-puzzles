@@ -62,7 +62,7 @@ class MaskedDiffusion(nn.Module):
         return logits
 
     def elbo_loss(self, t, logits, true_fen_tokens, masked_fen_tokens):
-        weight = self.config.masking_schedule.get_weight(torch.as_tensor(t)).unsqueeze(1)
+        weight = self.config.masking_schedule.get_weight(torch.as_tensor(t)).unsqueeze(1).to(logits.device)
         assert weight.ndim == 2
         mask = masked_fen_tokens == self.config.mask_token
         loss = torch.sum(mask * weight * F.cross_entropy(logits.transpose(1, 2), true_fen_tokens, reduction="none"))
