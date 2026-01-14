@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch.optim import AdamW, Muon
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
@@ -44,7 +44,7 @@ device = torch.device(device)
 
 # ====================== CONFIG ======================
 # config = Config(n_layers=1, batch_size=1024, n_steps=1000, train_logging_interval=10, validation_interval=25, save_interval=100, n_validation_generations=1, embed_dim=128)
-config = Config(n_layers=1, batch_size=1024, n_steps=1000, train_logging_interval=10000, validation_interval=25000, save_interval=100000, n_validation_generations=1, embed_dim=128, lr=1e-2, weight_decay=0)
+config = Config(n_layers=1, batch_size=1024, n_steps=200, train_logging_interval=10, validation_interval=25, save_interval=500, n_validation_generations=1, embed_dim=128, lr=1e-2, weight_decay=0)
 
 # ====================== SEED AND PRECISION ======================
 torch.manual_seed(0)
@@ -63,17 +63,18 @@ if master_process:
 # ====================== DATASET ======================
 dataset_path = base_path / "dataset"
 trainset = torch.load(dataset_path / "train" / "trainset.pt", weights_only=False, map_location="cpu")
-
-fen, theme, rating = trainset[0]
-fen, theme, rating = fen.unsqueeze(0), theme.unsqueeze(0), rating.unsqueeze(0)
-
 validationset = torch.load(dataset_path / "validation" / "validationset.pt", weights_only=False, map_location="cpu")
+
+fen, theme, rating = trainset[0]  # overfit to one example
+fen, theme, rating = fen.unsqueeze(0), theme.unsqueeze(0), rating.unsqueeze(0)
+validationset = Subset(validationset, list(range(100)))  # do not use the entire validation set if using a cpu
+
 trainsampler = DistributedSampler(trainset, shuffle=True, rank=ddp_rank, num_replicas=ddp_world_size) if distributed else None
 validationsampler = DistributedSampler(validationset, shuffle=True, rank=ddp_rank, num_replicas=ddp_world_size) if distributed else None
 assert config.batch_size % ddp_world_size == 0
 local_batch_size = config.batch_size // ddp_world_size
-trainloader = DataLoader(trainset, batch_size=local_batch_size, shuffle=not distributed, sampler=trainsampler, num_workers=os.cpu_count() // ddp_world_size, pin_memory=True)
-validationloader = DataLoader(validationset, batch_size=local_batch_size, shuffle=not distributed, sampler=validationsampler, num_workers=os.cpu_count() // ddp_world_size, pin_memory=True)
+trainloader = DataLoader(trainset, batch_size=local_batch_size, shuffle=not distributed, sampler=trainsampler, num_workers=os.cpu_count() // ddp_world_size if distributed else 0, pin_memory=distributed)
+validationloader = DataLoader(validationset, batch_size=local_batch_size, shuffle=not distributed, sampler=validationsampler, num_workers=os.cpu_count() // ddp_world_size if distributed else 0, pin_memory=distributed)
 
 # ====================== MODEL ======================
 model = MaskedDiffusion(config)
@@ -86,8 +87,7 @@ if distributed:
 params_adam = [p for p in model.parameters() if p.ndim != 2]
 params_muon = [p for p in model.parameters() if p.ndim == 2]
 adam = AdamW(params_adam, lr=config.lr, weight_decay=config.weight_decay)
-# muon = Muon(params_muon, lr=config.lr, weight_decay=config.weight_decay)
-muon = AdamW(params_muon, lr=config.lr, weight_decay=config.weight_decay)
+muon = Muon(params_muon, lr=config.lr, weight_decay=config.weight_decay)
 
 # ====================== LOSS FUNCTION ======================
 def compute_loss(model: MaskedDiffusion, fens, themes, ratings):
@@ -117,7 +117,7 @@ def write_logits(step):
         all_reduce(samples, op=ReduceOp.SUM)
     if master_process:
         logits = logits / samples
-        logits = F.log_softmax(logits, dim=1)  # plot the logits with respect to the other logits
+        logits = F.log_softmax(logits, dim=1)
 
         all_indices = torch.arange(config.n_fen_tokens)
         validation_writer.add_scalars("Impossible token logits/max", {"board": logits[:64, ~(all_indices <= FENTokens.black_king)].max(),
@@ -138,7 +138,7 @@ def write_logits(step):
                                         "enpassant": logits[69:71, ((all_indices >= FENTokens.no_en_passant) & (all_indices <= FENTokens.en_passant_h))].mean(),
                                         "halfmove": logits[71:73, ((all_indices >= FENTokens.pad_counter) & (all_indices <= FENTokens.counter_9))].mean(),
                                         "fullmove": logits[73:76, ((all_indices >= FENTokens.pad_counter) & (all_indices <= FENTokens.counter_9))].mean()}, step)
-        validation_writer.add_image("Logits", logits.unsqueeze(0) / 10 + 0.5, step)
+        validation_writer.add_image("Probabilities", logits.unsqueeze(0).exp(), step)
 
 def write_fen(step):
     if master_process:
@@ -155,7 +155,7 @@ def write_fen(step):
             except:
                 pass
 
-def write_validation_loss(step):
+def compute_validation_loss():
     total = torch.zeros(2, dtype=torch.float32, device=device)
     with torch.no_grad():
         for validation_fen, validation_theme, validation_rating in validationloader:
@@ -165,11 +165,14 @@ def write_validation_loss(step):
             total[1] += len(validation_rating)
     if distributed:
         all_reduce(total, op=ReduceOp.SUM)
+    return total[0] / total[1]
+
+def write_validation_loss(step):
     if master_process:
-        validation_writer.add_scalar("Loss", total[0] / total[1], step)
+        validation_writer.add_scalar("Loss", compute_validation_loss(), step)
 
 def save_state():
-    checkpoint_path = base_path / "supervised_checkpoints" / f"model_{step:05d}.pt"
+    checkpoint_path = base_path / "supervised_checkpoints" / f"model_{step:06d}.pt"
     checkpoint = {
         "model": model.module.state_dict() if distributed else model.state_dict(),
         "config": config if distributed else config,
@@ -197,8 +200,8 @@ while not ended:
         adam.zero_grad()
         muon.zero_grad()
 
-        loss = compute_loss(model, fen, theme, rating).mean()
-        loss.backward()
+        loss = compute_loss(model, fen, theme, rating)
+        loss.mean().backward()
 
         norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         adam.step()
@@ -206,23 +209,7 @@ while not ended:
 
         step += 1
 
-
-        print(f"Step: {step} - loss: {loss.item():.2f}")
-        fens = model.sample(theme, rating, steps=128)
-        print(fens)
-        for generated_fen in fens:
-            try:
-                string = tokens_to_fen(generated_fen)
-                print(string)
-            except:
-                pass
-
-
-
-
-
-
-        total[0] += len(rating) * loss.detach()
+        total[0] += loss.detach().sum()
         total[1] += len(rating) * norm.detach()
         total[2] += len(rating)
         if step % config.train_logging_interval == 0:
@@ -244,13 +231,28 @@ while not ended:
         if step % config.save_interval == 0 and master_process:
             save_state()
 
-            ended = True
-            break
-
         # are we finished?
         if step >= config.n_steps:
             ended = True
             break
+
+if master_process:
+    train_writer.add_hparams({
+        "masking_schedule": config.schedule,
+        "n_heads": config.n_heads,
+        "n_layers": config.n_layers,
+        "embed_dim": config.embed_dim,
+        "lr": config.lr,
+        "weight_decay": config.weight_decay,
+        "batch_size": config.batch_size,
+        "n_steps": config.n_steps,
+        "validation_interval": config.validation_interval,
+        "train_logging_interval": config.train_logging_interval,
+        "save_interval": config.save_interval,
+        "n_validation_generations": config.n_validation_generations,
+    }, {
+        "validation_loss": compute_validation_loss()
+    })
 
 if master_process: train_writer.close()
 if master_process: validation_writer.close()
