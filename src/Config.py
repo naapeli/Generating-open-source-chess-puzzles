@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 
-from MaskingSchedule.MaskingSchedule import MaskingSchedule, CosineSchedule
+from MaskingSchedule.MaskingSchedule import MaskingSchedule, CosineSchedule, string_to_schedule
 from tokenization.tokenization import FENTokens
 
 
 @dataclass
 class Config:
-    masking_schedule: MaskingSchedule = CosineSchedule()
+    schedule: str = "cosine"
+    masking_schedule = string_to_schedule(schedule)
 
     # tokenization
     n_fen_tokens: int = 48  # 48 real tokens and one mask token
