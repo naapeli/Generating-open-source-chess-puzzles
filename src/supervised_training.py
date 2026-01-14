@@ -44,7 +44,7 @@ device = torch.device(device)
 
 # ====================== CONFIG ======================
 # config = Config(n_layers=1, batch_size=1024, n_steps=1000, train_logging_interval=10, validation_interval=25, save_interval=100, n_validation_generations=1, embed_dim=128)
-config = Config(n_layers=1, batch_size=1024, n_steps=200, train_logging_interval=10, validation_interval=25, save_interval=500, n_validation_generations=1, embed_dim=128, lr=1e-2, weight_decay=0)
+config = Config(n_layers=1, batch_size=1024, n_steps=50, train_logging_interval=1, validation_interval=5, save_interval=500, n_validation_generations=1, embed_dim=128, lr=1e-2, weight_decay=0)
 
 # ====================== SEED AND PRECISION ======================
 torch.manual_seed(0)
@@ -219,7 +219,7 @@ while not ended:
             total = torch.zeros(3, dtype=torch.float32, device=device)
 
         # validation
-        if step % config.validation_interval == 0:
+        if step % config.validation_interval == 0 or step == 1:
             if distributed:
                 validationsampler.set_epoch(step // config.validation_interval)
 
