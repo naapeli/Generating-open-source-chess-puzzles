@@ -26,4 +26,6 @@ class Config:
     batch_size: int = 1024
     n_steps: int = 100_000
     validation_interval: int = 1000
-    n_validation_generations: int = 10
+    train_logging_interval: int = 100
+    save_interval: int = 10_000
+    n_validation_generations: int = 1
