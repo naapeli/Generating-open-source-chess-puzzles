@@ -65,8 +65,8 @@ class MaskedDiffusion(nn.Module):
         weight = self.config.masking_schedule.get_weight(torch.as_tensor(t)).unsqueeze(1).to(logits.device)
         assert weight.ndim == 2
         mask = masked_fen_tokens == self.config.mask_token
-        loss = torch.sum(mask * weight * F.cross_entropy(logits.transpose(1, 2), true_fen_tokens, reduction="none"))
-        return -loss / len(logits)  # negative sign, as F.cross_entropy inserts an additional negative sign compared to paper implementation
+        loss = -torch.sum(mask * weight * F.cross_entropy(torch.movedim(logits, 2, 1), true_fen_tokens, reduction="none"), dim=1)
+        return loss
     
     @torch.no_grad()
     def sample(self, theme_tokens, ratings, steps=256):
