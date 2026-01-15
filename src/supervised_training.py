@@ -20,9 +20,16 @@ from tokenization.tokenization import tokens_to_fen, scale_ratings, FENTokens
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--distributed", action="store_true")
+    parser.add_argument("--continue_from_checkpoint", action="store_true")
 
     args = parser.parse_args()
     distributed = args.distributed
+    continue_from_checkpoint = args.continue_from_checkpoint
+
+    base_path = Path("./src")
+    
+    # ====================== LOAD CHECKPOINT ======================
+    if continue_from_checkpoint: checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0200000.pt", map_location="cpu", weights_only=False)  # as the config was saved as well, cannot use weights_only=True
 
     # ====================== DEVICE ======================
     if distributed:
@@ -49,7 +56,12 @@ def main():
     # ====================== CONFIG ======================
     # config = Config(n_layers=1, batch_size=1024, n_steps=50, train_logging_interval=1, validation_interval=5, save_interval=500, n_validation_generations=1, embed_dim=128, lr=1e-2, weight_decay=0)
     # config = Config(n_layers=1, batch_size=1024, n_steps=1000, train_logging_interval=1, validation_interval=100, save_interval=500, n_validation_generations=1)
-    config = Config(train_logging_interval=10, validation_interval=5000)
+    if continue_from_checkpoint:
+        config = checkpoint["config"]
+        config.n_steps = 300_000
+        config.n_validation_generations = 1
+    else:
+        config = Config(train_logging_interval=10, validation_interval=5000, n_steps=100_000)
 
     # ====================== SEED AND PRECISION ======================
     torch.manual_seed(0)
@@ -58,10 +70,13 @@ def main():
     torch.set_float32_matmul_precision("high")
 
     # ====================== LOGGING ======================
-    base_path = Path("./src")
     if master_process:
-        current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-        logging_path = base_path / "runs"/ "supervised" / current_time
+        if continue_from_checkpoint:
+            logging_path = base_path / "runs"/ "supervised" / "real_model_v1"
+        else:
+            current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+            logging_path = base_path / "runs"/ "supervised" / current_time
+
         train_writer = SummaryWriter(logging_path / "train")
         validation_writer = SummaryWriter(logging_path / "validation")
 
@@ -69,11 +84,7 @@ def main():
     dataset_path = base_path / "dataset"
     trainset = torch.load(dataset_path / "train" / "trainset.pt", weights_only=False, map_location="cpu")
     validationset = torch.load(dataset_path / "validation" / "validationset.pt", weights_only=False, map_location="cpu")
-
-    # fen, theme, rating = trainset[0]  # overfit to one example
-    # fen, theme, rating = fen.unsqueeze(0), theme.unsqueeze(0), rating.unsqueeze(0)
     # validationset = Subset(validationset, list(range(100)))  # do not use the entire validation set if using a cpu
-
     trainsampler = DistributedSampler(trainset, shuffle=True, rank=rank, num_replicas=world_size) if distributed else None
     validationsampler = DistributedSampler(validationset, shuffle=True, rank=rank, num_replicas=world_size) if distributed else None
     assert config.batch_size % world_size == 0
@@ -83,6 +94,7 @@ def main():
 
     # ====================== MODEL ======================
     model = MaskedDiffusion(config)
+    if continue_from_checkpoint: model.load_state_dict(checkpoint["model"])
     model.to(device=device)
 
     if distributed:
@@ -93,6 +105,8 @@ def main():
     params_muon = [p for p in model.parameters() if p.ndim == 2]
     adam = AdamW(params_adam, lr=config.lr, weight_decay=config.weight_decay)
     muon = Muon(params_muon, lr=config.lr, weight_decay=config.weight_decay)
+    if continue_from_checkpoint: adam.load_state_dict(checkpoint["adam"])
+    if continue_from_checkpoint: muon.load_state_dict(checkpoint["muon"])
 
     # ====================== LOSS FUNCTION ======================
     def compute_loss(model: MaskedDiffusion, fens, themes, ratings):
@@ -181,10 +195,10 @@ def main():
             validation_writer.add_scalar("Loss", validation_loss, step)
 
     def save_state():
-        checkpoint_path = base_path / "supervised_checkpoints" / f"model_{step:06d}.pt"
+        checkpoint_path = base_path / "supervised_checkpoints" / f"model_{step:07d}.pt"
         checkpoint = {
             "model": model.module.state_dict() if distributed else model.state_dict(),
-            "config": config if distributed else config,
+            "config": config,
             "adam": adam.state_dict(),
             "muon": muon.state_dict(),
             "epoch": epoch,
@@ -195,6 +209,8 @@ def main():
     # ====================== TRAINING LOOP ======================
     step = 0
     epoch = 0
+    if continue_from_checkpoint: step = checkpoint["step"]
+    if continue_from_checkpoint: epoch = checkpoint["epoch"]
     ended = False
     while not ended:
         epoch += 1
