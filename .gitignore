@@ -10,3 +10,11 @@ dataset/
 
 # Virtual environments
 .venv
+
+# stockfish
+# remember module load triton/2025.1-gcc gcc/13.3.0
+# stockfish path ./Stockfish/src/stockfish
+Stockfish/
+
+# model checkpoints
+src/supervised_checkpoints
