@@ -145,6 +145,8 @@ def tokenize_themes(themes):
     tokens = theme_preprocessor.transform(themes.str.split())
     return tokens
 
+def get_themes(one_hot_themes):
+    return theme_preprocessor.inverse_transform(one_hot_themes)
 
 # =========================================== RATINGS ===========================================
 
