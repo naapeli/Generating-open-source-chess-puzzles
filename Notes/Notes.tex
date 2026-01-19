@@ -72,6 +72,11 @@ Compute the log-probability of the models in the same way as with autoregressive
 
 \textcolor{Green}{Computation of the log-probability is intractable for these diffusion models. Therefore, as it is needed in RL, we will use the ELBO as a replacement as was done in \cite{ou2025principledrldiffusionllms}. We should compute the ELBO in exactly the same way as in SFT (for a fen, sample $t$, compute $\alpha_t$ and mask with probability, then compute the ELBO as in the paper, finally apply RL with the log probabilities replaced with the negative ELBOs). This paper may also be useful \cite{rojas2025improvingreasoningdiffusionlanguage}.}
 
+
+Computing if the fen position is legal and unique is surprisingly costly (why?)
+
+Perhaps ask authors for the implementation of the uniqueness and counter-intuitiveness so we can measure differences exactly.
+
 \bibliography{references.bib}
 \bibliographystyle{ieeetr}
 
