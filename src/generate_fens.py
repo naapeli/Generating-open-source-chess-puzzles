@@ -1,14 +1,11 @@
 import torch
-from stockfish import Stockfish
 
 from pathlib import Path
 
 from MaskedDiffusion.model import MaskedDiffusion
-from metrics import legal
+from metrics.metrics import legal
 from tokenization.tokenization import tokens_to_fen, scale_ratings, get_themes
 
-
-stockfish = Stockfish(path="./Stockfish/src/stockfish", depth=15)
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -38,7 +35,7 @@ while not ended:
         step += 1
         try:
             fen = tokens_to_fen(generated_fen)
-            string = str(step) + "," + fen + "," + str(int(rating.item())) + "," + theme_string[0] + "," + str(legal(stockfish, fen)) + "\n"
+            string = str(step) + "," + fen + "," + str(int(rating.item())) + "," + theme_string[0] + "," + str(legal(fen)) + "\n"
             with open(base_path / "generated_fens.txt", "a") as f:
                 f.write(string)
         except KeyError:
