@@ -109,26 +109,27 @@ def cook_advantage(node: ChildNode, winner: Color, engine: SimpleEngine) -> Opti
 
 
 if __name__ == "__main__":
+    from cook import cook
+    import os
+    from time import perf_counter
+
     stockfish_path = "./Stockfish/src/stockfish"
     engine = SimpleEngine.popen_uci(stockfish_path)
+    engine.configure({"Threads": os.cpu_count() - 1})  # 240 seconds with and 411 seconds without
 
-    # puzzle = puzzle_from_fen("1r2k1r1/pbppnp1p/1b3P2/8/Q7/B1PB1q2/P4PPP/3R2K1 w - - 1 0", engine)
-    # print(puzzle.cp)
-    # print(puzzle.game)
-    # print(puzzle.mainline)
-    # print(puzzle.pov)
-
-    # from cook import cook
-    # print(cook(puzzle))
+    start = perf_counter()
+    puzzle = puzzle_from_fen("1r2k1r1/pbppnp1p/1b3P2/8/Q7/B1PB1q2/P4PPP/3R2K1 w - - 1 0", engine)
+    print(puzzle.game)
+    print(cook(puzzle))  # first mate-in-4 in https://chess.stackexchange.com/questions/19633/chess-problem-database-with-pgn-or-fen
 
     puzzle = puzzle_from_fen("q5nr/1ppknQpp/3p4/1P2p3/4P3/B1PP1b2/B5PP/5K2 w - - 1 18", engine)
-
-    print(puzzle.cp)
     print(puzzle.game)
-    print(puzzle.mainline)
-    print(puzzle.pov)
+    print(cook(puzzle))  # [mate mateIn2 middlegame short]
 
-    from cook import cook
-    print(cook(puzzle))
+    puzzle = puzzle_from_fen("r3r1k1/p4ppp/2p2n2/1p6/3P1qb1/2NQ2R1/PPB2PP1/R1B3K1 b - - 6 18", engine)
+    print(puzzle.game)
+    print(cook(puzzle))  # [advantage attraction fork middlegame sacrifice veryLong]
+
+    print(perf_counter() - start)
 
     engine.quit()
