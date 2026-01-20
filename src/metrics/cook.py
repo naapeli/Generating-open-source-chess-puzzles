@@ -11,6 +11,7 @@ from chess import (
 )
 from chess import KING, QUEEN, ROOK, BISHOP, KNIGHT, PAWN
 from chess import WHITE, BLACK
+from chess.engine import Cp
 from chess.pgn import ChildNode
 from model import Puzzle, TagKind
 import util
@@ -40,9 +41,9 @@ def cook(puzzle: Puzzle) -> List[TagKind]:
                 tags.append(found)
             elif dovetail_mate(puzzle):
                 tags.append("dovetailMate")
-    elif puzzle.cp > 600:
+    elif puzzle.cp > Cp(600):
         tags.append("crushing")
-    elif puzzle.cp > 200:
+    elif puzzle.cp > Cp(200):
         tags.append("advantage")
     else:
         tags.append("equality")
@@ -140,11 +141,11 @@ def cook(puzzle: Puzzle) -> List[TagKind]:
         elif queenside_attack(puzzle):
             tags.append("queensideAttack")
 
-    if len(puzzle.mainline) == 2:
+    if len(puzzle.mainline) + 1 == 2:
         tags.append("oneMove")
-    elif len(puzzle.mainline) == 4:
+    elif len(puzzle.mainline) + 1 == 4:
         tags.append("short")
-    elif len(puzzle.mainline) >= 8:
+    elif len(puzzle.mainline) + 1 >= 8:
         tags.append("veryLong")
     else:
         tags.append("long")
@@ -153,14 +154,14 @@ def cook(puzzle: Puzzle) -> List[TagKind]:
 
 
 def advanced_pawn(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         if util.is_very_advanced_pawn_move(node):
             return True
     return False
 
 
 def double_check(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         if len(node.board().checkers()) > 1:
             return True
     return False
@@ -169,15 +170,15 @@ def double_check(puzzle: Puzzle) -> bool:
 def sacrifice(puzzle: Puzzle) -> bool:
     # down in material compared to initial position, after moving
     diffs = [material_diff(n.board(), puzzle.pov) for n in puzzle.mainline]
-    initial = diffs[0]
-    for d in diffs[1::2][1:]:
+    initial = material_diff(puzzle.game.board(), puzzle.pov)
+    for d in diffs[0::2][1:]:
         if d - initial <= -2:
-            return not any(n.move.promotion for n in puzzle.mainline[::2][1:])
+            return not any(n.move.promotion for n in puzzle.mainline[1::2])
     return False
 
 
 def x_ray(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][1:]:
         if not util.is_capture(node):
             continue
         prev_op_node = node.parent
@@ -200,7 +201,7 @@ def x_ray(puzzle: Puzzle) -> bool:
 
 
 def fork(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2][:-1]:
+    for node in puzzle.mainline[0::2][:-1]:
         if util.moved_piece_type(node) is not KING:
             board = node.board()
             if util.is_in_bad_spot(board, node.move.to_square):
@@ -225,34 +226,25 @@ def fork(puzzle: Puzzle) -> bool:
 
 
 def hanging_piece(puzzle: Puzzle) -> bool:
-    to = puzzle.mainline[1].move.to_square
-    captured = puzzle.mainline[0].board().piece_at(to)
-    if puzzle.mainline[0].board().is_check() and (
-        not captured or captured.piece_type == PAWN
-    ):
+    player_node = puzzle.mainline[0]
+    to_square = player_node.move.to_square
+    board = puzzle.game.board()
+    captured = board.piece_at(to_square)
+    if board.is_check() and (not captured or captured.piece_type == PAWN):
         return False
     if captured and captured.piece_type != PAWN:
-        if util.is_hanging(puzzle.mainline[0].board(), captured, to):
-            op_move = puzzle.mainline[0].move
-            op_capture = puzzle.game.board().piece_at(op_move.to_square)
-            if (
-                op_capture
-                and util.values[op_capture.piece_type]
-                >= util.values[captured.piece_type]
-                and op_move.to_square == to
-            ):
-                return False
-            if len(puzzle.mainline) < 4:
+        if util.is_hanging(board, captured, to_square):
+            if len(puzzle.mainline) + 1 < 3:
                 return True
-            if material_diff(puzzle.mainline[3].board(), puzzle.pov) >= material_diff(
-                puzzle.mainline[1].board(), puzzle.pov
+            if material_diff(puzzle.mainline[2].board(), puzzle.pov) >= material_diff(
+                player_node.board(), puzzle.pov
             ):
                 return True
     return False
 
 
 def trapped_piece(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][1:]:
         square = node.move.to_square
         captured = node.parent.board().piece_at(square)
         if captured and captured.piece_type != PAWN:
@@ -272,7 +264,7 @@ def overloading(puzzle: Puzzle) -> bool:
 def discovered_attack(puzzle: Puzzle) -> bool:
     if discovered_check(puzzle):
         return True
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][1:]:
         if util.is_capture(node):
             between = SquareSet.between(node.move.from_square, node.move.to_square)
             assert isinstance(node.parent, ChildNode)
@@ -291,7 +283,7 @@ def discovered_attack(puzzle: Puzzle) -> bool:
 
 
 def discovered_check(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         board = node.board()
         checkers = board.checkers()
         if checkers and not node.move.to_square in checkers:
@@ -341,7 +333,7 @@ def defensive_move(puzzle: Puzzle) -> bool:
 
 
 def check_escape(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         if node.board().is_check() or util.is_capture(node):
             return False
         if node.parent.board().legal_moves.count() < 3:
@@ -352,7 +344,7 @@ def check_escape(puzzle: Puzzle) -> bool:
 
 
 def attraction(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1:]:
+    for node in puzzle.mainline:
         if node.turn() == puzzle.pov:
             continue
         # 1. player moves to a square
@@ -381,7 +373,7 @@ def attraction(puzzle: Puzzle) -> bool:
 
 
 def deflection(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][1:]:
         captured_piece = node.parent.board().piece_at(node.move.to_square)
         if captured_piece or node.move.promotion:
             capturing_piece = util.moved_piece_type(node)
@@ -429,10 +421,10 @@ def deflection(puzzle: Puzzle) -> bool:
 def exposed_king(puzzle: Puzzle) -> bool:
     if puzzle.pov:
         pov = puzzle.pov
-        board = puzzle.mainline[0].board()
+        board = puzzle.game.board() 
     else:
         pov = not puzzle.pov
-        board = puzzle.mainline[0].board().mirror()
+        board = puzzle.game.board().mirror()    
     king = board.king(not pov)
     assert king is not None
     if chess.square_rank(king) < 5:
@@ -447,14 +439,14 @@ def exposed_king(puzzle: Puzzle) -> bool:
     for square in squares:
         if board.piece_at(square) == Piece(PAWN, not pov):
             return False
-    for node in puzzle.mainline[1::2][1:-1]:
+    for node in puzzle.mainline[0::2][1:-1]:
         if node.board().is_check():
             return True
     return False
 
 
 def skewer(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][1:]:
         prev = node.parent
         assert isinstance(prev, ChildNode)
         capture = prev.board().piece_at(node.move.to_square)
@@ -480,7 +472,7 @@ def skewer(puzzle: Puzzle) -> bool:
 
 def self_interference(puzzle: Puzzle) -> bool:
     # intereference by opponent piece
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][1:]:
         prev_board = node.parent.board()
         square = node.move.to_square
         capture = prev_board.piece_at(square)
@@ -505,7 +497,7 @@ def self_interference(puzzle: Puzzle) -> bool:
 
 def interference(puzzle: Puzzle) -> bool:
     # intereference by player piece
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][1:]:
         prev_board = node.parent.board()
         square = node.move.to_square
         capture = prev_board.piece_at(square)
@@ -536,7 +528,7 @@ def interference(puzzle: Puzzle) -> bool:
 
 
 def intermezzo(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][2:]:  # cannot start on our second move, as we have no access to the previous move
         if util.is_capture(node):
             capture_move = node.move
             capture_square = node.move.to_square
@@ -560,7 +552,7 @@ def intermezzo(puzzle: Puzzle) -> bool:
 
 # the pinned piece can't attack a player piece
 def pin_prevents_attack(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         board = node.board()
         for square, piece in board.piece_map().items():
             if piece.color == puzzle.pov:
@@ -585,7 +577,7 @@ def pin_prevents_attack(puzzle: Puzzle) -> bool:
 
 # the pinned piece can't escape the attack
 def pin_prevents_escape(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         board = node.board()
         for pinned_square, pinned_piece in board.piece_map().items():
             if pinned_piece.color == puzzle.pov:
@@ -618,7 +610,7 @@ def pin_prevents_escape(puzzle: Puzzle) -> bool:
 
 
 def attacking_f2_f7(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         square = node.move.to_square
         if node.parent.board().piece_at(node.move.to_square) and square in [
             chess.F2,
@@ -645,19 +637,19 @@ def side_attack(
     puzzle: Puzzle, corner_file: int, king_files: List[int], nb_pieces: int
 ) -> bool:
     back_rank = 7 if puzzle.pov else 0
-    init_board = puzzle.mainline[0].board()
+    init_board = puzzle.game.board()
     king_square = init_board.king(not puzzle.pov)
     if (
         not king_square
         or square_rank(king_square) != back_rank
         or square_file(king_square) not in king_files
         or len(init_board.piece_map()) < nb_pieces  # no endgames
-        or not any(node.board().is_check() for node in puzzle.mainline[1::2])
+        or not any(node.board().is_check() for node in puzzle.mainline[0::2])
     ):
         return False
     score = 0
     corner = chess.square(corner_file, back_rank)
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         corner_dist = square_distance(corner, node.move.to_square)
         if node.board().is_check():
             score += 1
@@ -669,7 +661,7 @@ def side_attack(
 
 
 def clearance(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][1:]:
         board = node.board()
         if not node.parent.board().piece_at(node.move.to_square):
             piece = board.piece_at(node.move.to_square)
@@ -704,7 +696,7 @@ def clearance(puzzle: Puzzle) -> bool:
 
 
 def en_passant(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         if (
             util.moved_piece_type(node) == PAWN
             and square_file(node.move.from_square) != square_file(node.move.to_square)
@@ -715,21 +707,21 @@ def en_passant(puzzle: Puzzle) -> bool:
 
 
 def castling(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         if util.is_castling(node):
             return True
     return False
 
 
 def promotion(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         if node.move.promotion:
             return True
     return False
 
 
 def under_promotion(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2]:
+    for node in puzzle.mainline[0::2]:
         if node.board().is_checkmate():
             return True if node.move.promotion == KNIGHT else False
         elif node.move.promotion and node.move.promotion != QUEEN:
@@ -738,7 +730,7 @@ def under_promotion(puzzle: Puzzle) -> bool:
 
 
 def capturing_defender(puzzle: Puzzle) -> bool:
-    for node in puzzle.mainline[1::2][1:]:
+    for node in puzzle.mainline[0::2][1:]:
         board = node.board()
         capture = node.parent.board().piece_at(node.move.to_square)
         assert isinstance(node.parent, ChildNode)
@@ -933,7 +925,7 @@ def dovetail_mate(puzzle: Puzzle) -> bool:
 
 
 def piece_endgame(puzzle: Puzzle, piece_type: PieceType) -> bool:
-    for board in [puzzle.mainline[i].board() for i in [0, 1]]:
+    for board in [puzzle.game.board(), puzzle.mainline[0].board()]:
         if not board.pieces(piece_type, WHITE) and not board.pieces(piece_type, BLACK):
             return False
         for piece in board.piece_map().values():
@@ -951,7 +943,7 @@ def queen_rook_endgame(puzzle: Puzzle) -> bool:
             and all(p.piece_type in [QUEEN, ROOK, PAWN, KING] for p in pieces)
         )
 
-    return all(test(puzzle.mainline[i].board()) for i in [0, 1])
+    return all(test(board) for board in [puzzle.game.board(), puzzle.mainline[0].board()])
 
 
 def smothered_mate(puzzle: Puzzle) -> bool:
@@ -975,7 +967,7 @@ def smothered_mate(puzzle: Puzzle) -> bool:
 def mate_in(puzzle: Puzzle) -> Optional[TagKind]:
     if not puzzle.game.end().board().is_checkmate():
         return None
-    moves_to_mate = len(puzzle.mainline) // 2
+    moves_to_mate = (len(puzzle.mainline) + 1) // 2
     if moves_to_mate == 1:
         return "mateIn1"
     elif moves_to_mate == 2:
