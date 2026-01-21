@@ -18,13 +18,13 @@ from chess.pgn import ChildNode
 
 from model import Puzzle, TagKind
 import util
-from util import material_diff, win_chances
+from util import material_diff, win_chances, game_phase
 
 
 zugzwang_limit = Limit(depth=30, time=10, nodes=12_000_000)
 
 def cook(puzzle: Puzzle, engine: SimpleEngine) -> List[TagKind]:
-    tags: List[TagKind] = []
+    tags: List[TagKind] = [game_phase(puzzle)]
 
     mate_tag = mate_in(puzzle)
     if mate_tag:
