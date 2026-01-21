@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 import chess
-from chess.engine import Score, SimpleEngine
+from chess.engine import Score, SimpleEngine, Limit
 from chess import square_rank, Color, Board, Square, Piece, square_distance
 from chess import KING, QUEEN, ROOK, BISHOP, KNIGHT, PAWN
 from chess.pgn import ChildNode, GameNode
@@ -157,7 +157,7 @@ def maximum_castling_rights(board: chess.Board) -> chess.Bitboard:
     )
 
 
-def get_next_move_pair(engine: SimpleEngine, node: GameNode, winner: Color, limit: chess.engine.Limit) -> NextMovePair:
+def get_next_move_pair(engine: SimpleEngine, node: GameNode, winner: Color, limit: Limit) -> NextMovePair:
     info = engine.analyse(node.board(), multipv = 2, limit = limit)
     best = EngineMove(info[0]["pv"][0], info[0]["score"].pov(winner))
     second = EngineMove(info[1]["pv"][0], info[1]["score"].pov(winner)) if len(info) > 1 else None

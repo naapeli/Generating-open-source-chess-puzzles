@@ -1,4 +1,5 @@
 from typing import List, Optional
+
 import chess
 from chess import (
     square_rank,
@@ -11,14 +12,18 @@ from chess import (
 )
 from chess import KING, QUEEN, ROOK, BISHOP, KNIGHT, PAWN
 from chess import WHITE, BLACK
-from chess.engine import Cp
+from chess import Move
+from chess.engine import Cp, SimpleEngine, Limit
 from chess.pgn import ChildNode
+
 from model import Puzzle, TagKind
 import util
-from util import material_diff
+from util import material_diff, win_chances
 
 
-def cook(puzzle: Puzzle) -> List[TagKind]:
+zugzwang_limit = Limit(depth=30, time=10, nodes=12_000_000)
+
+def cook(puzzle: Puzzle, engine: SimpleEngine) -> List[TagKind]:
     tags: List[TagKind] = []
 
     mate_tag = mate_in(puzzle)
@@ -121,6 +126,9 @@ def cook(puzzle: Puzzle) -> List[TagKind]:
 
     if capturing_defender(puzzle):
         tags.append("capturingDefender")
+    
+    if zugzwang(engine, puzzle):
+        tags.append("zugzwang")
 
     if piece_endgame(puzzle, PAWN):
         tags.append("pawnEndgame")
@@ -977,3 +985,18 @@ def mate_in(puzzle: Puzzle) -> Optional[TagKind]:
     elif moves_to_mate == 4:
         return "mateIn4"
     return "mateIn5"
+
+def zugzwang(engine: SimpleEngine, puzzle: Puzzle) -> bool:
+    for node in puzzle.mainline[0::2]:
+        board = node.board()
+        if board.is_check():
+            continue
+        if len(list(board.legal_moves)) > 15:
+            continue
+        score = engine.analyse(board, limit = zugzwang_limit)["score"].pov(not puzzle.pov)
+        rev_board = node.board()
+        rev_board.push(Move.null())
+        rev_score = engine.analyse(rev_board, limit = zugzwang_limit)["score"].pov(not puzzle.pov)
+        if win_chances(score) < win_chances(rev_score) - 0.3:
+            return True
+    return False

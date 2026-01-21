@@ -1,0 +1,62 @@
+Not transmitting history with null moves to UCI engine
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[FEN "1r2k1r1/pbppnp1p/1b3P2/8/Q7/B1PB1q2/P4PPP/3R2K1 w - - 1 1"]
+[SetUp "1"]
+
+1. Qxd7+ Kxd7 2. Bf5+ Ke8 3. Bd7+ Kf8 4. Bxe7# *
+['mateIn4', 'mate', 'attraction', 'doubleCheck', 'sacrifice', 'veryLong']
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[FEN "q5nr/1ppknQpp/3p4/1P2p3/4P3/B1PP1b2/B5PP/5K2 w - - 1 18"]
+[SetUp "1"]
+
+18. Be6+ Kd8 19. Qf8# *
+['mateIn2', 'mate', 'short']
+[NextMovePair(node=<Game at 0x15027830d480 ('?' vs. '?', '????.??.??' at '?')>, winner=False, best=EngineMove(move=Move.from_uci('e8e1'), score=Cp(+363)), second=EngineMove(move=Move.from_uci('f4d6'), score=Cp(-456))), NextMovePair(node=<ChildNode at 0x150278336120 (18... Re1+ ...)>, winner=False, best=EngineMove(move=Move.from_uci('g1h2'), score=Cp(+376)), second=EngineMove(move=Move.from_uci('d3f1'), score=Cp(+383))), NextMovePair(node=<ChildNode at 0x150278336990 (19. Kh2 ...)>, winner=False, best=EngineMove(move=Move.from_uci('e1c1'), score=Cp(+383)), second=EngineMove(move=Move.from_uci('f4f2'), score=Cp(-304))), NextMovePair(node=<ChildNode at 0x1502784ddb70 (19... Rxc1 ...)>, winner=False, best=EngineMove(move=Move.from_uci('a1c1'), score=Cp(+390)), second=EngineMove(move=Move.from_uci('c3e4'), score=Cp(+473))), NextMovePair(node=<ChildNode at 0x150278322190 (20. Rxc1 ...)>, winner=False, best=EngineMove(move=Move.from_uci('f4h6'), score=Cp(+367)), second=EngineMove(move=Move.from_uci('f4c1'), score=Cp(+33))), NextMovePair(node=<ChildNode at 0x1502783d2000 (20... Qh6+ ...)>, winner=False, best=EngineMove(move=Move.from_uci('h2g1'), score=Cp(+396)), second=EngineMove(move=Move.from_uci('g3h3'), score=Cp(+493))), NextMovePair(node=<ChildNode at 0x1502786531d0 (21. Kg1 ...)>, winner=False, best=EngineMove(move=Move.from_uci('h6c1'), score=Cp(+377)), second=EngineMove(move=Move.from_uci('a8e8'), score=Cp(-380)))]
+e8e1
+g1h2
+e1c1
+a1c1
+f4h6
+h2g1
+h6c1
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[FEN "r3r1k1/p4ppp/2p2n2/1p6/3P1qb1/2NQ2R1/PPB2PP1/R1B3K1 b - - 6 18"]
+[SetUp "1"]
+
+18... Re1+ 19. Kh2 Rxc1 20. Rxc1 Qh6+ 21. Kg1 Qxc1+ *
+['advantage', 'attraction', 'sacrifice', 'fork', 'veryLong']
+[NextMovePair(node=<Game at 0x15027845f890 ('?' vs. '?', '????.??.??' at '?')>, winner=True, best=EngineMove(move=Move.from_uci('d3d4'), score=Cp(+822)), second=EngineMove(move=Move.from_uci('d3e3'), score=Cp(-530))), NextMovePair(node=<ChildNode at 0x1502782fba50 (44. Kd4 ...)>, winner=True, best=EngineMove(move=Move.from_uci('d6d7'), score=Cp(+935)), second=EngineMove(move=Move.from_uci('c7c5'), score=Cp(+1004))), NextMovePair(node=<ChildNode at 0x1502782fb850 (44... Kd7 ...)>, winner=True, best=EngineMove(move=Move.from_uci('d4c5'), score=Cp(+1369)), second=EngineMove(move=Move.from_uci('d4c3'), score=Cp(0)))]
+d3d4
+d6d7
+d4c5
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[FEN "8/2p5/3k2p1/1p1P1p2/1P3P2/3K2Pp/7P/8 w - - 2 44"]
+[SetUp "1"]
+
+44. Kd4 Kd7 45. Kc5 *
+['crushing', 'zugzwang', 'pawnEndgame', 'short']
+Time taken: 29.83332332401187
