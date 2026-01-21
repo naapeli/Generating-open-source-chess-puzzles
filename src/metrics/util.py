@@ -6,7 +6,7 @@ from chess import KING, QUEEN, ROOK, BISHOP, KNIGHT, PAWN
 from chess.pgn import ChildNode, GameNode
 from typing import TypeVar
 import math
-from model import EngineMove, NextMovePair
+from model import EngineMove, NextMovePair, Puzzle
 
 # below from https://github.com/ornicar/lichess-puzzler/blob/master/tagger/util.py
 
@@ -202,3 +202,125 @@ def rating_tier(line: str) -> Optional[int]:
         return 0
     except:
         return 0
+
+# from lichess-puzzler commit 86744ff or https://github.com/lichess-org/scalachess/blob/master/core/src/main/scala/Divider.scala (slightly different, but mostly the same)
+
+def _majors_and_minors(board: chess.Board) -> int:
+    count = 0
+    for piece in board.piece_map().values():
+        if piece.piece_type != chess.PAWN and piece.piece_type != chess.KING:
+            count += 1
+    return count
+
+def _backrank_sparse(board: chess.Board) -> bool:
+    # Check White Backrank (Rank 1)
+    white_backrank_count = 0
+    for sq in range(0, 8):
+        piece = board.piece_at(sq)
+        if piece and piece.color == chess.WHITE:
+            white_backrank_count += 1
+    
+    # Check Black Backrank (Rank 8)
+    black_backrank_count = 0
+    for sq in range(56, 64):
+        piece = board.piece_at(sq)
+        if piece and piece.color == chess.BLACK:
+            black_backrank_count += 1
+
+    return white_backrank_count < 4 or black_backrank_count < 4
+
+def _score(white: int, black: int, y: int) -> int:
+    counts = (white, black)
+
+    if counts == (0, 0):
+        return 0
+    
+    elif counts == (1, 0):
+        return 1 + (8 - y)
+    elif counts == (2, 0):
+        return (2 + (y - 2)) if y > 2 else 0
+    elif counts == (3, 0):
+        return (3 + (y - 1)) if y > 1 else 0
+    elif counts == (4, 0):
+        return (3 + (y - 1)) if y > 1 else 0
+
+    elif counts == (0, 1):
+        return 1 + y
+    elif counts == (1, 1):
+        return 5 + abs(3 - y)
+    elif counts == (2, 1):
+        return 4 + y
+    elif counts == (3, 1):
+        return 5 + y
+
+    elif counts == (0, 2):
+        return (2 + (6 - y)) if y < 6 else 0
+    elif counts == (1, 2):
+        return 4 + (6 - y)
+    elif counts == (2, 2):
+        return 7
+        
+    elif counts == (0, 3):
+        return (3 + (7 - y)) if y < 7 else 0
+    elif counts == (1, 3):
+        return 5 + (6 - y)
+
+    elif counts == (0, 4):
+        return (3 + (7 - y)) if y < 7 else 0
+
+    return 0
+
+def _generate_mixedness_regions():
+    regions = []
+    for rank in range(7):
+        for file in range(7):
+            sqs = [
+                chess.square(file, rank),
+                chess.square(file + 1, rank),
+                chess.square(file, rank + 1),
+                chess.square(file + 1, rank + 1)
+            ]
+            regions.append(sqs)
+    return regions
+
+mixedness_regions = _generate_mixedness_regions()
+
+def _mixedness(board: chess.Board) -> int:
+    total_score = 0
+    
+    for region in mixedness_regions:
+        white_count = 0
+        black_count = 0
+        
+        y = chess.square_rank(region[0]) + 1
+
+        for sq in region:
+            piece = board.piece_at(sq)
+            if piece:
+                if piece.color == chess.WHITE:
+                    white_count += 1
+                else:
+                    black_count += 1
+        
+        total_score += _score(white_count, black_count, y)
+        
+    return total_score
+
+def game_phase(puzzle: Puzzle) -> str:
+    board = puzzle.game.board()
+    m_and_m = _majors_and_minors(board)
+    is_opening = not (
+        m_and_m <= 10 or 
+        _backrank_sparse(board) or 
+        _mixedness(board) > 150
+    )
+
+    is_endgame = (not is_opening) and (m_and_m <= 6)
+
+    if is_opening:
+        return "opening"
+    elif is_endgame:
+        return "endgame"
+    else:
+        return "middlegame"
+

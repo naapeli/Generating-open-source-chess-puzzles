@@ -84,12 +84,6 @@ class Puzzle:
 # from generator
 
 @dataclass
-class PuzzleFromGenerator:
-    node: ChildNode
-    moves: List[Move]
-    cp: int
-
-@dataclass
 class EngineMove:
     move: Move
     score: Score
