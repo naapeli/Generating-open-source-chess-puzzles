@@ -1,13 +1,17 @@
 from typing import Optional, List
+import os
+from time import perf_counter
+from copy import deepcopy
 
 import chess
 from chess import Color, Move
-from chess.engine import Mate, Limit, SimpleEngine, Cp  # , Score, PovScore
+from chess.engine import Mate, Limit, SimpleEngine, Cp
 import chess.pgn
 from chess.pgn import ChildNode
 
 from model import Puzzle, NextMovePair
 from util import win_chances, count_mates, get_next_move_pair
+from cook import cook
 
 
 mate_soon = Mate(15)
@@ -16,19 +20,32 @@ mate_defense_limit = Limit(depth=15, time=10, nodes=8_000_000)
 
 def puzzle_from_fen(fen, engine: SimpleEngine):
     board = chess.Board(fen)
-    winner = board.turn
     game = chess.pgn.Game.from_board(board)
-    score = engine.analyse(board, limit=pair_limit)["score"].pov(winner)
+    info = engine.analyse(board, limit=pair_limit)
+    score = info["score"].pov(board.turn)
 
     if score > mate_soon:
-        mate_solution = cook_mate(game, winner, engine)
+        mate_solution = cook_mate(game, board.turn, engine)
         if mate_solution is None:
             return None
         return Puzzle(game, score)
     else:
-        solution = cook_advantage(game, winner, engine)
+        solution = cook_advantage(deepcopy(game), board.turn, engine)
         if not solution:
             return None
+        
+        # make sure the solution is odd, the last move is not the only one available and the puzzle is not a one mover
+        while len(solution) % 2 == 0 or not solution[-1].second:
+            solution = solution[:-1]
+        if not solution or len(solution) == 1:
+            return None
+        
+        # update the main line
+        node = game
+        for pair in solution:
+            move = pair.best.move
+            node = node.add_main_variation(move)
+
         return Puzzle(game, score)
 
 def is_valid_attack(pair: NextMovePair, engine: SimpleEngine) -> bool:
@@ -107,29 +124,32 @@ def cook_advantage(node: ChildNode, winner: Color, engine: SimpleEngine) -> Opti
 
     return [pair] + follow_up
 
-
 if __name__ == "__main__":
-    from cook import cook
-    import os
-    from time import perf_counter
-
     stockfish_path = "./Stockfish/src/stockfish"
     engine = SimpleEngine.popen_uci(stockfish_path)
-    engine.configure({"Threads": os.cpu_count() - 1})  # 240 seconds with and 411 seconds without
+    engine.configure({"Threads": os.cpu_count()})
+    engine.configure({"Hash": 4096})
 
     start = perf_counter()
     puzzle = puzzle_from_fen("1r2k1r1/pbppnp1p/1b3P2/8/Q7/B1PB1q2/P4PPP/3R2K1 w - - 1 0", engine)
     print(puzzle.game)
-    print(cook(puzzle))  # first mate-in-4 in https://chess.stackexchange.com/questions/19633/chess-problem-database-with-pgn-or-fen
+    print(cook(puzzle, engine))  # first mate-in-4 in https://chess.stackexchange.com/questions/19633/chess-problem-database-with-pgn-or-fen
 
+    engine.configure({"Clear Hash": None})
     puzzle = puzzle_from_fen("q5nr/1ppknQpp/3p4/1P2p3/4P3/B1PP1b2/B5PP/5K2 w - - 1 18", engine)
     print(puzzle.game)
-    print(cook(puzzle))  # [mate mateIn2 middlegame short]
+    print(cook(puzzle, engine))  # [mate mateIn2 middlegame short]
 
+    engine.configure({"Clear Hash": None})
     puzzle = puzzle_from_fen("r3r1k1/p4ppp/2p2n2/1p6/3P1qb1/2NQ2R1/PPB2PP1/R1B3K1 b - - 6 18", engine)
     print(puzzle.game)
-    print(cook(puzzle))  # [advantage attraction fork middlegame sacrifice veryLong]
+    print(cook(puzzle, engine))  # [advantage attraction fork middlegame sacrifice veryLong]
 
-    print(perf_counter() - start)
+    engine.configure({"Clear Hash": None})
+    puzzle = puzzle_from_fen("8/2p5/3k2p1/1p1P1p2/1P3P2/3K2Pp/7P/8 w - - 2 44", engine)
+    print(puzzle.game)  # d3d4 g6g5 f4g5
+    print(cook(puzzle, engine))  # [crushing endgame pawnEndgame short zugzwang]
+
+    print("Time taken:", perf_counter() - start)
 
     engine.quit()

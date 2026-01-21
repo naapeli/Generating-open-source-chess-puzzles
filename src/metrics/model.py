@@ -90,12 +90,6 @@ class PuzzleFromGenerator:
     cp: int
 
 @dataclass
-class Line:
-    nb: Tuple[int, int]
-    letter: str
-    password: str
-
-@dataclass
 class EngineMove:
     move: Move
     score: Score
