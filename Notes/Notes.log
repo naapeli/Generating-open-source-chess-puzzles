@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.9)  20 JAN 2026 08:16
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.9)  22 JAN 2026 15:17
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -299,23 +299,26 @@ L3 programming layer <2025-05-26>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 4212 strings out of 468225
- 66573 string characters out of 5432974
- 573323 words of memory out of 5000000
- 32692 multiletter control sequences out of 15000+600000
- 635618 words of font info for 74 fonts, out of 8000000 for 9000
+ 4213 strings out of 468225
+ 66590 string characters out of 5432974
+ 571323 words of memory out of 5000000
+ 32693 multiletter control sequences out of 15000+600000
+ 635925 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 73i,6n,77p,706b,233s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 73i,6n,77p,706b,232s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\aatus\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm
 1200.pk><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
 ts/cm/cmbx12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/publ
 ic/amsfonts/cm/cmmi12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/t
-ype1/public/amsfonts/cm/cmmi8.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX
-/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/aatus/AppData/Local/Program
-s/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb>
-Output written on Notes.pdf (4 pages, 73680 bytes).
+ype1/public/amsfonts/cm/cmmi6.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX
+/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/aatus/AppData/Local/Program
+s/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/aatus/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/aatus/AppDa
+ta/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/aatu
+s/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
+Output written on Notes.pdf (4 pages, 108591 bytes).
 PDF statistics:
- 45 PDF objects out of 1000 (max. 8388607)
+ 60 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
