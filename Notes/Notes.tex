@@ -70,7 +70,7 @@ I would love to access the code they used to compute the metrics to see what the
 
 Computing if the fen position is legal and unique is surprisingly costly (due to repeated Stockfish searches, which can be controlled by setting limits to the depth, nodes and time)
 
-Overlap zero over the 1000 generated positions with the training set (probably due to generating the positions with only one active theme, which basically never happens in the training set). 
+Overlap zero over the 1000 generated positions with the training set (probably due to generating the positions with only one active theme, which basically never happens in the training set).
 
 \subsection{Uniqueness}
 
@@ -91,6 +91,37 @@ Perhaps new thing we could do is that we could modify the counter intuitiveness 
 Compute the log-probability of the models in the same way as with autoregressive models (sum the log probabilities of the chosen tokens). The model must be called $K$ times, where $K$ is the amount of tokens (the latter tokens depend on the previous tokens and teacher forcing is not possible I think?). Hence, the computational complexity is a lot higher with masked diffusion than with an autoregressive model. \textcolor{red}{I may be wrong based on algorithm 2 of \cite{ruoss2024amortizedplanninglargescaletransformers}, as we call the model as many times as we have discretized the range [0, 1].}
 
 \textcolor{Green}{Computation of the log-probability is intractable for these diffusion models. Therefore, as it is needed in RL, we will use the ELBO as a replacement as was done in \cite{ou2025principledrldiffusionllms}. We should compute the ELBO in exactly the same way as in SFT (for a fen, sample $t$, compute $\alpha_t$ and mask with probability, then compute the ELBO as in the paper, finally apply RL with the log probabilities replaced with the negative ELBOs). This paper may also be useful \cite{rojas2025improvingreasoningdiffusionlanguage}.}
+
+
+\section{23.1.}
+
+\clearpage
+
+\begin{table}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        & Lichess puzzles & Masked Diffusion & Paper Masked Diffusion \\
+        \hline
+        Legal & 100\% & 96.8\% & 99.72\%\\
+        \hline
+        Unique & 81.7\% (95.25\%) & 9.67\% & 30.89\%\\
+        \hline
+        Counter-intuitive & 4.3\% (2.25\%) & 23.7\% & 1.11\%\\
+        \hline
+        Puzzle & 4.1\% (2.14\%) & 0.1\% & 0.34\%\\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{itemize}
+    \item Previously generated puzzles might not be amazing, as they were generated with a single uniformly random theme. The ones in the dataset have 3 or more themes almost every time. Most positions with a unique solution are mate-in-one.
+    \item Uniqueness computation working pretty well (is probably slightly stricter than in the paper, as we remove one-movers (apart from mate-in-one), although we allow mates-in-one at the end of a puzzle to have multiple solutions)
+    \item Uniqueness computation takes a long time for good puzzles that do not end in a checkmate, as we need to compute the entire solution line for the theme check. (computing the metrics (uniqueness and counter intuitiveness) for 1000 positions from the Lichess puzzle dataset took over 30 minutes, over 1.8 seconds per puzzle)
+    \item FEN $\rightarrow$ themes working well. It was surprisingly well hidden in the Lichess Puzzler repository, but I implemented it to our code.
+    \item Counter-intuitiveness behaves weird, as 1000 Lichess puzzles from the dataset have a realistic value, but our generations should probably not have a counter-intuitiveness of 23.7\%\dots
+    \item It would be amazing, if we could get the implementations of the uniqueness and the counter-intuitiveness metrics 
+    \item Talk with Arno Solin.
+\end{itemize}
 
 
 \bibliography{references.bib}
