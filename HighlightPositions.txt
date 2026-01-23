@@ -1,3 +1,7 @@
 After supervised training:
 2r3k1/2r3Pp/8/3p2P1/1pn1p1N1/p3q3/PPP2Q2/1K3R1R b - - 4 34
-
+3b3k/p5pB/8/1p2q1Pn/5N1P/1P6/P1Q2P2/1K5b w - - 0 33
+5r1k/pp1R2R1/2p1P3/8/3B2p1/1KP5/PP5p/3q4 w - - 2 38
+8/1k1r2pp/pN6/5Q2/PP6/2P4P/6P1/R2rb2K b - - 0 28
+5rk1/p6n/4bppQ/q3P2p/3BP3/5R1P/6PK/8 w - - 0 38
+r1b2r2/p1p1Nppk/8/8/3qP3/R3R3/P4PPP/R5K1 w - - 2 20  # anastasiaMate correctly generated
