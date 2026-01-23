@@ -16,9 +16,9 @@ from chess import Move
 from chess.engine import Cp, SimpleEngine, Limit
 from chess.pgn import ChildNode
 
-from model import Puzzle, TagKind
-import util
-from util import material_diff, win_chances, game_phase
+from metrics.model import Puzzle, TagKind
+import metrics.util as util
+from metrics.util import material_diff, win_chances, game_phase
 
 
 zugzwang_limit = Limit(depth=30, time=10, nodes=12_000_000)
@@ -325,6 +325,7 @@ def quiet_move(puzzle: Puzzle) -> bool:
 
 
 def defensive_move(puzzle: Puzzle) -> bool:
+    if len(puzzle.mainline) == 1: return False  # NOTE: not in lichess-puzzler, but as my version allows for mates in 1, prevents an error.
     # like quiet_move, but on last move
     # at least 3 legal moves
     if puzzle.mainline[-2].board().legal_moves.count() < 3:

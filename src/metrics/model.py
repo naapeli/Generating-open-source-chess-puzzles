@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
+from typing import List, Literal, Tuple, Optional
+
 from chess.pgn import Game, ChildNode, GameNode
 from chess import Color, Move
 from chess.engine import Score
-from typing import List, Literal, Tuple, Optional
 
 
 # from tagger
