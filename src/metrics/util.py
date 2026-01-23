@@ -1,12 +1,13 @@
 from typing import List, Optional, Tuple
+import math
+
 import chess
 from chess.engine import Score, SimpleEngine, Limit
 from chess import square_rank, Color, Board, Square, Piece, square_distance
 from chess import KING, QUEEN, ROOK, BISHOP, KNIGHT, PAWN
 from chess.pgn import ChildNode, GameNode
-from typing import TypeVar
-import math
-from model import EngineMove, NextMovePair, Puzzle
+
+from metrics.model import EngineMove, NextMovePair, Puzzle
 
 # below from https://github.com/ornicar/lichess-puzzler/blob/master/tagger/util.py
 
