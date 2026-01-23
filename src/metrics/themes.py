@@ -146,9 +146,9 @@ if __name__ == "__main__":
     print(cook(puzzle, engine))  # [advantage attraction fork middlegame sacrifice veryLong]
 
     engine.configure({"Clear Hash": None})
-    puzzle = puzzle_from_fen("8/2p5/3k2p1/1p1P1p2/1P3P2/3K2Pp/7P/8 w - - 2 44", engine)
-    print(puzzle.game)  # d3d4 g6g5 f4g5
-    print(cook(puzzle, engine))  # [crushing endgame pawnEndgame short zugzwang]
+    puzzle = puzzle_from_fen("8/8/1pp1k1p1/4Pp1p/2PK1P1P/pP6/P7/8 w - - 2 36", engine)
+    print(puzzle.game)
+    print(cook(puzzle, engine))  # [crushing endgame long pawnEndgame quietMove zugzwang]
 
     print("Time taken:", perf_counter() - start)
 
