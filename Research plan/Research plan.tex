@@ -84,10 +84,32 @@ As the authors of \cite{feng2025generatingcreativechesspuzzles} had trouble with
     \end{itemize}
     \item June: \begin{itemize}
         \item Finish the thesis and send the publication for review
-        \item Build a website where people can use the model or publish the model on huggingface or similar
+        \item Build a website where people can use the model or publish the model on Huggingface or similar
     \end{itemize}
 \end{itemize}
 
+
+\section{Results}
+
+The preliminary results after supervised training the masked diffusion model are shown in the table below.
+
+\begin{table}[h]
+    \centering
+    \caption{The proportion of positions satisfying a criterion. An average is taken over 1000 generated positions from the model or 1000 randomly sampled positions from the Lichess Puzzle dataset. The values in the parenthesis are the corresponding values in \cite{feng2025generatingcreativechesspuzzles}.}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        & Lichess puzzles & Masked Diffusion \\
+        \hline
+        Legal & 100\% & 96.8\% (99.72\%)\\
+        \hline
+        Unique & 81.7\% (95.25\%) & 9.67\% (30.89\%)\\
+        \hline
+        Counter-intuitive & 4.3\% (2.25\%) & 23.7\% (1.11\%)\\
+        \hline
+        Puzzle & 4.1\% (2.14\%) & 0.1\% (0.34\%)\\
+        \hline
+    \end{tabular}
+\end{table}
 
 \bibliography{references.bib}
 \bibliographystyle{ieeetr}
