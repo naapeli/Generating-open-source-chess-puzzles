@@ -64,6 +64,26 @@ What should be used, pre- or post-normalization (\cite{feng2025generatingcreativ
 
 \textcolor{red}{If we want some new experiments, we can find out what masking schedule produces the best results after supervised learning and then apply RL to that model.}
 
+\section{Metrics}
+
+I would love to access the code they used to compute the metrics to see what the differences are.
+
+Computing if the fen position is legal and unique is surprisingly costly (due to repeated Stockfish searches, which can be controlled by setting limits to the depth, nodes and time)
+
+Overlap zero over the 1000 generated positions with the training set (probably due to generating the positions with only one active theme, which basically never happens in the training set). 
+
+\subsection{Uniqueness}
+
+We remove one-movers, I think they might not? Similarly to the paper, we do not check if the best move wins enough (or draws when down in material) as Lichess puzzler does (\textcolor{red}{actually, we do check this!}). They mention minor differences in the implementation between Lichess puzzler and their metric computation. 
+
+\subsection{Counter intuitiveness}
+
+I think, in the end they compute $0.8\cdot depth_{move_{depth} == move_{high depth}} + 0.1\cdot value_{captured} \ge \tau_{cnt}$.
+
+Perhaps new thing we could do is that we could modify the counter intuitiveness threshold $\tau_{cnt}$ by considering the difficulty rating of the puzzle (more difficult puzzle is more counter-intuitive)
+
+
+
 \section{RL}
 
 \cite{feng2025generatingcreativechesspuzzles} did not use the masked diffusion for the RL, and it will probably be harder than with the autoregressive model.
@@ -72,12 +92,6 @@ Compute the log-probability of the models in the same way as with autoregressive
 
 \textcolor{Green}{Computation of the log-probability is intractable for these diffusion models. Therefore, as it is needed in RL, we will use the ELBO as a replacement as was done in \cite{ou2025principledrldiffusionllms}. We should compute the ELBO in exactly the same way as in SFT (for a fen, sample $t$, compute $\alpha_t$ and mask with probability, then compute the ELBO as in the paper, finally apply RL with the log probabilities replaced with the negative ELBOs). This paper may also be useful \cite{rojas2025improvingreasoningdiffusionlanguage}.}
 
-
-Computing if the fen position is legal and unique is surprisingly costly (why?)
-
-Perhaps we could ask the authors for the implementation of the uniqueness and counter-intuitiveness so we can measure differences between models exactly.
-
-Perhaps new thing we could do is that we could modify the counter intuitiveness threshold by considering the difficulty rating of the puzzle (more difficult puzzle is more counter-intuitive)
 
 \bibliography{references.bib}
 \bibliographystyle{ieeetr}
