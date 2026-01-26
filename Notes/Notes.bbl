@@ -39,4 +39,9 @@ K.~Rojas, J.~Lin, K.~Rasul, A.~Schneider, Y.~Nevmyvaka, M.~Tao, and W.~Deng,
   ``Improving reasoning for diffusion language models via group diffusion
   policy optimization,'' 2025.
 
+\bibitem{schiff2025simpleguidancemechanismsdiscrete}
+Y.~Schiff, S.~S. Sahoo, H.~Phung, G.~Wang, S.~Boshar, H.~Dalla-torre, B.~P.
+  de~Almeida, A.~Rush, T.~Pierrot, and V.~Kuleshov, ``Simple guidance
+  mechanisms for discrete diffusion models,'' 2025.
+
 \end{thebibliography}

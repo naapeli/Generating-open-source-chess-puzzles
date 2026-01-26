@@ -123,6 +123,65 @@ Compute the log-probability of the models in the same way as with autoregressive
     \item Talk with Arno Solin.
 \end{itemize}
 
+\section{26.1}
+
+If the solution to a puzzle is unique, counter-intuitivity metric makes sense for the puzzles we have generated. If the solution is not unique, the engine has potential to find two good moves early and switch the correct move making the puzzle counter-intuitive.
+
+Realized that the correct metrics should look the following (counter-intuitiveness was computed from all positions and not the ones with a unique solution):
+
+\begin{table}[h]
+    \centering
+    \caption{The proportion of positions satisfying a criterion. An average is taken over 1000 generated positions from the model or 1000 randomly sampled positions from the Lichess Puzzle dataset. The values in the parenthesis are the corresponding values in \cite{feng2025generatingcreativechesspuzzles}.}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        & Lichess puzzles & Masked Diffusion \\
+        \hline
+        Legal & 100\% & 96.8\% (99.72\%)\\
+        \hline
+        Unique & 81.4\% (95.25\%) & 9.71\% (30.89\%)\\
+        \hline
+        Counter-intuitive & 5.0\% (2.25\%) & 1.1\% (1.11\%)\\
+        \hline
+        Puzzle & 4.1\% (2.14\%) & 0.1\% (0.34\%)\\
+        \hline
+    \end{tabular}
+\end{table}
+
+Could experiment with guidance mechanisms as in \cite{schiff2025simpleguidancemechanismsdiscrete}.
+
+We could use a Gaussian quadrature ELBO estimate that has smaller variance from \cite{rojas2025improvingreasoningdiffusionlanguage}.
+% Use something like this:
+% def compute_loss_quadrature_vectorized(model, fens, themes, ratings, K=3):
+%     device = fens.device
+%     B = fens.size(0)
+%     t_nodes, t_weights = numpy.polynomial.legendre.leggauss(K)
+%     t = t_nodes[:, None].expand(K, B)
+%     alpha_t = config.masking_schedule(t).unsqueeze(-1)
+
+%     fens_rep = fens.unsqueeze(0).expand(K, *fens.shape)
+%     themes_rep = themes.unsqueeze(0).expand(K, *themes.shape)
+%     ratings_rep = ratings.unsqueeze(0).expand(K, *ratings.shape)
+
+%     random_mask = torch.rand_like(fens_rep, dtype=torch.float) < alpha_t
+%     masked_fens = torch.where(random_mask, fens_rep, config.mask_token)
+%     masked_fens = masked_fens.flatten(0, 1)
+%     themes_rep = themes_rep.flatten(0, 1)
+%     ratings_rep = ratings_rep.flatten(0, 1)
+%     t_flat = t.flatten(0, 1)
+
+%     with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
+%         logits = model(masked_fens, themes_rep, ratings_rep)
+
+%     unwrapped_model = model.module if distributed else model
+%     loss = unwrapped_model.elbo_loss(
+%         t_flat, logits, fens_rep.flatten(0, 1), masked_fens
+%     )
+
+%     loss = loss.view(K, B)
+%     return torch.sum(t_weights[:, None] * loss, dim=0)
+
+
+
 
 \bibliography{references.bib}
 \bibliographystyle{ieeetr}
