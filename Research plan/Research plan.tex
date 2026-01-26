@@ -93,6 +93,24 @@ As the authors of \cite{feng2025generatingcreativechesspuzzles} had trouble with
 
 The preliminary results after supervised training the masked diffusion model are shown in the table below.
 
+% \begin{table}[h]
+%     \centering
+%     \caption{The proportion of positions satisfying a criterion. An average is taken over 1000 generated positions from the model or 1000 randomly sampled positions from the Lichess Puzzle dataset. The values in the parenthesis are the corresponding values in \cite{feng2025generatingcreativechesspuzzles}.}
+%     \begin{tabular}{|c|c|c|}
+%         \hline
+%         & Lichess puzzles & Masked Diffusion \\
+%         \hline
+%         Legal & 100\% & 96.8\% (99.72\%)\\
+%         \hline
+%         Unique & 81.7\% (95.25\%) & 9.67\% (30.89\%)\\
+%         \hline
+%         Counter-intuitive & 4.3\% (2.25\%) & 23.7\% (1.11\%)\\
+%         \hline
+%         Puzzle & 4.1\% (2.14\%) & 0.1\% (0.34\%)\\
+%         \hline
+%     \end{tabular}
+% \end{table}
+
 \begin{table}[h]
     \centering
     \caption{The proportion of positions satisfying a criterion. An average is taken over 1000 generated positions from the model or 1000 randomly sampled positions from the Lichess Puzzle dataset. The values in the parenthesis are the corresponding values in \cite{feng2025generatingcreativechesspuzzles}.}
@@ -102,9 +120,9 @@ The preliminary results after supervised training the masked diffusion model are
         \hline
         Legal & 100\% & 96.8\% (99.72\%)\\
         \hline
-        Unique & 81.7\% (95.25\%) & 9.67\% (30.89\%)\\
+        Unique & 81.4\% (95.25\%) & 9.71\% (30.89\%)\\
         \hline
-        Counter-intuitive & 4.3\% (2.25\%) & 23.7\% (1.11\%)\\
+        Counter-intuitive & 5.0\% (2.25\%) & 1.1\% (1.11\%)\\
         \hline
         Puzzle & 4.1\% (2.14\%) & 0.1\% (0.34\%)\\
         \hline
