@@ -6,8 +6,6 @@ from chess import Color, Move
 from chess.engine import Score
 
 
-# from tagger
-
 TagKind = Literal[
     "advancedPawn",
     "advantage",
