@@ -1,9 +1,11 @@
 #!/bin/bash -l
-#SBATCH --time=00:30:00
+#SBATCH --time=00:10:00
 #SBATCH --output=output.out
-#SBATCH --mem=32G
+#SBATCH --mem=64G
 #SBATCH --gpus=1
+#SBATCH --cpus-per-gpu=10
+
 
 module load mamba
 source activate environment
-srun python src/generate_fens.py
+srun python src/train_rl.py
