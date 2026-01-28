@@ -68,6 +68,13 @@ class MaskedDiffusion(nn.Module):
         loss = -torch.sum(mask * weight * F.cross_entropy(torch.movedim(logits, 2, 1), true_fen_tokens, reduction="none"), dim=1)
         return loss
     
+    def variance_reduced_elbo(self, masked_fens, true_fens, themes, ratings, t, quadrature_weights=1):
+        with torch.autocast(dtype=torch.bfloat16):
+            logits = self(masked_fens, themes, ratings)
+        weight = self.config.masking_schedule.get_weight(torch.as_tensor(t)).unsqueeze(1).to(logits.device)
+        mask = masked_fens == self.config.mask_token
+        return -torch.sum(mask * quadrature_weights * weight * F.cross_entropy(torch.movedim(logits, 2, 1), true_fens, reduction="none"), dim=1)  # (batch_size,)
+    
     @torch.no_grad()
     def sample(self, theme_tokens, ratings, steps=256):
         batch_size = len(ratings)
