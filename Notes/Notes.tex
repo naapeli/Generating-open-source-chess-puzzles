@@ -150,37 +150,20 @@ Realized that the correct metrics should look the following (counter-intuitivene
 Could experiment with guidance mechanisms as in \cite{schiff2025simpleguidancemechanismsdiscrete}.
 
 We could use a Gaussian quadrature ELBO estimate that has smaller variance from \cite{rojas2025improvingreasoningdiffusionlanguage}.
-% Use something like this:
-% def compute_loss_quadrature_vectorized(model, fens, themes, ratings, K=3):
-%     device = fens.device
-%     B = fens.size(0)
-%     t_nodes, t_weights = numpy.polynomial.legendre.leggauss(K)
-%     t = t_nodes[:, None].expand(K, B)
-%     alpha_t = config.masking_schedule(t).unsqueeze(-1)
-
-%     fens_rep = fens.unsqueeze(0).expand(K, *fens.shape)
-%     themes_rep = themes.unsqueeze(0).expand(K, *themes.shape)
-%     ratings_rep = ratings.unsqueeze(0).expand(K, *ratings.shape)
-
-%     random_mask = torch.rand_like(fens_rep, dtype=torch.float) < alpha_t
-%     masked_fens = torch.where(random_mask, fens_rep, config.mask_token)
-%     masked_fens = masked_fens.flatten(0, 1)
-%     themes_rep = themes_rep.flatten(0, 1)
-%     ratings_rep = ratings_rep.flatten(0, 1)
-%     t_flat = t.flatten(0, 1)
-
-%     with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
-%         logits = model(masked_fens, themes_rep, ratings_rep)
-
-%     unwrapped_model = model.module if distributed else model
-%     loss = unwrapped_model.elbo_loss(
-%         t_flat, logits, fens_rep.flatten(0, 1), masked_fens
-%     )
-
-%     loss = loss.view(K, B)
-%     return torch.sum(t_weights[:, None] * loss, dim=0)
 
 
+\section{27.1}
+What group size should I use in GRPO? Currently, I set group size to batch size and use just one group.
+
+
+\section{28.1}
+ESPO now overfits to one position (if the reward is the negative number of nonzero tokens in the generated tokens, the model ends up generating just zeros)
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{figures/RL_overfit.png}
+\end{figure}
+
+Currently, I use the Gauss-Legendre quadrature to estimate the integral. I also use antithetic sampling (share masks with current model and reference model) and coupled sampling (use a mask and the inverse mask and average the losses) to reduce variance.
 
 
 \bibliography{references.bib}
