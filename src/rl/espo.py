@@ -4,7 +4,7 @@ import numpy as np
 import random
 
 
-n_quadrature = 5
+n_quadrature = 10
 t_points, quadrature_weights = np.polynomial.legendre.leggauss(n_quadrature)  # estimate the integral with a gaussian quadrature (https://arxiv.org/pdf/2510.08554)
 t_points, quadrature_weights = torch.from_numpy(t_points), torch.from_numpy(quadrature_weights)
 t_points, quadrature_weights = (1 - 0) / 2 * t_points + (1 + 0) / 2, (1 - 0) / 2 * quadrature_weights  # https://en.wikipedia.org/wiki/Gaussian_quadrature#Change_of_interval
@@ -45,7 +45,6 @@ def espo_loss(model, reference_model, fens, themes, ratings, rewards, group_size
     # compute the integral and get the group structure back
     model_loss = (quadrature_weight * model_loss.reshape(batch_size, group_size, n_quadrature)).sum(dim=2)
     reference_loss = (quadrature_weight * reference_loss.reshape(batch_size, group_size, n_quadrature)).sum(dim=2)
-    return model_loss
     rewards = rewards.reshape(batch_size, group_size)
     rho = torch.exp(1 / sequence_length * (model_loss - reference_loss))
 
@@ -62,7 +61,6 @@ def espo_loss_basic(model, reference_model, fens, themes, ratings, rewards, grou
     device = ratings.device
     config = model.config
 
-    # t = torch.rand(n_samples).to(device)
     t = ((torch.rand(1) + torch.arange(n_samples) / n_samples) % 1).to(device)
     alpha_t = config.masking_schedule(t)
 
@@ -78,7 +76,6 @@ def espo_loss_basic(model, reference_model, fens, themes, ratings, rewards, grou
 
     # get the group structure back
     model_loss = model_loss.reshape(batch_size, group_size)
-    return model_loss
     reference_loss = reference_loss.reshape(batch_size, group_size)
     rewards = rewards.reshape(batch_size, group_size)
 
