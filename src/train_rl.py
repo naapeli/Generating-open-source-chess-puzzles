@@ -27,18 +27,18 @@ model = MaskedDiffusion(config)
 model.load_state_dict(checkpoint["model"])
 model.to(device=device)
 
-old_model = deepcopy(model)
-old_model.to(device=device)
+reference_model = deepcopy(model)
+reference_model.to(device=device)
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
 total_steps = 20_000
-batch_size = 3
-group_size = 24  # 8 - 64 probably good?  # TODO: Look at the deep seek paper where GRPO was proposed (or the Dr GRPO paper)  in the overfitting task, 16 seems to be too low
+batch_size = 4
+group_size = 16  # 8 - 64 probably good?  # TODO: Look at the deep seek paper where GRPO was proposed (or the Dr GRPO paper)  in the overfitting task, 16 seems to be too low
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
 params_muon = [p for p in model.parameters() if p.ndim == 2]
-adam = AdamW(params_adam, lr=4e-3, weight_decay=0)  # 4e-3
-muon = Muon(params_muon, lr=4e-3, weight_decay=0)  # 4e-3
+adam = AdamW(params_adam, lr=1e-2, weight_decay=0)  # 4e-3
+muon = Muon(params_muon, lr=1e-2, weight_decay=0)  # 4e-3
 
 engine = SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish")
 # engine.configure({"Hash": 2048})
@@ -83,10 +83,11 @@ while not end:
     themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
     scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
 
-    # generate the fens from the reference_model
-    reference_model = deepcopy(model)
-    reference_model.to(device)
-    step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=128)  # 256
+    # generate the fens from the old_model
+    old_model = deepcopy(model)
+    old_model.to(device)
+    step_fens, step_themes, step_ratings = generate_grouped_positions(old_model, themes_one_hot, scaled_ratings, group_size, steps=128)  # 256
+    print(step_fens[0])
 
     # precompute the elbos of the old model
     with torch.no_grad():
@@ -110,7 +111,6 @@ while not end:
 
         loss = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask, eps=0.1, beta=0.0).mean()
         total_loss += loss.item()
-        print(loss.item(), flush=True)
 
         loss.backward()
 

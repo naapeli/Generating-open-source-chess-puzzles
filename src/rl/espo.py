@@ -4,7 +4,7 @@ import numpy as np
 import random
 
 
-n_quadrature = 20  # 3
+n_quadrature = 3
 t_points, quadrature_weights = np.polynomial.legendre.leggauss(n_quadrature)  # estimate the integral with a gaussian quadrature (https://arxiv.org/pdf/2510.08554)
 t_points, quadrature_weights = torch.from_numpy(t_points), torch.from_numpy(quadrature_weights)
 t_points, quadrature_weights = (1 - 0) / 2 * t_points + (1 + 0) / 2, (1 - 0) / 2 * quadrature_weights  # https://en.wikipedia.org/wiki/Gaussian_quadrature#Change_of_interval
@@ -31,6 +31,7 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     logits = model(masked_fens, themes, ratings)
     elbo = model.elbo_loss(t, logits, fens, masked_fens)
     elbo = (quadrature_weight * elbo.reshape(n_samples, n_quadrature)).sum(dim=1)
+    elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
     if return_mask:
         return elbo, random_mask
     return elbo
@@ -47,6 +48,7 @@ def compute_elbo_basic(model, fens, themes, ratings, mask=None, return_mask=Fals
 
     logits = model(masked_fens, themes, ratings)
     elbo = model.elbo_loss(t, logits, fens, masked_fens)
+    elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
     if return_mask:
         return elbo, random_mask
     return elbo
@@ -64,11 +66,12 @@ def espo_loss(model, reference_losses, old_losses, fens, themes, ratings, reward
     model_loss = model_loss.reshape(batch_size, group_size)
     reference_losses = reference_losses.reshape(batch_size, group_size)
     old_losses = old_losses.reshape(batch_size, group_size)
-    rho = torch.exp(1 / sequence_length * (model_loss - reference_losses))  # importance sampling (generate from reference, update model)
+    # this assumes that model_loss and old_losses are negative (lower bounds of the log probability)
+    rho = torch.exp((model_loss - old_losses) / sequence_length)  # importance sampling (generate from reference, update model)
 
     # (batch_size,)
     advantages = (rewards - rewards.mean(dim=1, keepdim=True)).to(device)  # Dr GRPO (do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
-    loss = torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages).mean(dim=1) - beta * kl_estimate(model_loss, old_losses)  # (batch_size,)
+    loss = torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages).mean(dim=1) - beta * kl_estimate(model_loss, reference_losses)  # (batch_size,)
     return -loss  # maximize the loss above
 
 def generate_grouped_positions(model, themes, ratings, group_size, steps=256):
