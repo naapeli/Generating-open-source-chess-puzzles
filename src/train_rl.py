@@ -130,18 +130,18 @@ scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
 
 step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=128)
 
-rewards = torch.randn(len(step_fens))
+rewards = 10 * torch.rand(len(step_fens))
 
 losses = []
 basic_losses = []
 beta = 0
 eps = 0.1
-for substep in range(100):
+for substep in range(100):  # 1000
     loss = espo_loss(model, reference_model, step_fens, step_themes, step_ratings, rewards, group_size, eps=eps, beta=beta)
-    losses.extend(loss.tolist())
+    losses.extend(loss.squeeze().tolist())
     
     loss = espo_loss_basic(model, reference_model, step_fens, step_themes, step_ratings, rewards, group_size, eps=eps, beta=beta)
-    basic_losses.extend(loss.tolist())
+    basic_losses.extend(loss.squeeze().tolist())
 
 losses = np.array(losses)
 basic_losses = np.array(basic_losses)
@@ -159,17 +159,23 @@ def plot_with_mode(data, label, color, x_limit=None):
     plt.fill_between(x_range, pdf_values, alpha=0.2, color=color)
     return mode_x
 
+plt.figure()
+plt.plot(np.cumsum(losses) / (np.arange(len(losses)) + 1), label="low variance")
+plt.plot(np.cumsum(basic_losses) / (np.arange(len(basic_losses)) + 1), label="high variance")
+plt.ylabel("ELBO loss")
+plt.legend()
+plt.savefig(base_path / "image2.png")
+
 
 plt.figure()
-mode_low = plot_with_mode(losses, "Low Var (Quadrature)", "blue")
-mode_high = plot_with_mode(basic_losses, "High Var (Basic)", "orange")
+try:
+    mode_low = plot_with_mode(losses, "Low Var (Quadrature)", "blue")
+    mode_high = plot_with_mode(basic_losses, "High Var (Basic)", "orange")
+except:
+    plt.hist(losses, alpha=0.5, density=True, label="Low Var (Quadrature)", color="blue")
+    plt.hist(basic_losses, alpha=0.5, density=True, label="High Var (Basic)", color="orange")
 plt.legend()
 plt.xlim((min(losses.min(), basic_losses.min()) - 2, max(np.quantile(losses, 0.95), np.quantile(basic_losses, 0.95)) + 2))
 plt.savefig(base_path / "image.png")
-
-
-print(mode_low, losses.mean(), np.median(losses), losses.var())
-print(mode_high, basic_losses.mean(), np.median(basic_losses), basic_losses.var())
-
 
 engine.quit()
