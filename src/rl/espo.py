@@ -32,6 +32,7 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     elbo = model.elbo_loss(t, logits, fens, masked_fens)
     elbo = (quadrature_weight * elbo.reshape(n_samples, n_quadrature)).sum(dim=1)
     elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
+    assert (elbo <= 0).all(), f"elbo should be a lower bound of a probability, {elbo}"
     if return_mask:
         return elbo, random_mask
     return elbo
@@ -49,29 +50,43 @@ def compute_elbo_basic(model, fens, themes, ratings, mask=None, return_mask=Fals
     logits = model(masked_fens, themes, ratings)
     elbo = model.elbo_loss(t, logits, fens, masked_fens)
     elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
+    assert (elbo <= 0).all(), f"elbo should be a lower bound of a probability, {elbo}"
     if return_mask:
         return elbo, random_mask
     return elbo
 
-def espo_loss(model, reference_losses, old_losses, fens, themes, ratings, rewards, group_size, mask=None, eps=0.2, beta=0.1):
+def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards, group_size, mask=None, eps=0.2, beta=0.1):
     n_samples, sequence_length = fens.shape  # fens.shape == (batch_size * group_size, sequence_length)  batch_size groups of size group_size
     assert n_samples % group_size == 0
     batch_size = n_samples // group_size
 
     device = ratings.device
-    model_loss = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
-    # model_loss = compute_elbo_basic(model, fens, themes, ratings, mask=mask, return_mask=False)
+    elbo = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
+    # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, return_mask=False)
 
     rewards = rewards.reshape(batch_size, group_size)
-    model_loss = model_loss.reshape(batch_size, group_size)
-    reference_losses = reference_losses.reshape(batch_size, group_size)
-    old_losses = old_losses.reshape(batch_size, group_size)
-    # this assumes that model_loss and old_losses are negative (lower bounds of the log probability)
-    rho = torch.exp((model_loss - old_losses) / sequence_length)  # importance sampling (generate from reference, update model)
+    elbo = elbo.reshape(batch_size, group_size)
+    reference_elbos = reference_elbos.reshape(batch_size, group_size)
+    old_elbos = old_elbos.reshape(batch_size, group_size)
+    # this assumes that elbo and old_elbos are negative (lower bounds of the log probability)
+    rho = torch.exp((elbo - old_elbos) / sequence_length)  # importance sampling (generate from old model, update current model)
 
     # (batch_size,)
     advantages = (rewards - rewards.mean(dim=1, keepdim=True)).to(device)  # Dr GRPO (do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
-    loss = torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages).mean(dim=1) - beta * kl_estimate(model_loss, reference_losses)  # (batch_size,)
+    loss = torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages).mean(dim=1)
+    # print("=========================")
+    # print(loss, beta * kl_estimate(elbo, reference_elbos))
+    # print(rho)
+    # print(advantages)
+    # print(torch.clamp(rho, 1 - eps, 1 + eps) * advantages)
+    # print(torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages))
+    # print(elbo)
+    # print(reference_elbos)
+    # print(old_elbos)
+    # print(rewards)
+    if beta > 0:
+        kl = beta * kl_estimate(elbo, reference_elbos)
+        loss = loss - kl
     return -loss  # maximize the loss above
 
 def generate_grouped_positions(model, themes, ratings, group_size, steps=256):

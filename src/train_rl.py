@@ -32,13 +32,13 @@ reference_model.to(device=device)
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
 total_steps = 20_000
-batch_size = 4
+batch_size = 4  # 4 works for torch.float32 models and 32g vram
 group_size = 16  # 8 - 64 probably good?  # TODO: Look at the deep seek paper where GRPO was proposed (or the Dr GRPO paper)  in the overfitting task, 16 seems to be too low
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
 params_muon = [p for p in model.parameters() if p.ndim == 2]
-adam = AdamW(params_adam, lr=1e-2, weight_decay=0)  # 4e-3
-muon = Muon(params_muon, lr=1e-2, weight_decay=0)  # 4e-3
+adam = AdamW(params_adam, lr=4e-3, weight_decay=0)  # 4e-3
+muon = Muon(params_muon, lr=4e-3, weight_decay=0)  # 4e-3
 
 engine = SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish")
 # engine.configure({"Hash": 2048})
@@ -80,42 +80,52 @@ step = 0
 end = False
 while not end:
     themes, ratings = generate_random_themes(batch_size)
+    # themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
+    # scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
     themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
     scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
+    # model.to(torch.float64)
+    # reference_model.to(torch.float64)
 
     # generate the fens from the old_model
     old_model = deepcopy(model)
     old_model.to(device)
-    step_fens, step_themes, step_ratings = generate_grouped_positions(old_model, themes_one_hot, scaled_ratings, group_size, steps=128)  # 256
+    step_fens, step_themes, step_ratings = generate_grouped_positions(old_model, themes_one_hot, scaled_ratings, group_size, steps=128)  # 256, 32
     print(step_fens[0])
-
-    # precompute the elbos of the old model
-    with torch.no_grad():
-        reference_elbo, mask = compute_elbo(reference_model, step_fens, step_themes, step_ratings, return_mask=True)
-        old_elbo = compute_elbo(old_model, step_fens, step_themes, step_ratings, mask=mask)
 
     # compute the rewards
     rewards = torch.zeros(len(step_fens))
-    for i, (tokens, theme, rating) in enumerate(zip(step_fens, themes, ratings)):
+    for i, tokens in enumerate(step_fens):
+        group_index = i // group_size
+        theme = themes[group_index]
+        rating = ratings[group_index]
+        # print(tokens, theme, rating)
         # fen = tokens_to_fen(tokens)
         # rewards[i] = get_reward(fen, theme, rating)
         rewards[i] = -(tokens != 0).float().sum()  # model should maximize the amount of zeros
 
     # update the model many times for one generation (as generations and reward calculations are expensive)
     total_loss = 0
+    total_norm = 0
     for substep in range(n_gradient_updates_per_generation):
         step += 1
 
         adam.zero_grad()
         muon.zero_grad()
 
-        loss = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask, eps=0.1, beta=0.0).mean()
+        # precompute the elbos of the old model
+        with torch.no_grad():
+            reference_elbo, mask = compute_elbo(reference_model, step_fens, step_themes, step_ratings, return_mask=True)
+            old_elbo = compute_elbo(old_model, step_fens, step_themes, step_ratings, mask=mask)
+
+        loss = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask, eps=1e-8, beta=0.1).mean()
         total_loss += loss.item()
 
         loss.backward()
 
-        # norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)  # 10
-        norm = torch.nn.utils.get_total_norm(model.parameters())
+        norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)  # 10
+        total_norm += norm.item()
+        # norm = torch.nn.utils.get_total_norm(model.parameters())
 
         adam.step()
         muon.step()
@@ -123,7 +133,7 @@ while not end:
         if step >= total_steps:
             end = True
     
-    print("Step: ", step, " Loss: ", total_loss / n_gradient_updates_per_generation, " reward: ", rewards.mean().item(), " grad norm: ", norm.item(), flush=True)
+    print("Step: ", step, " Loss: ", total_loss / n_gradient_updates_per_generation, " reward: ", rewards.mean().item(), " grad norm: ", total_norm / n_gradient_updates_per_generation, flush=True)
 
 
 
