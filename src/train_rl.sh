@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --time=01:00:00
+#SBATCH --time=00:30:00
 #SBATCH --output=output.out
 #SBATCH --mem=64G
 #SBATCH --gpus=1
