@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.9)  28 JAN 2026 15:28
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.9)  4 FEB 2026 11:56
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -189,23 +189,48 @@ Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
 ) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\svgnam.def
 File: svgnam.def 2024/09/29 v3.02 Predefined colors according to SVG 1.1 (UK)
 )
-(Notes.aux)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/caption\subcaption.sty
+Package: subcaption 2023/07/28 v1.6b Sub-captions (AR)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption.sty
+Package: caption 2023/08/05 v3.6o Customizing captions (AR)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption3.sty
+Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
+\caption@tempdima=\dimen168
+\captionmargin=\dimen169
+\caption@leftmargin=\dimen170
+\caption@rightmargin=\dimen171
+\caption@width=\dimen172
+\caption@indent=\dimen173
+\caption@parindent=\dimen174
+\caption@hangindent=\dimen175
+Package caption Info: Standard document class detected.
+)
+\c@caption@flags=\count302
+\c@continuedfloat=\count303
+)
+Package caption Info: New subtype `subfigure' on input line 238.
+\c@subfigure=\count304
+Package caption Info: New subtype `subtable' on input line 238.
+\c@subtable=\count305
+) (Notes.aux)
 \openout1 = `Notes.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -245,16 +270,16 @@ LaTeX Font Info:    ... okay on input line 19.
 (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
 ii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count302
-\scratchdimen=\dimen168
+\scratchcounter=\count306
+\scratchdimen=\dimen176
 \scratchbox=\box55
-\nofMPsegments=\count303
-\nofMParguments=\count304
+\nofMPsegments=\count307
+\nofMParguments=\count308
 \everyMPshowfont=\toks24
-\MPscratchCnt=\count305
-\MPscratchDim=\dimen169
-\MPnumerator=\count306
-\makeMPintoPDFobject=\count307
+\MPscratchCnt=\count309
+\MPscratchDim=\dimen177
+\MPnumerator=\count310
+\makeMPintoPDFobject=\count311
 \everyMPtoPDFconversion=\toks25
 )
 (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-b
@@ -267,12 +292,14 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 fg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
-LaTeX Font Info:    Trying to load font information for U+msa on input line 21.
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: End \AtBeginDocument code.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 23.
 
  (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 21.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 23.
 
 
 (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
@@ -295,42 +322,82 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 [4
 
 ]
-<figures/RL_overfit.png, id=23, 642.4pt x 481.8pt>
-File: figures/RL_overfit.png Graphic file (type png)
-<use figures/RL_overfit.png>
-Package pdftex.def Info: figures/RL_overfit.png  used on input line 163.
-(pdftex.def)             Requested size: 452.9679pt x 339.7352pt.
- (Notes.bbl
+<figures/RL_overfit_high_variance.png, id=23, 642.4pt x 481.8pt>
+File: figures/RL_overfit_high_variance.png Graphic file (type png)
+<use figures/RL_overfit_high_variance.png>
+Package pdftex.def Info: figures/RL_overfit_high_variance.png  used on input li
+ne 168.
+(pdftex.def)             Requested size: 217.42265pt x 163.0673pt.
+<figures/RL_overfit_low_variance.png, id=24, 1003.75pt x 501.875pt>
+File: figures/RL_overfit_low_variance.png Graphic file (type png)
+<use figures/RL_overfit_low_variance.png>
+Package pdftex.def Info: figures/RL_overfit_low_variance.png  used on input lin
+e 174.
+(pdftex.def)             Requested size: 217.42265pt x 108.70511pt.
+<figures/average_elbo_loss_over_time.png, id=25, 462.528pt x 346.896pt>
+File: figures/average_elbo_loss_over_time.png Graphic file (type png)
+<use figures/average_elbo_loss_over_time.png>
+Package pdftex.def Info: figures/average_elbo_loss_over_time.png  used on input
+ line 193.
+(pdftex.def)             Requested size: 271.7835pt x 203.8464pt.
+<figures/average_losses.png, id=27, 462.528pt x 346.896pt>
+File: figures/average_losses.png Graphic file (type png)
+<use figures/average_losses.png>
+Package pdftex.def Info: figures/average_losses.png  used on input line 201.
+(pdftex.def)             Requested size: 217.42265pt x 163.0676pt.
+<figures/average_losses_hist.png, id=28, 462.528pt x 346.896pt>
+File: figures/average_losses_hist.png Graphic file (type png)
+<use figures/average_losses_hist.png>
+Package pdftex.def Info: figures/average_losses_hist.png  used on input line 20
+7.
+(pdftex.def)             Requested size: 217.42265pt x 163.0676pt.
+<figures/Rewards_for_betas.png, id=29, 642.4pt x 481.8pt>
+File: figures/Rewards_for_betas.png Graphic file (type png)
+<use figures/Rewards_for_betas.png>
+Package pdftex.def Info: figures/Rewards_for_betas.png  used on input line 219.
 
-[5 <./figures/RL_overfit.png>])
+(pdftex.def)             Requested size: 362.37569pt x 271.7911pt.
 
-[6] (Notes.aux)
+
+[5 <./figures/RL_overfit_high_variance.png> <./figures/RL_overfit_low_variance.
+png>]
+
+[6 <./figures/average_elbo_loss_over_time.png> <./figures/average_losses.png> <
+./figures/average_losses_hist.png>]
+
+[7 <./figures/Rewards_for_betas.png>] (Notes.bbl)
+
+[8
+
+] (Notes.aux)
  ***********
 LaTeX2e <2025-06-01>
 L3 programming layer <2025-05-26>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 4226 strings out of 468225
- 66962 string characters out of 5432974
- 575326 words of memory out of 5000000
- 32706 multiletter control sequences out of 15000+600000
- 635925 words of font info for 75 fonts, out of 8000000 for 9000
+ 5733 strings out of 468225
+ 96785 string characters out of 5432974
+ 602588 words of memory out of 5000000
+ 34204 multiletter control sequences out of 15000+600000
+ 636225 words of font info for 76 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 73i,8n,77p,706b,232s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 73i,8n,77p,706b,500s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\aatus\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm
 1200.pk><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
 ts/cm/cmbx12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/publ
 ic/amsfonts/cm/cmmi12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/t
 ype1/public/amsfonts/cm/cmmi6.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX
 /fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/aatus/AppData/Local/Program
-s/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/aatus/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/aatus/AppDa
-ta/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/aatu
-s/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
-Output written on Notes.pdf (6 pages, 138666 bytes).
+s/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/aatus/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/aatus/AppDa
+ta/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/aat
+us/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Us
+ers/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.p
+fb>
+Output written on Notes.pdf (8 pages, 288330 bytes).
 PDF statistics:
- 67 PDF objects out of 1000 (max. 8388607)
+ 89 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 6 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 31 words of extra memory for PDF output out of 10000 (max. 10000000)
 
