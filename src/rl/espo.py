@@ -10,7 +10,8 @@ t_points, quadrature_weights = torch.from_numpy(t_points), torch.from_numpy(quad
 t_points, quadrature_weights = (1 - 0) / 2 * t_points + (1 + 0) / 2, (1 - 0) / 2 * quadrature_weights  # https://en.wikipedia.org/wiki/Gaussian_quadrature#Change_of_interval
 
 
-def kl_estimate(model_elbo, reference_elbo):  # k2 from http://joschu.net/blog/kl-approx.html and https://arxiv.org/pdf/2512.03759 (biased, but low variance estimator)
+def kl_estimate(model_elbo, reference_elbo):
+    # k2 from http://joschu.net/blog/kl-approx.html and https://arxiv.org/pdf/2512.03759 (biased, but low variance estimator)
     return 0.5 * torch.mean((model_elbo - reference_elbo) ** 2, dim=1)
 
 def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
@@ -74,16 +75,6 @@ def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards,
     # (batch_size,)
     advantages = (rewards - rewards.mean(dim=1, keepdim=True)).to(device)  # Dr GRPO (do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
     loss = torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages).mean(dim=1)
-    # print("=========================")
-    # print(loss, beta * kl_estimate(elbo, reference_elbos))
-    # print(rho)
-    # print(advantages)
-    # print(torch.clamp(rho, 1 - eps, 1 + eps) * advantages)
-    # print(torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages))
-    # print(elbo)
-    # print(reference_elbos)
-    # print(old_elbos)
-    # print(rewards)
     if beta > 0:
         kl = beta * kl_estimate(elbo, reference_elbos)
         loss = loss - kl
