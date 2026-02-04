@@ -11,6 +11,8 @@
 \usepackage{lipsum}
 \usepackage[svgnames]{xcolor}
 
+\usepackage{subcaption}
+
 
 \title{Generating open source chess puzzles - notes}
 \author{Aatu Selkee}
@@ -160,12 +162,67 @@ What group size should I use in GRPO? Currently, I set group size to batch size 
 ESPO now overfits to one position (if the reward is the negative number of nonzero tokens in the generated tokens, the model ends up generating just zeros)
 
 \begin{figure}[h]
-    \includegraphics[width=\textwidth]{figures/RL_overfit.png}
+     \centering
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figures/RL_overfit_high_variance.png}
+         \caption{High Variance Estimate}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figures/RL_overfit_low_variance.png}
+         \caption{Low Variance Estimate}
+     \end{subfigure}
 \end{figure}
 
 Currently, I use the Gauss-Legendre quadrature to estimate the integral. I also use antithetic sampling (share masks with current model and reference model) and coupled sampling (use a mask and the inverse mask and average the losses) to reduce variance.
 
+\section{29.1}
 
+The RL is quite sensitive to the group size $G$ even for the simple reward.
+
+$\mathcal{L}_{old}$ might be different to $\mathcal{L}_{ref}$ (currently I use them as the same). I probably need to change the training loop to store the elbo of the model when the positions are generated.
+
+\section{2.2}
+
+The low variance elbo estimate is currently working well. Previously, I had a sign error, as the model.elbo\_loss returned an upper bound for the negative log likelihood, which we minimized during supervised training. Now I take that into account in the ESPO loss computation.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/average_elbo_loss_over_time.png}
+    \caption{y-axis ELBO integrand, x-axis t, ELBO is the area under this curve divided by a constant (20, the number of grid points). (Severi told me that this should have a peak in the middle and be low on the edges.)}
+\end{figure}
+
+\begin{figure}[ht]
+     \centering
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figures/average_losses.png}
+         \caption{Cumulative average of the ELBO estimates.}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figures/average_losses_hist.png}
+         \caption{Histograms of the ELBO estimates.}
+     \end{subfigure}
+\end{figure}
+
+
+\section{4.2}
+
+Importance sampling has some bug (or performs unpredictably for some other reason), but if n\_gradient\_updates\_per\_generation is set to 1, the performance is great.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/Rewards_for_betas.png}
+    \caption{Rewards over time for different betas. If beta is zero, the model overfits completely. For larger betas, the rewards stay lower. No importance sampling is used (only one gradient update is made for each generation).}
+\end{figure}
+
+
+
+\clearpage
 \bibliography{references.bib}
 \bibliographystyle{ieeetr}
 
