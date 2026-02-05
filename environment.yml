@@ -15,3 +15,4 @@ dependencies:
       - stockfish==4.0.5
       - ipykernel
       - chess==1.11.2
+      - torchaudio==2.9.1
