@@ -1,0 +1,20 @@
+0
+Not transmitting history with null moves to UCI engine
+2
+Not transmitting history with null moves to UCI engine
+Not transmitting history with null moves to UCI engine
+Not transmitting history with null moves to UCI engine
+Not transmitting history with null moves to UCI engine
+Not transmitting history with null moves to UCI engine
+Not transmitting history with null moves to UCI engine
+3
+3
+4
+4
+6
+6
+8
+Not transmitting history with null moves to UCI engine
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+[2026-02-05T15:35:46.257] error: *** STEP 15703501.0 ON skl29 CANCELLED AT 2026-02-05T15:35:46 DUE to SIGNAL Terminated ***
+[2026-02-05T15:35:46.257] error: *** JOB 15703501 ON skl29 CANCELLED AT 2026-02-05T15:35:46 DUE to SIGNAL Terminated ***

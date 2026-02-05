@@ -5,15 +5,13 @@ import torch
 from torch.optim import AdamW, Muon
 import chess
 from chess.engine import SimpleEngine
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.stats import gaussian_kde
 
 from MaskedDiffusion.model import MaskedDiffusion
 from rl.espo import espo_loss, generate_grouped_positions, generate_random_themes, compute_elbo, compute_elbo_basic
 from tokenization.tokenization import theme_preprocessor, scale_ratings, tokens_to_fen
 from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
 from metrics.cook import cook
+from metrics.diversity_filtering import ReplayBuffer, PV_distance, board_distance
 
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
