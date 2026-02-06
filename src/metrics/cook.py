@@ -1,15 +1,7 @@
 from typing import List, Optional
 
 import chess
-from chess import (
-    square_rank,
-    square_file,
-    Board,
-    SquareSet,
-    Piece,
-    PieceType,
-    square_distance,
-)
+from chess import square_rank, square_file, Board, SquareSet, Piece, PieceType, square_distance
 from chess import KING, QUEEN, ROOK, BISHOP, KNIGHT, PAWN
 from chess import WHITE, BLACK
 from chess import Move
@@ -21,7 +13,9 @@ import metrics.util as util
 from metrics.util import material_diff, win_chances, game_phase
 
 
-zugzwang_limit = Limit(depth=30, time=10, nodes=12_000_000)
+# zugzwang_limit = Limit(depth=30, time=10, nodes=12_000_000)
+# zugzwang_limit = Limit(depth=15, time=10, nodes=8_000_000)
+zugzwang_limit = Limit(depth=8, time=5, nodes=4_000_000)
 
 def cook(puzzle: Puzzle, engine: SimpleEngine) -> List[TagKind]:
     tags: List[TagKind] = [game_phase(puzzle)]
@@ -995,8 +989,8 @@ def zugzwang(engine: SimpleEngine, puzzle: Puzzle) -> bool:
         if len(list(board.legal_moves)) > 15:
             continue
         score = engine.analyse(board, limit = zugzwang_limit)["score"].pov(not puzzle.pov)
-        rev_board = node.board()
-        rev_board.push(Move.null())
+        board.push(Move.null())
+        rev_board = chess.Board(board.fen())
         rev_score = engine.analyse(rev_board, limit = zugzwang_limit)["score"].pov(not puzzle.pov)
         if win_chances(score) < win_chances(rev_score) - 0.3:
             return True

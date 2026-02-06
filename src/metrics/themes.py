@@ -159,6 +159,8 @@ def cook_mate(node: ChildNode, winner: Color, engine: SimpleEngine) -> Optional[
 
 def cook_advantage(node: ChildNode, winner: Color, engine: SimpleEngine) -> Optional[List[NextMovePair]]:
     board = node.board()
+    if board.is_game_over():  # if we accidentally find checkmate, make sure we do not get an error
+        return []
     if board.is_repetition(2):
         return None
 
