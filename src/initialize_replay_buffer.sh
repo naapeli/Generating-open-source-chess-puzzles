@@ -2,7 +2,7 @@
 #SBATCH --time=12:00:00
 #SBATCH --output=output.out
 #SBATCH --mem=128G
-#SBATCH --cpus-per-task=64
+#SBATCH --cpus-per-task=128
 
 
 module load mamba
