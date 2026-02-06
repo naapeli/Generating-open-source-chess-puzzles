@@ -28,6 +28,9 @@ model.to(device=device)
 reference_model = deepcopy(model)
 reference_model.to(device=device)
 
+capacity = 200_000
+buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
+
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
 total_steps = 20_000
 batch_size = 4
@@ -45,45 +48,84 @@ piece_counts = {chess.PAWN: 8, chess.KNIGHT: 2, chess.BISHOP: 2, chess.ROOK: 2, 
 pieces = [chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN, chess.KING]
 colors = [chess.WHITE, chess.BLACK]
 
-def get_reward(fen, themes, rating):
+def get_rewards(fens, themes, ratings):
     # TODO: add distance metrics and rating dependence
-    if not legal(fen):
-        return -2
-    
-    engine.configure({"Clear Hash": None})
-    puzzle = get_unique_puzzle_from_fen(fen, engine)
-    if puzzle is None:
-        return 0
-    is_counter_intuitive = counter_intuitive(fen, engine)
-    if not is_counter_intuitive:
-        return 0
-    
-    # realistic piece counts
-    for color in colors:
-        for piece in pieces:
-            if len(puzzle.game.board().pieces(piece, color)) > piece_counts[piece]:
-                return 0
-    
-    # check the PV distances of the solution and the board
-    # TODO
+    puzzles = []
+    for fen in fens:
+        if legal(fen):
+            engine.configure({"Clear Hash": None})
+            puzzles.append(get_unique_puzzle_from_fen(fen, engine))
+        else:
+            puzzles.append(None)
 
-    generation_themes = cook(puzzle, engine)
-    if len(set(generation_themes).intersection(themes)) > len(themes) / 2:
-        return 2
-    else:
-        return 1  # if a puzzle is good, but of wrong type, could still give it a reward
+    rewards = torch.zeros(len(fens))
+    for i, (fen, theme, rating) in enumerate(zip(fens, themes, ratings)):
+        if not legal(fen):
+            rewards[i] = -2
+            continue
+        
+        # engine.configure({"Clear Hash": None})
+        # puzzle = get_unique_puzzle_from_fen(fen, engine)
+        puzzle = puzzles[i]
+        if puzzle is None:
+            continue  # reward 0
+        is_counter_intuitive = counter_intuitive(fen, engine)
+        if not is_counter_intuitive:
+            continue  # reward 0
+        
+        # realistic piece counts
+        too_many_pieces = False
+        for color in colors:
+            for piece in pieces:
+                if len(puzzle.game.board().pieces(piece, color)) > piece_counts[piece]:
+                    too_many_pieces = True  # reward 0
+                    break
+            if too_many_pieces:
+                break
+        if too_many_pieces:
+            continue
+        
+        # check the PV distances of the solution and the board gainst positions from the replay buffer and the batch
+        sampled_fens, sampled_pvs = buffer.sample(16)
+        pv = " ".join([move.uci() for move in puzzle.mainline])
+        found_too_close_position = False
+        for sampled_fen, sampled_pv in zip(sampled_fens, sampled_pvs):
+            if not board_distance(fen, sampled_fen):
+                found_too_close_position = True  # reward 0
+                break
+            if not PV_distance(sampled_pv, pv):
+                found_too_close_position = True  # reward 0
+                break
+        for other_puzzle in puzzles:
+            if other_puzzle is None:
+                found_too_close_position = True
+                break
+            other_fen = other_puzzle.board.fen()
+            other_pv = " ".join([move.uci() for move in other_puzzle.mainline])
+            if not board_distance(fen, other_fen):
+                found_too_close_position = True  # reward 0
+                break
+            if not PV_distance(sampled_pv, other_pv):
+                found_too_close_position = True  # reward 0
+                break
+        if found_too_close_position:
+            continue
+
+        generation_themes = cook(puzzle, engine)
+        if len(set(generation_themes).intersection(theme)) > len(theme) / 2:
+            rewards[i] = 2
+            continue
+        else:
+            rewards[i] = 1  # if a puzzle is good, but of wrong type, could still give it a reward
+            continue
 
 
 step = 0
 end = False
 while not end:
     themes, ratings = generate_random_themes(batch_size)
-    # themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
-    # scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
     themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
     scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
-    # model.to(torch.float64)
-    # reference_model.to(torch.float64)
 
     # generate the fens from the old_model
     old_model = deepcopy(model)
