@@ -163,18 +163,19 @@ ESPO now overfits to one position (if the reward is the negative number of nonze
 
 \begin{figure}[h]
      \centering
-     \begin{subfigure}[b]{0.48\textwidth}
+     \begin{subfigure}[t]{0.48\textwidth}
          \centering
          \includegraphics[width=\textwidth]{figures/RL_overfit_high_variance.png}
          \caption{High Variance Estimate}
      \end{subfigure}
      \hfill
-     \begin{subfigure}[b]{0.48\textwidth}
+     \begin{subfigure}[t]{0.48\textwidth}
          \centering
          \includegraphics[width=\textwidth]{figures/RL_overfit_low_variance.png}
          \caption{Low Variance Estimate}
      \end{subfigure}
 \end{figure}
+
 
 Currently, I use the Gauss-Legendre quadrature to estimate the integral. I also use antithetic sampling (share masks with current model and reference model) and coupled sampling (use a mask and the inverse mask and average the losses) to reduce variance.
 
@@ -191,35 +192,48 @@ The low variance elbo estimate is currently working well. Previously, I had a si
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.6\textwidth]{figures/average_elbo_loss_over_time.png}
-    \caption{y-axis ELBO integrand, x-axis t, ELBO is the area under this curve divided by a constant (20, the number of grid points). (Severi told me that this should have a peak in the middle and be low on the edges.)}
+    \caption{y-axis negative ELBO integrand, x-axis t, negative ELBO is the area under this curve divided by a constant (20, the number of grid points). (Severi told me that this should have a peak in the middle and be low on the edges.)}
 \end{figure}
 
 \begin{figure}[ht]
      \centering
-     \begin{subfigure}[b]{0.48\textwidth}
+     \begin{subfigure}[t]{0.48\textwidth}
          \centering
          \includegraphics[width=\textwidth]{figures/average_losses.png}
-         \caption{Cumulative average of the ELBO estimates.}
+         \caption{Cumulative average of the negative ELBO estimates.}
      \end{subfigure}
      \hfill
-     \begin{subfigure}[b]{0.48\textwidth}
+     \begin{subfigure}[t]{0.48\textwidth}
          \centering
          \includegraphics[width=\textwidth]{figures/average_losses_hist.png}
-         \caption{Histograms of the ELBO estimates.}
+         \caption{Histograms of the negative ELBO estimates.}
      \end{subfigure}
 \end{figure}
 
 
 \section{4.2}
 
-Importance sampling has some bug (or performs unpredictably for some other reason), but if n\_gradient\_updates\_per\_generation is set to 1, the performance is great.
+If n\_gradient\_updates\_per\_generation is set to 1, the performance is great. If n\_gradient \_updates\_per\_generation is set higher and importance sampling is hence used, the performance is effected greatly by the $\epsilon$ parameter (needs to be larger to not clip as many gradients, e.g. $\epsilon = 0.5$ or even higher in the test case). If epsilon is low (e.g. $\epsilon = 0.1$), the model will not converge to a good solution. There is hence no bug in the code I think, although, the RL seems to converge a lot slower if n\_gradient\_updates\_per\_generation is eight compared to when it is one (way more gradient updates AND more new generations as well).
+
 
 \begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/Rewards_for_betas.png}
-    \caption{Rewards over time for different betas. If beta is zero, the model overfits completely. For larger betas, the rewards stay lower. No importance sampling is used (only one gradient update is made for each generation).}
+     \centering
+     \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/Rewards_for_betas.png}
+        \caption{Rewards over time for different betas. If beta is zero, the model overfits completely. For larger betas, the rewards stay lower. No importance sampling is used (only one gradient update is made for each generation).}
+    \end{subfigure}
+     \hfill
+     \begin{subfigure}[t]{0.48\textwidth}
+         \centering
+        \includegraphics[width=\textwidth]{figures/Rewards_for_importance_sampling.png}
+        \caption{Rewards over time if eight gradient updates are done for new generations. The convergence is way slower than in the image on the left (even $\frac{184}{8} = 23$ is slower than around $12$ for the image on the left).}
+     \end{subfigure}
 \end{figure}
 
+\section{5.2}
+
+In the reward function, the authors check if the entropy of the generated board is high enough, which I believe requires the autoregressive decomposition to be computed efficiently (some approximation is needed with the diffusion). Hence, currently, we do not employ the entropy condition for the reward and trust that the other diversity measures are enough.
 
 
 \clearpage

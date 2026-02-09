@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.9)  4 FEB 2026 11:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.9)  5 FEB 2026 09:12
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -338,34 +338,42 @@ e 174.
 File: figures/average_elbo_loss_over_time.png Graphic file (type png)
 <use figures/average_elbo_loss_over_time.png>
 Package pdftex.def Info: figures/average_elbo_loss_over_time.png  used on input
- line 193.
+ line 194.
 (pdftex.def)             Requested size: 271.7835pt x 203.8464pt.
 <figures/average_losses.png, id=27, 462.528pt x 346.896pt>
 File: figures/average_losses.png Graphic file (type png)
 <use figures/average_losses.png>
-Package pdftex.def Info: figures/average_losses.png  used on input line 201.
+Package pdftex.def Info: figures/average_losses.png  used on input line 202.
 (pdftex.def)             Requested size: 217.42265pt x 163.0676pt.
 <figures/average_losses_hist.png, id=28, 462.528pt x 346.896pt>
 File: figures/average_losses_hist.png Graphic file (type png)
 <use figures/average_losses_hist.png>
 Package pdftex.def Info: figures/average_losses_hist.png  used on input line 20
-7.
+8.
 (pdftex.def)             Requested size: 217.42265pt x 163.0676pt.
-<figures/Rewards_for_betas.png, id=29, 642.4pt x 481.8pt>
-File: figures/Rewards_for_betas.png Graphic file (type png)
-<use figures/Rewards_for_betas.png>
-Package pdftex.def Info: figures/Rewards_for_betas.png  used on input line 219.
-
-(pdftex.def)             Requested size: 362.37569pt x 271.7911pt.
 
 
 [5 <./figures/RL_overfit_high_variance.png> <./figures/RL_overfit_low_variance.
 png>]
+<figures/Rewards_for_betas.png, id=33, 642.4pt x 481.8pt>
+File: figures/Rewards_for_betas.png Graphic file (type png)
+<use figures/Rewards_for_betas.png>
+Package pdftex.def Info: figures/Rewards_for_betas.png  used on input line 223.
+
+(pdftex.def)             Requested size: 217.42265pt x 163.0673pt.
+<figures/Rewards_for_importance_sampling.png, id=34, 642.4pt x 481.8pt>
+File: figures/Rewards_for_importance_sampling.png Graphic file (type png)
+<use figures/Rewards_for_importance_sampling.png>
+Package pdftex.def Info: figures/Rewards_for_importance_sampling.png  used on i
+nput line 229.
+(pdftex.def)             Requested size: 217.42265pt x 163.0673pt.
+
 
 [6 <./figures/average_elbo_loss_over_time.png> <./figures/average_losses.png> <
 ./figures/average_losses_hist.png>]
 
-[7 <./figures/Rewards_for_betas.png>] (Notes.bbl)
+[7 <./figures/Rewards_for_betas.png> <./figures/Rewards_for_importance_sampling
+.png>] (Notes.bbl)
 
 [8
 
@@ -376,13 +384,13 @@ L3 programming layer <2025-05-26>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 5733 strings out of 468225
- 96785 string characters out of 5432974
+ 5745 strings out of 468225
+ 97218 string characters out of 5432974
  602588 words of memory out of 5000000
- 34204 multiletter control sequences out of 15000+600000
- 636225 words of font info for 76 fonts, out of 8000000 for 9000
+ 34216 multiletter control sequences out of 15000+600000
+ 637473 words of font info for 81 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 73i,8n,77p,706b,500s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 73i,8n,77p,739b,538s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\aatus\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm
 1200.pk><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
 ts/cm/cmbx12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/publ
@@ -395,9 +403,9 @@ ta/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/aat
 us/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Us
 ers/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.p
 fb>
-Output written on Notes.pdf (8 pages, 288330 bytes).
+Output written on Notes.pdf (8 pages, 316468 bytes).
 PDF statistics:
- 89 PDF objects out of 1000 (max. 8388607)
+ 90 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 31 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 36 words of extra memory for PDF output out of 10000 (max. 10000000)
 
