@@ -18,8 +18,11 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     device = ratings.device
     n_samples = len(ratings)
 
+    config = model.module.config if hasattr(model, "module") else model.config
+    module = model.module if hasattr(model, "module") else model
+
     t = t_points.repeat(n_samples).to(device)
-    alpha_t = model.config.masking_schedule(t)
+    alpha_t = config.masking_schedule(t)
     quadrature_weight = quadrature_weights.unsqueeze(0).to(device)
 
     fens = fens.repeat_interleave(n_quadrature, dim=0)
@@ -27,10 +30,10 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     ratings = ratings.repeat_interleave(n_quadrature, dim=0)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
-    masked_fens = torch.where(random_mask, fens, model.config.mask_token)
+    masked_fens = torch.where(random_mask, fens, config.mask_token)
 
     logits = model(masked_fens, themes, ratings)
-    elbo = model.elbo_loss(t, logits, fens, masked_fens)
+    elbo = module.elbo_loss(t, logits, fens, masked_fens)
     elbo = (quadrature_weight * elbo.reshape(n_samples, n_quadrature)).sum(dim=1)
     elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
     assert (elbo <= 0).all(), f"elbo should be a lower bound of a probability, {elbo}"
@@ -42,14 +45,17 @@ def compute_elbo_basic(model, fens, themes, ratings, mask=None, return_mask=Fals
     device = ratings.device
     n_samples = len(ratings)
 
+    config = model.module.config if hasattr(model, "module") else model.config
+    module = model.module if hasattr(model, "module") else model
+
     t = ((torch.rand(1) + torch.arange(n_samples) / n_samples) % 1).to(device)
-    alpha_t = model.config.masking_schedule(t)
+    alpha_t = config.masking_schedule(t)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
     masked_fens = torch.where(random_mask, fens, model.config.mask_token)
 
     logits = model(masked_fens, themes, ratings)
-    elbo = model.elbo_loss(t, logits, fens, masked_fens)
+    elbo = module.elbo_loss(t, logits, fens, masked_fens)
     elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
     assert (elbo <= 0).all(), f"elbo should be a lower bound of a probability, {elbo}"
     if return_mask:
