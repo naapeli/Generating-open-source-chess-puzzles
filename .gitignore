@@ -18,3 +18,4 @@ Stockfish/
 
 # model checkpoints
 src/supervised_checkpoints
+src/rl_checkpoints
