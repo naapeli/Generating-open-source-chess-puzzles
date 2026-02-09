@@ -1,0 +1,52 @@
+eps=2e-1, n_gradient_updates_per_generation=1 (eps doesn't matter if only 1 update per generation, as no clipping will happen anyway)
+
+beta=0
+Step:  1  Loss:  0.0  reward:  -30.03125  grad norm:  5.199955940246582
+Step:  2  Loss:  0.0  reward:  -24.046875  grad norm:  4.903256416320801
+Step:  3  Loss:  0.0  reward:  -20.875  grad norm:  3.17966890335083
+Step:  4  Loss:  0.0  reward:  -16.421875  grad norm:  1.895578145980835
+Step:  5  Loss:  0.0  reward:  -14.53125  grad norm:  2.0538129806518555
+Step:  6  Loss:  0.0  reward:  -11.453125  grad norm:  2.355093002319336
+Step:  7  Loss:  0.0  reward:  -7.140625  grad norm:  0.48938310146331787
+Step:  8  Loss:  0.0  reward:  -7.0  grad norm:  0.0
+Step:  9  Loss:  0.0  reward:  -3.703125  grad norm:  2.23014760017395
+Step:  10  Loss:  0.0  reward:  -0.984375  grad norm:  0.08706016838550568
+Step:  11  Loss:  0.0  reward:  -0.015625  grad norm:  0.055088549852371216
+Step:  12  Loss:  0.0  reward:  0.0  grad norm:  0.0
+Step:  13  Loss:  0.0  reward:  0.0  grad norm:  0.0
+
+
+beta=1e-4
+Step:  1  Loss:  0.0  reward:  -30.6875  grad norm:  4.485507011413574
+Step:  2  Loss:  0.0018737890442917507  reward:  -29.109375  grad norm:  4.203372001647949
+Step:  3  Loss:  0.018224872960355062  reward:  -22.109375  grad norm:  2.5624818801879883
+Step:  4  Loss:  0.34909154643470497  reward:  -18.265625  grad norm:  2.4638419151306152
+Step:  5  Loss:  0.9131919714179436  reward:  -14.453125  grad norm:  3.144634485244751
+Step:  6  Loss:  1.074851816836181  reward:  -11.9375  grad norm:  2.2240078449249268
+Step:  7  Loss:  1.063796082121041  reward:  -8.46875  grad norm:  1.4773279428482056
+Step:  8  Loss:  2.5402558162734477  reward:  -9.15625  grad norm:  6.894747734069824
+Step:  9  Loss:  2.6685410358495183  reward:  -8.265625  grad norm:  6.6468024253845215
+Step:  10  Loss:  2.7256768032772603  reward:  -6.375  grad norm:  5.229207515716553
+Step:  11  Loss:  2.4397719015035353  reward:  -5.1875  grad norm:  10.90121841430664
+Step:  12  Loss:  3.1298140745951315  reward:  -3.6875  grad norm:  12.629351615905762
+Step:  13  Loss:  2.325412183096971  reward:  -4.515625  grad norm:  12.152190208435059
+Step:  14  Loss:  2.1764943225454876  reward:  -4.34375  grad norm:  8.841108322143555
+Step:  15  Loss:  1.849722664322239  reward:  -4.546875  grad norm:  6.322515964508057
+
+
+beta=1e-3
+Step:  1  Loss:  0.0  reward:  -29.546875  grad norm:  4.284523963928223
+Step:  2  Loss:  0.01328989767347303  reward:  -30.046875  grad norm:  3.877037763595581
+Step:  3  Loss:  0.19174635856509523  reward:  -21.4375  grad norm:  4.230005264282227
+Step:  4  Loss:  1.4797620201710018  reward:  -16.46875  grad norm:  10.328299522399902
+Step:  5  Loss:  10.59653330456221  reward:  -13.5625  grad norm:  26.056562423706055
+Step:  6  Loss:  12.18888779132843  reward:  -10.921875  grad norm:  11.544227600097656
+Step:  7  Loss:  18.681474959635135  reward:  -10.453125  grad norm:  31.397016525268555
+Step:  8  Loss:  15.107834371513661  reward:  -10.5625  grad norm:  34.18052673339844
+Step:  9  Loss:  8.598977858833823  reward:  -9.921875  grad norm:  23.49314308166504
+Step:  10  Loss:  8.063107980523679  reward:  -10.546875  grad norm:  23.421297073364258
+Step:  11  Loss:  8.070500879322797  reward:  -13.15625  grad norm:  128.24847412109375
+Step:  12  Loss:  6.721828674274976  reward:  -21.515625  grad norm:  213.54205322265625
+Step:  13  Loss:  8.543475029979618  reward:  -10.34375  grad norm:  56.81542205810547
+Step:  14  Loss:  25.47463407258534  reward:  -17.71875  grad norm:  781.4967651367188
+Step:  15  Loss:  3.0097426529778017  reward:  -13.3125  grad norm:  85.16316986083984
