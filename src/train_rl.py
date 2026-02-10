@@ -85,8 +85,8 @@ capacity = 200_000
 buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
-total_steps = 20  # 20_000
-batch_size = 4  # 32  # batch_size * group_size == 64 works for 32g of vram
+total_steps = 80_000  # 20_000 generation steps, but 80_000 gradient updates
+batch_size = 32  # batch_size * group_size == 64 works for 32g of vram
 local_batch_size = batch_size // world_size
 group_size = 8  # 8 - 64 probably good?
 eps = 0.2  # from https://arxiv.org/pdf/1707.06347 page 6
@@ -94,8 +94,8 @@ beta = 0.03  # from https://arxiv.org/pdf/2510.23881 page 34
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
 params_muon = [p for p in model.parameters() if p.ndim == 2]
-adam = AdamW(params_adam, lr=4e-3, weight_decay=0)  # 4e-3
-muon = Muon(params_muon, lr=4e-3, weight_decay=0)  # 4e-3
+adam = AdamW(params_adam, lr=config.lr, weight_decay=config.weight_decay)
+muon = Muon(params_muon, lr=config.lr, weight_decay=config.weight_decay)
 
 engine = SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish")
 
@@ -243,8 +243,8 @@ while not end:
         adam.step()
         muon.step()
 
-        if step >= total_steps:
-            end = True
+    if step >= total_steps:
+        end = True
     
     if distributed:
         all_reduce(total_loss, op=ReduceOp.AVG)
@@ -253,7 +253,7 @@ while not end:
         writer.add_scalar("Loss", total_loss.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("Grad norm", total_norm.item() / n_gradient_updates_per_generation, step)
 
-    if step // n_gradient_updates_per_generation % 1 == 0:
+    if step // n_gradient_updates_per_generation % 2000 == 0:
         save_state()
 
 if master_process:
@@ -261,8 +261,8 @@ if master_process:
         "batch_size": batch_size,
         "group_size": group_size,
         "n_gradient_updates_per_generation": n_gradient_updates_per_generation,
-        "adam_lr": adam.param_groups[0]['lr'],
-        "muon_lr": muon.param_groups[0]['lr'],
+        "lr": config.lr,
+        "weight_decay": config.weight_decay,
         "PPO_eps": eps,
         "PPO_beta": beta
     }, {

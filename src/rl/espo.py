@@ -90,7 +90,9 @@ def generate_grouped_positions(model, themes, ratings, group_size, steps=256):
     themes = themes.repeat_interleave(group_size, dim=0)
     ratings = ratings.repeat_interleave(group_size, dim=0)
 
-    fens = model.sample(themes, ratings, steps=steps)
+    module = model.module if hasattr(model, "module") else model
+
+    fens = module.sample(themes, ratings, steps=steps)
     return fens, themes, ratings
 
 state_of_game_tokens = ("opening", "middlegame", "endgame")
