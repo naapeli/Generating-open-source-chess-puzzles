@@ -1,0 +1,189 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{nty/global//global/global/global}
+  \entry{feng2025generatingcreativechesspuzzles}{misc}{}{}
+    \name{author}{13}{}{%
+      {{hash=FX}{%
+         family={Feng},
+         familyi={F\bibinitperiod},
+         given={Xidong},
+         giveni={X\bibinitperiod},
+      }}%
+      {{hash=VV}{%
+         family={Veeriah},
+         familyi={V\bibinitperiod},
+         given={Vivek},
+         giveni={V\bibinitperiod},
+      }}%
+      {{hash=CM}{%
+         family={Chiam},
+         familyi={C\bibinitperiod},
+         given={Marcus},
+         giveni={M\bibinitperiod},
+      }}%
+      {{hash=DM}{%
+         family={Dennis},
+         familyi={D\bibinitperiod},
+         given={Michael},
+         giveni={M\bibinitperiod},
+      }}%
+      {{hash=PR}{%
+         family={Pachauri},
+         familyi={P\bibinitperiod},
+         given={Ryan},
+         giveni={R\bibinitperiod},
+      }}%
+      {{hash=TT}{%
+         family={Tumiel},
+         familyi={T\bibinitperiod},
+         given={Thomas},
+         giveni={T\bibinitperiod},
+      }}%
+      {{hash=BF}{%
+         family={Barbero},
+         familyi={B\bibinitperiod},
+         given={Federico},
+         giveni={F\bibinitperiod},
+      }}%
+      {{hash=OCJ}{%
+         family={Obando-Ceron},
+         familyi={O\bibinithyphendelim C\bibinitperiod},
+         given={Johan},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=SJ}{%
+         family={Shi},
+         familyi={S\bibinitperiod},
+         given={Jiaxin},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=SS}{%
+         family={Singh},
+         familyi={S\bibinitperiod},
+         given={Satinder},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=HS}{%
+         family={Hou},
+         familyi={H\bibinitperiod},
+         given={Shaobo},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=TN}{%
+         family={Tomašev},
+         familyi={T\bibinitperiod},
+         given={Nenad},
+         giveni={N\bibinitperiod},
+      }}%
+      {{hash=ZT}{%
+         family={Zahavy},
+         familyi={Z\bibinitperiod},
+         given={Tom},
+         giveni={T\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{FX+1}
+    \strng{fullhash}{FXVVCMDMPRTTBFOCJSJSSHSTNZT1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{F}
+    \field{sortinithash}{F}
+    \verb{eprint}
+    \verb 2510.23881
+    \endverb
+    \field{title}{Generating Creative Chess Puzzles}
+    \verb{url}
+    \verb https://arxiv.org/abs/2510.23881
+    \endverb
+    \field{eprinttype}{arXiv}
+    \field{eprintclass}{cs.AI}
+    \field{year}{2025}
+  \endentry
+
+  \entry{ou2025principledrldiffusionllms}{misc}{}{}
+    \name{author}{8}{}{%
+      {{hash=OJ}{%
+         family={Ou},
+         familyi={O\bibinitperiod},
+         given={Jingyang},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=HJ}{%
+         family={Han},
+         familyi={H\bibinitperiod},
+         given={Jiaqi},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=XM}{%
+         family={Xu},
+         familyi={X\bibinitperiod},
+         given={Minkai},
+         giveni={M\bibinitperiod},
+      }}%
+      {{hash=XS}{%
+         family={Xu},
+         familyi={X\bibinitperiod},
+         given={Shaoxuan},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=XJ}{%
+         family={Xie},
+         familyi={X\bibinitperiod},
+         given={Jianwen},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=ES}{%
+         family={Ermon},
+         familyi={E\bibinitperiod},
+         given={Stefano},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=WY}{%
+         family={Wu},
+         familyi={W\bibinitperiod},
+         given={Yi},
+         giveni={Y\bibinitperiod},
+      }}%
+      {{hash=LC}{%
+         family={Li},
+         familyi={L\bibinitperiod},
+         given={Chongxuan},
+         giveni={C\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{OJ+1}
+    \strng{fullhash}{OJHJXMXSXJESWYLC1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{O}
+    \field{sortinithash}{O}
+    \verb{eprint}
+    \verb 2512.03759
+    \endverb
+    \field{title}{Principled RL for Diffusion LLMs Emerges from a
+  Sequence-Level Perspective}
+    \verb{url}
+    \verb https://arxiv.org/abs/2512.03759
+    \endverb
+    \field{eprinttype}{arXiv}
+    \field{eprintclass}{cs.CL}
+    \field{year}{2025}
+  \endentry
+\enddatalist
+\endinput
