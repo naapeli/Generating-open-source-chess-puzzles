@@ -100,6 +100,7 @@ Compute the log-probability of the models in the same way as with autoregressive
 \clearpage
 
 \begin{table}
+    \centering
     \begin{tabular}{|c|c|c|c|}
         \hline
         & Lichess puzzles & Masked Diffusion & Paper Masked Diffusion \\
@@ -235,6 +236,42 @@ If n\_gradient\_updates\_per\_generation is set to 1, the performance is great. 
 
 In the reward function, the authors check if the entropy of the generated board is high enough, which I believe requires the autoregressive decomposition to be computed efficiently (some approximation is needed with the diffusion). Hence, currently, we do not employ the entropy condition for the reward and trust that the other diversity measures are enough.
 
+\section{10.2}
+
+The counter-intuitiveness metric is weird. My current understanding is that the authors of \cite{feng2025generatingcreativechesspuzzles} ended up finding only two nonzero features that effect the counter-intuitiveness (others had an effect as well, but the best model had only two features). 
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.53\textwidth]{figures/counter_intuitiveness.png}
+    \caption{Green parts are counter-intuitive, and the blue parts are not. Only captured material and critical point depth have nonzero weights, of which the coefficient of the critical depth is so much larger that the captured material has no effect.}
+\end{figure}
+
+\section{11.2}
+
+Realized that the large clips I had previously were due to too large of a learning rate, which was not a problem as the reward function was very simple. With a smaller learning rate, the 8 gradient updates works and converges a lot better.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/gradient_updates_1.png}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/gradient_updates_8.png}
+    \end{subfigure}
+    \caption{Left with 1 gradient update (new generations every step) and right 8 gradient updates (new generation every eighth step). The learning rate in both pictures is $10^{-4}$. Now the larger amount of gradient updates works a lot faster (around 15 min vs around 30 min).}
+\end{figure}
+
+\section{12.2}
+
+Because we generate $G$ positions with the same conditioning, the model often gets zero rewards and doesn't learn during RL. When removing the fen and pv distance checks, the model starts to change (initial test made the reward worse, when previously, it didn't move at all, meaning that there is a bug somewhere).
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{figures/Nonzero_reward_positions.png}
+    \caption{The rewards mostly make sense (0.5 might be too high reward for positions that have normal amount of pieces)}
+\end{figure}
 
 \clearpage
 \bibliography{references.bib}

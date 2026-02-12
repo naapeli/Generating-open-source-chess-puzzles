@@ -1,0 +1,142 @@
+\documentclass{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\title{Generating conditional chess puzzles}
+\author{Aatu Selkee et al.}
+\institute{Aalto University}
+\date{February 13, 2026}
+
+
+\usepackage[style=verbose, backend=bibtex]{biblatex}
+\usepackage{svg}
+
+\addbibresource{references.bib}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+
+% \section{Introduction}
+% \begin{frame}
+%     \centering\Huge Introduction
+% \end{frame}
+
+\begin{frame}
+    \textbf{What is our plan:}
+    \begin{itemize}
+        \item Follow your paper on chess puzzle generation with the masked diffusion model \footcite{feng2025generatingcreativechesspuzzles}
+        \item Condition the generation on the themes and the difficulty of the puzzles
+        \item Apply RL for the masked diffusion model
+        \begin{itemize}
+            \item Specifically, we plan to use  ELBO-based Sequence-level Policy Optimization (ESPO)\footcite{ou2025principledrldiffusionllms}
+        \end{itemize}
+        \item Perhaps make a UI for people to use the model
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \textbf{What have we have done so far:}
+    \begin{itemize}
+        \item Pretrained the masked diffusion model to 300 000 steps (validation loss starting to separate from the train loss slightly, but we may try to train a little further)
+        \item Implemented the RL training pipeline
+        \item Implemented the reward functions (as similarly to your implementations as we could based on the paper)
+        \item Early experiments with the RL training
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \textbf{Reward function components:}
+    \begin{itemize}
+        \item Uniqueness is probably pretty similar to your implementation
+        \item Counter-intuitiveness check might differ
+        \begin{itemize}
+            \item We currently have two terms: Stockfish critical point depth and the captured material value. Only the critical depth matters in the current implementation, as the coefficient of the captured material is so low.
+        \end{itemize}
+        \item Legality check
+        \item Piece count regularization
+        \item Intra- and inter-batch fen and principal variation distances
+        \item No token-level entropy check currently
+        \item Themes in the generated puzzles match the ones the generation was conditioned on
+    \end{itemize}
+    \begin{equation*}
+        R = \begin{cases} 
+            -2 & \text{if not legal} \\
+            0 & \text{legal, but no unique solution} \\
+            \begin{aligned}
+                & 2I_{cnt} + 0.5I_{pieces} + 0.5I_{themes} \\
+                & + 0.5\sum_{i\in\{ intra, inter \}}\sum_{j\in\{ fen, pv \}}I_{i, j} 
+            \end{aligned} & \text{otherwise}
+        \end{cases}
+    \end{equation*}
+\end{frame}
+
+\begin{frame}
+    \textbf{ESPO:}
+    \begin{itemize}
+        \item Mostly the same as GRPO, but with the ELBO instead of the probability of model generation.
+        \item Optimize the following:
+    \end{itemize}
+    \begin{align*}
+        \mathcal{J}_{\text{seq}}(\pi_\theta) &= \mathbb{E}_{x\sim\mathcal{D},y^{(1:G)}\sim \pi_{\text{old}}(\cdot | x)}\left[ L_i(\theta) \right], \\
+        L_i(\theta) &= \frac{1}{G}\sum_{i=1}^{G} \min(\rho_\text{seq}^{(i)}\hat{A}^{(i)}, \text{clip}(\rho_\text{seq}^{(i)}, 1 - \epsilon, 1 + \epsilon)\hat{A}^{(i)}),
+    \end{align*}
+    where $\rho_{\text{seq}}^{(i)} = \exp(\frac{1}{L}(\mathcal{L}_\theta(y^{(i)} | x) - \mathcal{L}_{\theta_{\text{old}}}(y^{(i)} | x)))$ and $\mathcal{L}$ is the evidence lower bound.
+
+    \begin{itemize}
+        \item Initial tests with an easy reward have worked well
+        \item If the larger runs do not end up working, we may go back to a more traditional policy gradient.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \textbf{Results after supervised training:}
+    \begin{table}[h]
+        \centering
+        \caption{The proportion of positions satisfying a criterion. An average is taken over 1000 generated positions from the model or 1000 randomly sampled positions from the Lichess Puzzle dataset. The values in the parenthesis are the corresponding values in \cite{feng2025generatingcreativechesspuzzles}.}
+        \begin{tabular}{|c|c|c|}
+            \hline
+            & Lichess puzzles & Masked Diffusion \\
+            \hline
+            Legal & 100\% & 96.8\% (99.72\%)\\
+            \hline
+            Unique & 81.4\% (95.25\%) & 9.71\% (30.89\%)\\
+            \hline
+            Counter-intuitive & 5.0\% (2.25\%) & 1.1\% (1.11\%)\\
+            \hline
+            Puzzle & 4.1\% (2.14\%) & 0.1\% (0.34\%)\\
+            \hline
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}
+    \centering\Huge Positions
+\end{frame}
+
+\begin{frame}
+    \begin{figure}
+        \includesvg[width=0.65\textwidth]{figures/smothered_mate_setup.svg}
+        \caption{Themes: middlegame, mate, one move, smothered mate. Rating: 2174}
+    \end{figure}
+\end{frame}
+
+\begin{frame}
+    \begin{figure}
+        \includesvg[width=0.65\textwidth]{figures/anastasia_mate_setup.svg}
+        \caption{Themes: long, mate, opening, anastasia mate, mate-in-5. Rating: 1135}
+    \end{figure}
+\end{frame}
+
+\begin{frame}
+    \begin{figure}
+        \includesvg[width=0.65\textwidth]{figures/endgame_setup.svg}
+        \caption{Themes: crushing, long, endgame, pawnendgame, intermezzo. Rating: 1249}
+    \end{figure}
+\end{frame}
+
+\end{document}

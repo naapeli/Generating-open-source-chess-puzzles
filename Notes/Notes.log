@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.9)  5 FEB 2026 09:12
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.9)  12 FEB 2026 14:49
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -326,30 +326,30 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 File: figures/RL_overfit_high_variance.png Graphic file (type png)
 <use figures/RL_overfit_high_variance.png>
 Package pdftex.def Info: figures/RL_overfit_high_variance.png  used on input li
-ne 168.
+ne 169.
 (pdftex.def)             Requested size: 217.42265pt x 163.0673pt.
 <figures/RL_overfit_low_variance.png, id=24, 1003.75pt x 501.875pt>
 File: figures/RL_overfit_low_variance.png Graphic file (type png)
 <use figures/RL_overfit_low_variance.png>
 Package pdftex.def Info: figures/RL_overfit_low_variance.png  used on input lin
-e 174.
+e 175.
 (pdftex.def)             Requested size: 217.42265pt x 108.70511pt.
 <figures/average_elbo_loss_over_time.png, id=25, 462.528pt x 346.896pt>
 File: figures/average_elbo_loss_over_time.png Graphic file (type png)
 <use figures/average_elbo_loss_over_time.png>
 Package pdftex.def Info: figures/average_elbo_loss_over_time.png  used on input
- line 194.
+ line 195.
 (pdftex.def)             Requested size: 271.7835pt x 203.8464pt.
 <figures/average_losses.png, id=27, 462.528pt x 346.896pt>
 File: figures/average_losses.png Graphic file (type png)
 <use figures/average_losses.png>
-Package pdftex.def Info: figures/average_losses.png  used on input line 202.
+Package pdftex.def Info: figures/average_losses.png  used on input line 203.
 (pdftex.def)             Requested size: 217.42265pt x 163.0676pt.
 <figures/average_losses_hist.png, id=28, 462.528pt x 346.896pt>
 File: figures/average_losses_hist.png Graphic file (type png)
 <use figures/average_losses_hist.png>
 Package pdftex.def Info: figures/average_losses_hist.png  used on input line 20
-8.
+9.
 (pdftex.def)             Requested size: 217.42265pt x 163.0676pt.
 
 
@@ -358,24 +358,58 @@ png>]
 <figures/Rewards_for_betas.png, id=33, 642.4pt x 481.8pt>
 File: figures/Rewards_for_betas.png Graphic file (type png)
 <use figures/Rewards_for_betas.png>
-Package pdftex.def Info: figures/Rewards_for_betas.png  used on input line 223.
+Package pdftex.def Info: figures/Rewards_for_betas.png  used on input line 224.
 
 (pdftex.def)             Requested size: 217.42265pt x 163.0673pt.
 <figures/Rewards_for_importance_sampling.png, id=34, 642.4pt x 481.8pt>
 File: figures/Rewards_for_importance_sampling.png Graphic file (type png)
 <use figures/Rewards_for_importance_sampling.png>
 Package pdftex.def Info: figures/Rewards_for_importance_sampling.png  used on i
-nput line 229.
+nput line 230.
 (pdftex.def)             Requested size: 217.42265pt x 163.0673pt.
 
 
 [6 <./figures/average_elbo_loss_over_time.png> <./figures/average_losses.png> <
 ./figures/average_losses_hist.png>]
+<figures/counter_intuitiveness.png, id=41, 462.528pt x 346.896pt>
+File: figures/counter_intuitiveness.png Graphic file (type png)
+<use figures/counter_intuitiveness.png>
+Package pdftex.def Info: figures/counter_intuitiveness.png  used on input line 
+245.
+(pdftex.def)             Requested size: 240.07242pt x 180.05348pt.
+
 
 [7 <./figures/Rewards_for_betas.png> <./figures/Rewards_for_importance_sampling
-.png>] (Notes.bbl)
+.png> <./figures/counter_intuitiveness.png>]
+<figures/gradient_updates_1.png, id=47, 414.8298pt x 328.8285pt>
+File: figures/gradient_updates_1.png Graphic file (type png)
+<use figures/gradient_updates_1.png>
+Package pdftex.def Info: figures/gradient_updates_1.png  used on input line 257
+.
+(pdftex.def)             Requested size: 217.42265pt x 172.34653pt.
+<figures/gradient_updates_8.png, id=48, 414.8298pt x 328.8285pt>
+File: figures/gradient_updates_8.png Graphic file (type png)
+<use figures/gradient_updates_8.png>
+Package pdftex.def Info: figures/gradient_updates_8.png  used on input line 262
+.
+(pdftex.def)             Requested size: 217.42265pt x 172.34653pt.
+<figures/Nonzero_reward_positions.png, id=49, 1204.5pt x 1606.0pt>
+File: figures/Nonzero_reward_positions.png Graphic file (type png)
+<use figures/Nonzero_reward_positions.png>
+Package pdftex.def Info: figures/Nonzero_reward_positions.png  used on input li
+ne 272.
+(pdftex.def)             Requested size: 452.9679pt x 603.96393pt.
 
-[8
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+
+[8 <./figures/gradient_updates_1.png> <./figures/gradient_updates_8.png>]
+
+[9 <./figures/Nonzero_reward_positions.png (PNG copy)>] (Notes.bbl)
+
+[10
 
 ] (Notes.aux)
  ***********
@@ -384,10 +418,10 @@ L3 programming layer <2025-05-26>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 5745 strings out of 468225
- 97218 string characters out of 5432974
+ 5773 strings out of 468225
+ 98313 string characters out of 5432974
  602588 words of memory out of 5000000
- 34216 multiletter control sequences out of 15000+600000
+ 34244 multiletter control sequences out of 15000+600000
  637473 words of font info for 81 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  73i,8n,77p,739b,538s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -402,10 +436,11 @@ s/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/aatus/AppData/Local
 ta/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/aat
 us/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Us
 ers/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.p
-fb>
-Output written on Notes.pdf (8 pages, 316468 bytes).
+fb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm
+/cmsy8.pfb>
+Output written on Notes.pdf (10 pages, 669843 bytes).
 PDF statistics:
- 90 PDF objects out of 1000 (max. 8388607)
+ 108 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 36 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 56 words of extra memory for PDF output out of 10000 (max. 10000000)
 
