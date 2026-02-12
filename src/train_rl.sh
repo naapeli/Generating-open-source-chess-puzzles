@@ -1,11 +1,11 @@
 #!/bin/bash -l
-#SBATCH --time=24:00:00
+#SBATCH --time=01:00:00
 #SBATCH --output=output.out
-#SBATCH --mem=128G
+#SBATCH --mem=32G
 #SBATCH --nodes=1
-#SBATCH --ntasks=4
-#SBATCH --gpus=h100:4
-#SBATCH --cpus-per-task=32
+#SBATCH --ntasks=8
+#SBATCH --gpus=h200:8
+#SBATCH --cpus-per-task=16
 
 
 module load mamba

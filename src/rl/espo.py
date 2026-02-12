@@ -82,9 +82,9 @@ def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards,
     advantages = (rewards - rewards.mean(dim=1, keepdim=True)).to(device)  # Dr GRPO (do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
     loss = torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages).mean(dim=1)
     if beta > 0:
-        kl = beta * kl_estimate(elbo, reference_elbos)
-        loss = loss - kl
-    return -loss  # maximize the loss above
+        kl = kl_estimate(elbo, reference_elbos)
+        loss = loss - beta * kl
+    return -loss, kl  # maximize the loss above
 
 def generate_grouped_positions(model, themes, ratings, group_size, steps=256):
     themes = themes.repeat_interleave(group_size, dim=0)
@@ -117,7 +117,7 @@ def generate_random_themes(batch_size):
         if state_of_game == "endgame":
             position_themes.append(random.choice(endgames))
         
-        if torch.rand(1) < 0.2:  # about 20% of positions should be mates
+        if torch.rand(1) < 0.1:  # about 20% of positions should be mates
             position_themes.append(is_mate)
             position_themes.append(random.choice(mate_lengths))
             position_themes.append(random.choice(types_of_mate))
@@ -130,3 +130,22 @@ def generate_random_themes(batch_size):
     ratings = 3000 * torch.rand((batch_size,)) + 300
 
     return themes, ratings
+
+def theme_reward(base_themes, puzzle_themes):
+    if base_themes[1] not in puzzle_themes:  # the state of the game must match
+        return False
+    if base_themes[1] == "endgame" and base_themes[2] not in puzzle_themes:
+        return False
+    
+    # checkmate
+    is_mate = "mate" in base_themes
+    if is_mate and "mate" not in puzzle_themes:
+        return False
+    if is_mate and base_themes[base_themes.index("mate") + 1] not in puzzle_themes:  # they must be the same type of checkmate
+        return False
+    
+    # just a winning position
+    if not is_mate and base_themes[-1] not in puzzle_themes:  # the other component in a not mating position must match
+        return False
+
+    return True
