@@ -5,16 +5,23 @@ import argparse
 import os
 from joblib import Parallel, delayed
 import random
+import io
 
 import torch
 from torch.optim import AdamW, Muon
+from torch.optim.lr_scheduler import LinearLR
 from torch.utils.tensorboard import SummaryWriter
 from torch.nn.parallel import DistributedDataParallel
-from torch.distributed import init_process_group, destroy_process_group, all_reduce, all_gather_into_tensor, ReduceOp, gather, scatter
+from torch.distributed import init_process_group, destroy_process_group, all_reduce, ReduceOp, gather, scatter
+import chess
+from chess import svg
 from chess.engine import SimpleEngine
+import cairosvg
+from PIL import Image, ImageDraw
+import numpy as np
 
 from MaskedDiffusion.model import MaskedDiffusion
-from rl.espo import espo_loss, generate_grouped_positions, generate_random_themes, compute_elbo
+from rl.espo import espo_loss, generate_grouped_positions, generate_random_themes, compute_elbo, theme_reward
 from tokenization.tokenization import theme_preprocessor, scale_ratings, tokens_to_fen
 from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
 from metrics.cook import cook
@@ -86,18 +93,26 @@ buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
 total_steps = 80_000  # 20_000 generation steps, but 80_000 gradient updates
-batch_size = 32  # batch_size * group_size == 64 works for 32g of vram
+batch_size = 16  # batch_size * group_size == 64 works for 32g of vram
 local_batch_size = batch_size // world_size
 group_size = 8  # 8 - 64 probably good?
-eps = 0.2  # from https://arxiv.org/pdf/1707.06347 page 6
+eps = 0.5  # from https://arxiv.org/pdf/1707.06347 page 6
 beta = 0.03  # from https://arxiv.org/pdf/2510.23881 page 34
+config.lr = 3e-5
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
 params_muon = [p for p in model.parameters() if p.ndim == 2]
 adam = AdamW(params_adam, lr=config.lr, weight_decay=config.weight_decay)
 muon = Muon(params_muon, lr=config.lr, weight_decay=config.weight_decay)
 
+adam_scheduler = LinearLR(adam, start_factor=0.01, end_factor=1, total_iters=100)
+muon_scheduler = LinearLR(muon, start_factor=0.01, end_factor=1, total_iters=100)
+
+cpu_count = int(os.environ.get("SLURM_CPUS_PER_TASK")) * int(os.environ.get("SLURM_NTASKS"))
+
 engine = SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish")
+
+# ====================== REWARDS ======================
 
 def get_puzzle(fen):
     if fen is None: return None
@@ -106,7 +121,23 @@ def get_puzzle(fen):
         puzzle = get_unique_puzzle_from_fen(fen, stockfish)
     return puzzle
 
-cpu_count = int(os.environ.get("SLURM_CPUS_PER_TASK")) * int(os.environ.get("SLURM_NTASKS"))
+def save_fen(fen, themes, rating):
+    try:
+        board = chess.Board(fen)
+        svg_data = svg.board(board, size=300)
+        png_data = cairosvg.svg2png(bytestring=svg_data.encode("utf-8"))
+        board_img = Image.open(io.BytesIO(png_data)).convert("RGB")
+        text_height = 80
+        info_pane = Image.new("RGB", (board_img.width, text_height), (255, 255, 255))
+        draw = ImageDraw.Draw(info_pane)
+        text_content = f"{rating}\n{themes}\n{fen}"
+        draw.text((10, 10), text_content, fill=(0, 0, 0))
+        combined_img = np.vstack((np.array(board_img), np.array(info_pane)))
+        
+        writer.add_image("Generations", combined_img, step, dataformats="HWC")
+        writer.add_text("Generations/fen", text_content, step)
+    except Exception:
+        pass
 
 def get_rewards(fen_tokens, themes, ratings):
     # TODO: add rating dependence
@@ -114,10 +145,10 @@ def get_rewards(fen_tokens, themes, ratings):
     unique_solution = torch.zeros(len(fen_tokens), dtype=bool)
     counter_intuitive_solution = torch.zeros(len(fen_tokens), dtype=bool)
     piece_counts = torch.zeros(len(fen_tokens), dtype=bool)
-    inter_batch_fen_dist = torch.zeros(len(fen_tokens), dtype=bool)
-    intra_batch_fen_dist = torch.zeros(len(fen_tokens), dtype=bool)
-    inter_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
-    intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
+    # inter_batch_fen_dist = torch.zeros(len(fen_tokens), dtype=bool)
+    # intra_batch_fen_dist = torch.zeros(len(fen_tokens), dtype=bool)
+    # inter_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
+    # intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     themes_match = torch.zeros(len(fen_tokens), dtype=bool)
 
     fens = []
@@ -128,7 +159,7 @@ def get_rewards(fen_tokens, themes, ratings):
         except:
             fens.append(None)
 
-    puzzles = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle)(fen) for fen in fens))  # do the puzzle computation in parallel as it is the most time consuming step
+    puzzles = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle)(fen) for fen in fens))
 
     group_size = len(fen_tokens) // len(ratings)
     for i, fen in enumerate(fens):
@@ -146,18 +177,25 @@ def get_rewards(fen_tokens, themes, ratings):
         counter_intuitive_solution[i] = counter_intuitive(fen, engine)
         piece_counts[i] = good_piece_counts(puzzle)
 
-        sampled_fens, sampled_pvs = buffer.sample(32)
-        pv = " ".join([move.uci() for move in puzzle.mainline])
-        intra_batch_fen_dist[i], intra_batch_pv_dist[i] = good_intra_batch_distances(fen, pv, puzzles)
-        inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
+        # sampled_fens, sampled_pvs = buffer.sample(32)
+        # pv = " ".join([move.uci() for move in puzzle.mainline])
+        # intra_batch_fen_dist[i], intra_batch_pv_dist[i] = good_intra_batch_distances(fen, pv, puzzles)
+        # inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
 
         generation_themes = cook(puzzle, engine)
-        themes_match[i] = len(set(generation_themes).intersection(theme)) > len(theme) / 2
+        themes_match[i] = theme_reward(theme, generation_themes)
 
-    distance_rewards = inter_batch_fen_dist + inter_batch_pv_dist + intra_batch_fen_dist + intra_batch_pv_dist
-    rewards = 2 * counter_intuitive_solution + 0.5 * piece_counts + 0.5 * themes_match + 0.5 * distance_rewards
+        # if the position returns a high reward, add it to the buffer
+        # if counter_intuitive_solution[i] and piece_counts[i] and intra_batch_fen_dist[i] and intra_batch_pv_dist[i] and inter_batch_fen_dist[i] and inter_batch_pv_dist[i]:
+        #     buffer.add(fen, pv)
+
+    # distance_rewards = inter_batch_fen_dist + inter_batch_pv_dist + intra_batch_fen_dist + intra_batch_pv_dist
+    rewards = 1 + 2 * counter_intuitive_solution + 0.1 * piece_counts + 0.5 * themes_match# + 0.5 * distance_rewards
     rewards = torch.where(unique_solution, rewards, 0)
     rewards = torch.where(legal_position, rewards, -2)
+
+    index = torch.argmax(rewards)
+    save_fen(fens[index], themes[index // group_size], ratings[index // group_size])  # log the position with the highest reward
 
     log_data = {
         "legal_rate": legal_position.float().mean().item(),
@@ -165,10 +203,10 @@ def get_rewards(fen_tokens, themes, ratings):
         "counter_intuitive_rate": counter_intuitive_solution.float().mean().item(),
         "piece_counts": piece_counts.float().mean().item(),
         "themes_match_rate": themes_match.float().mean().item(),
-        "dist_inter_fen": inter_batch_fen_dist.float().mean().item(),
-        "dist_intra_fen": intra_batch_fen_dist.float().mean().item(),
-        "dist_inter_pv": inter_batch_pv_dist.float().mean().item(),
-        "dist_intra_pv": intra_batch_pv_dist.float().mean().item(),
+        # "dist_inter_fen": inter_batch_fen_dist.float().mean().item(),
+        # "dist_intra_fen": intra_batch_fen_dist.float().mean().item(),
+        # "dist_inter_pv": inter_batch_pv_dist.float().mean().item(),
+        # "dist_intra_pv": intra_batch_pv_dist.float().mean().item(),
     }
     for key, value in log_data.items():
         writer.add_scalar(f"Components/{key}", value, step)
@@ -186,6 +224,8 @@ def save_state():
         "step": step
     }
     torch.save(checkpoint, checkpoint_path)
+
+# ====================== TRAINING LOOP ======================
 
 step = 0
 end = False
@@ -226,14 +266,17 @@ while not end:
     # update the model many times for one generation (as generations and reward calculations are expensive)
     total_loss = 0
     total_norm = 0
+    total_kl = 0
     for substep in range(n_gradient_updates_per_generation):
         step += 1
 
         adam.zero_grad()
         muon.zero_grad()
 
-        loss = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask, eps=eps, beta=beta).mean()
+        loss, kl = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask, eps=eps, beta=beta)
+        loss, kl = loss.mean(), kl.mean()
         total_loss += loss
+        total_kl += kl
 
         loss.backward()
 
@@ -242,6 +285,8 @@ while not end:
 
         adam.step()
         muon.step()
+        adam_scheduler.step()
+        muon_scheduler.step()
 
     if step >= total_steps:
         end = True
@@ -249,11 +294,14 @@ while not end:
     if distributed:
         all_reduce(total_loss, op=ReduceOp.AVG)
         all_reduce(total_norm, op=ReduceOp.AVG)
+        all_reduce(total_kl, op=ReduceOp.AVG)
     if master_process:
         writer.add_scalar("Loss", total_loss.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("Grad norm", total_norm.item() / n_gradient_updates_per_generation, step)
+        writer.add_scalar("KL divergence", total_kl.item() / n_gradient_updates_per_generation, step)
+        writer.add_scalar("learning_rate", adam.param_groups[0]['lr'], step)
 
-    if step // n_gradient_updates_per_generation % 2000 == 0:
+    if step // n_gradient_updates_per_generation % 100 == 0:
         save_state()
 
 if master_process:

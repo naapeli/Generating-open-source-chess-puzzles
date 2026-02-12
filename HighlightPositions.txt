@@ -5,3 +5,7 @@ After supervised training:
 8/1k1r2pp/pN6/5Q2/PP6/2P4P/6P1/R2rb2K b - - 0 28
 5rk1/p6n/4bppQ/q3P2p/3BP3/5R1P/6PK/8 w - - 0 38
 r1b2r2/p1p1Nppk/8/8/3qP3/R3R3/P4PPP/R5K1 w - - 2 20  # anastasiaMate correctly generated
+
+After RL:
+8/1Pb5/8/2K2pp1/PP2pk2/7P/5P2/8 w - - 0 63  (advantage, endgame, verylong, quietmove, bishopendgame)  2859.890
+6k1/pp1n3p/2B1p3/2Pp4/1P1Pb1pP/2B1PrN1/P4rRK/R7 b - - 0 22 (middlegame, advantage, verylong, attraction)  463.76
