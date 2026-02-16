@@ -93,12 +93,12 @@ buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
 total_steps = 80_000  # 20_000 generation steps, but 80_000 gradient updates
-batch_size = 16  # batch_size * group_size == 64 works for 32g of vram
+batch_size = 32
 local_batch_size = batch_size // world_size
-group_size = 8  # 8 - 64 probably good?
-eps = 0.5  # from https://arxiv.org/pdf/1707.06347 page 6
-beta = 0.03  # from https://arxiv.org/pdf/2510.23881 page 34
-config.lr = 3e-5
+group_size = 16  # 8 - 64 probably good?
+eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
+beta = 0  # 0.03  # from https://arxiv.org/pdf/2510.23881 page 34
+config.lr = 3e-5  # 3e-4 3e-5
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
 params_muon = [p for p in model.parameters() if p.ndim == 2]
@@ -121,7 +121,7 @@ def get_puzzle(fen):
         puzzle = get_unique_puzzle_from_fen(fen, stockfish)
     return puzzle
 
-def save_fen(fen, themes, rating):
+def save_board(fen, themes, rating):
     try:
         board = chess.Board(fen)
         svg_data = svg.board(board, size=300)
@@ -145,10 +145,10 @@ def get_rewards(fen_tokens, themes, ratings):
     unique_solution = torch.zeros(len(fen_tokens), dtype=bool)
     counter_intuitive_solution = torch.zeros(len(fen_tokens), dtype=bool)
     piece_counts = torch.zeros(len(fen_tokens), dtype=bool)
-    # inter_batch_fen_dist = torch.zeros(len(fen_tokens), dtype=bool)
-    # intra_batch_fen_dist = torch.zeros(len(fen_tokens), dtype=bool)
-    # inter_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
-    # intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
+    inter_batch_fen_dist = torch.zeros(len(fen_tokens), dtype=bool)
+    intra_batch_fen_dist = torch.zeros(len(fen_tokens), dtype=bool)
+    inter_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
+    intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     themes_match = torch.zeros(len(fen_tokens), dtype=bool)
 
     fens = []
@@ -164,9 +164,7 @@ def get_rewards(fen_tokens, themes, ratings):
     group_size = len(fen_tokens) // len(ratings)
     for i, fen in enumerate(fens):
         theme, rating = themes[i // group_size], ratings[i // group_size]
-        if fen is None:
-            continue
-        if not legal(fen):
+        if fen is None or not legal(fen):
             continue
         legal_position[i] = 1
         
@@ -177,10 +175,10 @@ def get_rewards(fen_tokens, themes, ratings):
         counter_intuitive_solution[i] = counter_intuitive(fen, engine)
         piece_counts[i] = good_piece_counts(puzzle)
 
-        # sampled_fens, sampled_pvs = buffer.sample(32)
-        # pv = " ".join([move.uci() for move in puzzle.mainline])
-        # intra_batch_fen_dist[i], intra_batch_pv_dist[i] = good_intra_batch_distances(fen, pv, puzzles)
-        # inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
+        sampled_fens, sampled_pvs = buffer.sample(32)
+        pv = " ".join([move.uci() for move in puzzle.mainline])
+        intra_batch_fen_dist[i], intra_batch_pv_dist[i] = good_intra_batch_distances(fen, pv, puzzles)
+        inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
 
         generation_themes = cook(puzzle, engine)
         themes_match[i] = theme_reward(theme, generation_themes)
@@ -195,7 +193,7 @@ def get_rewards(fen_tokens, themes, ratings):
     rewards = torch.where(legal_position, rewards, -2)
 
     index = torch.argmax(rewards)
-    save_fen(fens[index], themes[index // group_size], ratings[index // group_size])  # log the position with the highest reward
+    save_board(fens[index], themes[index // group_size], ratings[index // group_size])  # log the position with the highest reward
 
     log_data = {
         "legal_rate": legal_position.float().mean().item(),
@@ -203,14 +201,14 @@ def get_rewards(fen_tokens, themes, ratings):
         "counter_intuitive_rate": counter_intuitive_solution.float().mean().item(),
         "piece_counts": piece_counts.float().mean().item(),
         "themes_match_rate": themes_match.float().mean().item(),
-        # "dist_inter_fen": inter_batch_fen_dist.float().mean().item(),
-        # "dist_intra_fen": intra_batch_fen_dist.float().mean().item(),
-        # "dist_inter_pv": inter_batch_pv_dist.float().mean().item(),
-        # "dist_intra_pv": intra_batch_pv_dist.float().mean().item(),
+        "dist_inter_fen": inter_batch_fen_dist.float().mean().item(),
+        "dist_intra_fen": intra_batch_fen_dist.float().mean().item(),
+        "dist_inter_pv": inter_batch_pv_dist.float().mean().item(),
+        "dist_intra_pv": intra_batch_pv_dist.float().mean().item(),
     }
     for key, value in log_data.items():
         writer.add_scalar(f"Components/{key}", value, step)
-    writer.add_scalar("Reward", rewards.mean().item(), step)
+    writer.add_scalar("Reward", rewards.float().mean().item(), step)
 
     return rewards
 
