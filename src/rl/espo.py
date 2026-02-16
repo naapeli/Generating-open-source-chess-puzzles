@@ -81,9 +81,8 @@ def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards,
     # (batch_size,)
     advantages = (rewards - rewards.mean(dim=1, keepdim=True)).to(device)  # Dr GRPO (do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
     loss = torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages).mean(dim=1)
-    if beta > 0:
-        kl = kl_estimate(elbo, reference_elbos)
-        loss = loss - beta * kl
+    kl = kl_estimate(elbo, reference_elbos)
+    loss = loss - beta * kl
     return -loss, kl  # maximize the loss above
 
 def generate_grouped_positions(model, themes, ratings, group_size, steps=256):
