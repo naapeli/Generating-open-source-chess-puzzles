@@ -11,6 +11,8 @@
 \usepackage{lipsum}
 \usepackage[svgnames]{xcolor}
 
+\usepackage{svg}
+
 \usepackage{subcaption}
 
 
@@ -271,6 +273,14 @@ Because we generate $G$ positions with the same conditioning, the model often ge
 \begin{figure}[h]
     \includegraphics[width=\textwidth]{figures/Nonzero_reward_positions.png}
     \caption{The rewards mostly make sense (0.5 might be too high reward for positions that have normal amount of pieces)}
+\end{figure}
+
+\section{18.2}
+
+Found a good value for RL $\beta = 10^{-3}$. Implemented a rating model that predicts the difficulty of a puzzle based on themes and a fen. The following is an image of a checkpoint (training still continues and the model is getting better) of the errors of the model. The average error in the elo rating is around 284 and the median error is 231.
+
+\begin{figure}
+    \includesvg[width=\textwidth]{figures/rating_model_errors.svg}
 \end{figure}
 
 \clearpage
