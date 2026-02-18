@@ -93,11 +93,11 @@ buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
 total_steps = 80_000  # 20_000 generation steps, but 80_000 gradient updates
-batch_size = 32
+batch_size = 16
 local_batch_size = batch_size // world_size
-group_size = 16  # 8 - 64 probably good?
+group_size = 8
 eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
-beta = 0  # 0.03  # from https://arxiv.org/pdf/2510.23881 page 34
+beta = 1e-3  # 0.03  # from https://arxiv.org/pdf/2510.23881 page 34
 config.lr = 3e-5  # 3e-4 3e-5
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
@@ -121,7 +121,7 @@ def get_puzzle(fen):
         puzzle = get_unique_puzzle_from_fen(fen, stockfish)
     return puzzle
 
-def save_board(fen, themes, rating):
+def save_board(fen, themes, rating, tag):
     try:
         board = chess.Board(fen)
         svg_data = svg.board(board, size=300)
@@ -134,8 +134,8 @@ def save_board(fen, themes, rating):
         draw.text((10, 10), text_content, fill=(0, 0, 0))
         combined_img = np.vstack((np.array(board_img), np.array(info_pane)))
         
-        writer.add_image("Generations", combined_img, step, dataformats="HWC")
-        writer.add_text("Generations/fen", text_content, step)
+        writer.add_image(tag, combined_img, step, dataformats="HWC")
+        writer.add_text(f"{tag}/fen", text_content, step)
     except Exception:
         pass
 
@@ -177,7 +177,7 @@ def get_rewards(fen_tokens, themes, ratings):
 
         sampled_fens, sampled_pvs = buffer.sample(32)
         pv = " ".join([move.uci() for move in puzzle.mainline])
-        intra_batch_fen_dist[i], intra_batch_pv_dist[i] = good_intra_batch_distances(fen, pv, puzzles)
+        intra_batch_fen_dist[i], intra_batch_pv_dist[i] = good_intra_batch_distances(fen, pv, puzzles, i)
         inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
 
         generation_themes = cook(puzzle, engine)
@@ -193,7 +193,9 @@ def get_rewards(fen_tokens, themes, ratings):
     rewards = torch.where(legal_position, rewards, -2)
 
     index = torch.argmax(rewards)
-    save_board(fens[index], themes[index // group_size], ratings[index // group_size])  # log the position with the highest reward
+    save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Generations")  # log the position with the highest reward
+    index = torch.median(rewards, dim=0).indices
+    save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Median")  # log the position with the median reward
 
     log_data = {
         "legal_rate": legal_position.float().mean().item(),
