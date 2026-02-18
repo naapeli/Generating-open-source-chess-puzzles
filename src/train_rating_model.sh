@@ -1,10 +1,8 @@
 #!/bin/bash -l
-#SBATCH --time=05:00:00
+#SBATCH --time=12:00:00
 #SBATCH --output=output.out
 #SBATCH --mem=128G
 #SBATCH --nodes=1
-# #SBATCH --ntasks=8
-# #SBATCH --gpus=h200:8
 #SBATCH --ntasks=4
 #SBATCH --gpus=4
 #SBATCH --gres=min-vram:32g
@@ -13,4 +11,4 @@
 
 module load mamba
 source activate environment
-srun python src/train_rl.py --distributed
+srun python src/train_rating_model.py --distributed --continue_from_checkpoint

@@ -156,6 +156,9 @@ MAX_RATING = 3395
 def scale_ratings(ratings):
     return (ratings - MIN_RATING) / (MAX_RATING - MIN_RATING)
 
+def unscale_ratings(scaled_ratings):
+    return scaled_ratings * (MAX_RATING - MIN_RATING) + MIN_RATING
+
 
 # =========================================== TOKENIZE ===========================================
 
