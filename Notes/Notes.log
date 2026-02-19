@@ -1,12 +1,12 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.11.20)  18 FEB 2026 13:16
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.9)  19 FEB 2026 13:46
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**./Notes.tex
-(Notes.tex
-LaTeX2e <2025-11-01>
-L3 programming layer <2025-10-24>
+**c:/Users/aatus/ohjelmointi/Dippatyo/Notes/Notes.tex
+(c:/Users/aatus/ohjelmointi/Dippatyo/Notes/Notes.tex
+LaTeX2e <2025-06-01>
+L3 programming layer <2025-05-26>
 (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
 Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
 (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/base\size12.clo
@@ -23,14 +23,18 @@ File: size12.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
 \abovecaptionskip=\skip49
 \belowcaptionskip=\skip50
 \bibindent=\dimen148
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
 Package: geometry 2020/01/02 v5.9 Page Geometry
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
 \KV@toks@=\toks17
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
 Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
 Package: iftex 2024/12/12 v1.0g TeX engine tests
 ))
 \Gm@cnth=\count283
@@ -45,21 +49,26 @@ Package: iftex 2024/12/12 v1.0g TeX engine tests
 \Gm@layouthoffset=\dimen155
 \Gm@layoutvoffset=\dimen156
 \Gm@dimlist=\toks18
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg)) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
-Package: amsmath 2025/07/09 v2.17z AMS math features
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg))
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
+Package: amsmath 2025/05/18 v2.17x AMS math features
 \@mathmargin=\skip51
 
 For additional information on amsmath, use the `?' option.
 (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
 Package: amstext 2024/11/17 v2.01 AMS text
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
 \@emptytoks=\toks19
 \ex@=\dimen157
-)) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty
+))
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d Bold Symbols
 \pmbraise@=\dimen158
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty
 Package: amsopn 2022/04/08 v2.04 operator names
 )
 \inf@bad=\count286
@@ -107,51 +116,67 @@ LaTeX Info: Redefining \Relbar on input line 970.
 \multlinegap=\skip52
 \multlinetaggap=\skip53
 \mathdisplay@stack=\toks23
-LaTeX Info: Redefining \[ on input line 2950.
-LaTeX Info: Redefining \] on input line 2951.
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amssymb.sty
+LaTeX Info: Redefining \[ on input line 2949.
+LaTeX Info: Redefining \] on input line 2950.
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amssymb.sty
 Package: amssymb 2013/01/14 v3.01 AMS font symbols
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amsfonts.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amsfonts.sty
 Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
 \symAMSa=\mathgroup4
 \symAMSb=\mathgroup5
 LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
-)) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+)) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.st
+y
 Package: graphicx 2024/12/31 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
 Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty
 Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.cfg
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.c
+fg
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
 Package graphics Info: Driver file: pdftex.def on input line 106.
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def
-File: pdftex.def 2025/09/29 v1.2d Graphics/color driver for pdftex
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def
+File: pdftex.def 2024/04/13 v1.2c Graphics/color driver for pdftex
 ))
 \Gin@req@height=\dimen166
 \Gin@req@width=\dimen167
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.sty (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/l3keys2e\l3keys2e.sty (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\expl3.sty
-Package: expl3 2025-10-24 L3 programming layer (loader) 
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdftex.def
-File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
+) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.sty
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/l3keys2e\l3k
+eys2e.sty
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\expl3.sty
+Package: expl3 2025-05-26 L3 programming layer (loader) 
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdf
+tex.def
+File: l3backend-pdftex.def 2025-04-14 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count298
 ))
-Package: l3keys2e 2025-10-09 LaTeX2e option processing using LaTeX3 keys
+Package: l3keys2e 2024-08-16 LaTeX2e option processing using LaTeX3 keys
 )
 Package: lipsum 2021-09-20 v2.7 150 paragraphs of Lorem Ipsum dummy text
 \g__lipsum_par_int=\count299
 \l__lipsum_a_int=\count300
 \l__lipsum_b_int=\count301
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.ltd.tex)) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/lipsum\lipsum.ltd.tex))
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
 Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
 Package xcolor Info: Driver file: pdftex.def on input line 274.
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)
 Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
 Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1353.
 Package xcolor Info: Model `RGB' extended on input line 1365.
@@ -163,39 +188,62 @@ Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
 ) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\svgnam.def
 File: svgnam.def 2024/09/29 v3.02 Predefined colors according to SVG 1.1 (UK)
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/svg\svg.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/svg\svg.sty
 Package: svg 2020/11/26 v2.02k (include SVG pictures)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/koma-script\scrbase.sty
-Package: scrbase 2026/02/02 v3.49.2 KOMA-Script package (KOMA-Script-independent basics and keyval usage)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/koma-script\scrlfile.sty
-Package: scrlfile 2026/02/02 v3.49.2 KOMA-Script package (file load hooks)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/koma-script\scrlfile-hook.sty
-Package: scrlfile-hook 2026/02/02 v3.49.2 KOMA-Script package (using LaTeX hooks)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/koma-script\scrlogo.sty
-Package: scrlogo 2026/02/02 v3.49.2 KOMA-Script package (logo)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/koma-script\scrbase.sty
+Package: scrbase 2025/06/04 v3.45 KOMA-Script package (KOMA-Script-independent 
+basics and keyval usage)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/koma-script\scrlfile.st
+y
+Package: scrlfile 2025/06/04 v3.45 KOMA-Script package (file load hooks)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/koma-script\scrlfile-ho
+ok.sty
+Package: scrlfile-hook 2025/06/04 v3.45 KOMA-Script package (using LaTeX hooks)
+
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/koma-script\scrlogo.sty
+Package: scrlogo 2025/06/04 v3.45 KOMA-Script package (logo)
 )))
 Applying: [2021/05/01] Usage of raw or classic option list on input line 254.
-Already applied: [0000/00/00] Usage of raw or classic option list on input line 370.
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds.sty
-Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.sty
+Already applied: [0000/00/00] Usage of raw or classic option list on input line
+ 370.
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds
+.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.s
+ty
 Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
 Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
 )
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
 Package pdftexcmds Info: \pdfdraftmode found.
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/trimspaces\trimspaces.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/trimspaces\trimspaces.s
+ty
 Package: trimspaces 2009/09/17 v1.1 Trim spaces around a token list
 ) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/tools\shellesc.sty
 Package: shellesc 2023/07/08 v1.0d unified shell escape interface for LaTeX
 Package shellesc Info: Unrestricted shell escape enabled on input line 75.
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/ifplatform\ifplatform.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/ifplatform\ifplatform.s
+ty
 Package: ifplatform 2017/10/13 v0.4a Testing for the operating system
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/catchfile\catchfile.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/catchfile\catchfile.s
+ty
 Package: catchfile 2019/12/09 v1.8 Catch the contents of a file (HO)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/etexcmds\etexcmds.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/etexcmds\etexcmds.sty
 Package: etexcmds 2019/12/15 v1.7 Avoid name clashes with e-TeX commands (HO)
 )) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifluatex.sty
 Package: ifluatex 2019/10/25 v1.5 ifluatex legacy package. Use iftex instead.
@@ -203,26 +251,49 @@ Package: ifluatex 2019/10/25 v1.5 ifluatex legacy package. Use iftex instead.
 \c@svg@param@lastpage=\count302
 \svg@box=\box55
 \c@svg@param@currpage=\count303
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/transparent\transparent.sty
-Package: transparent 2025-06-23 v1.6 Transparency with color stacks
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/transparent\transparent-nometadata.sty
-Package: transparent-nometadata 2025-06-23 v1.6 Transparency via pdfTeX's color stack (HO)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/auxhook\auxhook.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/transparent\transparent
+.sty
+Package: transparent 2022-10-27 v1.5 Transparency with color stacks
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/transparent\transparent
+-nometadata.sty
+Package: transparent-nometadata 2022-10-27 v1.5 Transparency via pdfTeX's color
+ stack (HO)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/auxhook\auxhook.sty
 Package: auxhook 2019-12-17 v1.6 Hooks for auxiliary files (HO)
-))) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsys.sty (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.sty (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil-common.tex
+)))
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsys.
+sty
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.st
+y
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
+-common.tex
 \pgfutil@everybye=\toks24
 \pgfutil@tempdima=\dimen168
 \pgfutil@tempdimb=\dimen169
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil-latex.def
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
+-latex.def
 \pgfutil@abb=\box56
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrcs.code.tex (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.tex)
-Package: pgfrcs 2025-08-29 v3.1.11a (3.1.11a)
-)) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys.code.tex
-Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys.code.tex
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrcs.
+code.tex
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.tex)
+Package: pgfrcs 2023-01-15 v3.1.10 (3.1.10)
+))
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s.code.tex
+Package: pgfsys 2023-01-15 v3.1.10 (3.1.10)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+.code.tex
 \pgfkeys@pathtoks=\toks25
 \pgfkeys@temptoks=\toks26
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeyslibraryfiltered.code.tex
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+libraryfiltered.code.tex
 \pgfkeys@tmptoks=\toks27
 ))
 \pgf@x=\dimen170
@@ -245,25 +316,38 @@ Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
 \t@pgf@tokb=\toks29
 \t@pgf@tokc=\toks30
 \pgf@sys@id@count=\count308
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf.cfg
-File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf.c
+fg
+File: pgf.cfg 2023-01-15 v3.1.10 (3.1.10)
 )
 Driver file for pgf: pgfsys-pdftex.def
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys-pdftex.def
-File: pgfsys-pdftex.def 2025-08-29 v3.1.11a (3.1.11a)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys-common-pdf.def
-File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
-))) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsyssoftpath.code.tex
-File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-pdftex.def
+File: pgfsys-pdftex.def 2023-01-15 v3.1.10 (3.1.10)
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-common-pdf.def
+File: pgfsys-common-pdf.def 2023-01-15 v3.1.10 (3.1.10)
+)))
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+ssoftpath.code.tex
+File: pgfsyssoftpath.code.tex 2023-01-15 v3.1.10 (3.1.10)
 \pgfsyssoftpath@smallbuffer@items=\count309
 \pgfsyssoftpath@bigbuffer@items=\count310
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsysprotocol.code.tex
-File: pgfsysprotocol.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-)) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/caption\subcaption.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+sprotocol.code.tex
+File: pgfsysprotocol.code.tex 2023-01-15 v3.1.10 (3.1.10)
+))
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/caption\subcaption.sty
 Package: subcaption 2023/07/28 v1.6b Sub-captions (AR)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption.sty
 Package: caption 2023/08/05 v3.6o Customizing captions (AR)
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption3.sty
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption3.sty
 Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
 \caption@tempdima=\dimen180
 \captionmargin=\dimen181
@@ -334,7 +418,9 @@ LaTeX Font Info:    ... okay on input line 23.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
+ii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count315
 \scratchdimen=\dimen188
@@ -347,44 +433,64 @@ LaTeX Font Info:    ... okay on input line 23.
 \MPnumerator=\count319
 \makeMPintoPDFobject=\count320
 \everyMPtoPDFconversion=\toks32
-) (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-base.sty
+)
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-b
+ase.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
-Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.cfg
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+85.
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.c
+fg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
-)) ()
+))
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: End \AtBeginDocument code.
 LaTeX Font Info:    Trying to load font information for U+msa on input line 25.
+
  (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
 LaTeX Font Info:    Trying to load font information for U+msb on input line 25.
- (C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
+
+
+(C:\Users\aatus\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-) (Notes.toc)
+)
+(Notes.toc)
 \tf@toc=\write4
 \openout4 = `Notes.toc'.
 
- [1
 
-{C:/Users/aatus/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}] [2] [3] [4
+
+[1
+
+{C:/Users/aatus/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
+
+[2]
+
+[3]
+
+[4
 
 ]
 <figures/RL_overfit_high_variance.png, id=26, 642.4pt x 481.8pt>
 File: figures/RL_overfit_high_variance.png Graphic file (type png)
 <use figures/RL_overfit_high_variance.png>
-Package pdftex.def Info: figures/RL_overfit_high_variance.png  used on input line 171.
+Package pdftex.def Info: figures/RL_overfit_high_variance.png  used on input li
+ne 171.
 (pdftex.def)             Requested size: 217.42265pt x 163.0673pt.
 <figures/RL_overfit_low_variance.png, id=27, 1003.75pt x 501.875pt>
 File: figures/RL_overfit_low_variance.png Graphic file (type png)
 <use figures/RL_overfit_low_variance.png>
-Package pdftex.def Info: figures/RL_overfit_low_variance.png  used on input line 177.
+Package pdftex.def Info: figures/RL_overfit_low_variance.png  used on input lin
+e 177.
 (pdftex.def)             Requested size: 217.42265pt x 108.70511pt.
 <figures/average_elbo_loss_over_time.png, id=28, 462.528pt x 346.896pt>
 File: figures/average_elbo_loss_over_time.png Graphic file (type png)
 <use figures/average_elbo_loss_over_time.png>
-Package pdftex.def Info: figures/average_elbo_loss_over_time.png  used on input line 197.
+Package pdftex.def Info: figures/average_elbo_loss_over_time.png  used on input
+ line 197.
 (pdftex.def)             Requested size: 271.7835pt x 203.8464pt.
 <figures/average_losses.png, id=30, 462.528pt x 346.896pt>
 File: figures/average_losses.png Graphic file (type png)
@@ -394,81 +500,151 @@ Package pdftex.def Info: figures/average_losses.png  used on input line 205.
 <figures/average_losses_hist.png, id=31, 462.528pt x 346.896pt>
 File: figures/average_losses_hist.png Graphic file (type png)
 <use figures/average_losses_hist.png>
-Package pdftex.def Info: figures/average_losses_hist.png  used on input line 211.
+Package pdftex.def Info: figures/average_losses_hist.png  used on input line 21
+1.
 (pdftex.def)             Requested size: 217.42265pt x 163.0676pt.
- [5 <./figures/RL_overfit_high_variance.png> <./figures/RL_overfit_low_variance.png>]
+
+
+[5 <./figures/RL_overfit_high_variance.png> <./figures/RL_overfit_low_variance.
+png>]
 <figures/Rewards_for_betas.png, id=36, 642.4pt x 481.8pt>
 File: figures/Rewards_for_betas.png Graphic file (type png)
 <use figures/Rewards_for_betas.png>
 Package pdftex.def Info: figures/Rewards_for_betas.png  used on input line 226.
+
 (pdftex.def)             Requested size: 217.42265pt x 163.0673pt.
 <figures/Rewards_for_importance_sampling.png, id=37, 642.4pt x 481.8pt>
 File: figures/Rewards_for_importance_sampling.png Graphic file (type png)
 <use figures/Rewards_for_importance_sampling.png>
-Package pdftex.def Info: figures/Rewards_for_importance_sampling.png  used on input line 232.
+Package pdftex.def Info: figures/Rewards_for_importance_sampling.png  used on i
+nput line 232.
 (pdftex.def)             Requested size: 217.42265pt x 163.0673pt.
- [6 <./figures/average_elbo_loss_over_time.png> <./figures/average_losses.png> <./figures/average_losses_hist.png>]
+
+
+[6 <./figures/average_elbo_loss_over_time.png> <./figures/average_losses.png> <
+./figures/average_losses_hist.png>]
 <figures/counter_intuitiveness.png, id=44, 462.528pt x 346.896pt>
 File: figures/counter_intuitiveness.png Graphic file (type png)
 <use figures/counter_intuitiveness.png>
-Package pdftex.def Info: figures/counter_intuitiveness.png  used on input line 247.
+Package pdftex.def Info: figures/counter_intuitiveness.png  used on input line 
+247.
 (pdftex.def)             Requested size: 240.07242pt x 180.05348pt.
- [7 <./figures/Rewards_for_betas.png> <./figures/Rewards_for_importance_sampling.png> <./figures/counter_intuitiveness.png>]
+
+
+[7 <./figures/Rewards_for_betas.png> <./figures/Rewards_for_importance_sampling
+.png> <./figures/counter_intuitiveness.png>]
 <figures/gradient_updates_1.png, id=50, 414.8298pt x 328.8285pt>
 File: figures/gradient_updates_1.png Graphic file (type png)
 <use figures/gradient_updates_1.png>
-Package pdftex.def Info: figures/gradient_updates_1.png  used on input line 259.
+Package pdftex.def Info: figures/gradient_updates_1.png  used on input line 259
+.
 (pdftex.def)             Requested size: 217.42265pt x 172.34653pt.
 <figures/gradient_updates_8.png, id=51, 414.8298pt x 328.8285pt>
 File: figures/gradient_updates_8.png Graphic file (type png)
 <use figures/gradient_updates_8.png>
-Package pdftex.def Info: figures/gradient_updates_8.png  used on input line 264.
+Package pdftex.def Info: figures/gradient_updates_8.png  used on input line 264
+.
 (pdftex.def)             Requested size: 217.42265pt x 172.34653pt.
 <figures/Nonzero_reward_positions.png, id=52, 1204.5pt x 1606.0pt>
 File: figures/Nonzero_reward_positions.png Graphic file (type png)
 <use figures/Nonzero_reward_positions.png>
-Package pdftex.def Info: figures/Nonzero_reward_positions.png  used on input line 274.
+Package pdftex.def Info: figures/Nonzero_reward_positions.png  used on input li
+ne 274.
 (pdftex.def)             Requested size: 452.9679pt x 603.96393pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-Package svg Info: Calling Inkscape on input line 283.
-runsystem(inkscape "figures/rating_model_errors.svg" -D --export-latex --export-filename="rating_model_errors_svg-tex.pdf")...executed.
+Package svg Info: Last page of `./svg-inkscape/rating_model_errors18000steps_sv
+g-tex.pdf' is 1 on input line 286.
+(svg-inkscape/rating_model_errors18000steps_svg-tex.pdf_tex
+<./svg-inkscape/rating_model_errors18000steps_svg-tex.pdf, id=54, page=1, 462.5
+2798pt x 346.89601pt>
+File: ./svg-inkscape/rating_model_errors18000steps_svg-tex.pdf Graphic file (ty
+pe pdf)
+<use ./svg-inkscape/rating_model_errors18000steps_svg-tex.pdf, page 1>
+Package pdftex.def Info: ./svg-inkscape/rating_model_errors18000steps_svg-tex.p
+df , page1 used on input line 56.
+(pdftex.def)             Requested size: 217.42265pt x 163.06761pt.
+)
+Package svg Info: Last page of `./svg-inkscape/rating_model_errors_svg-tex.pdf'
+ is 1 on input line 291.
 
-runsystem(if not exist "./svg-inkscape/" mkdir "./svg-inkscape/")...executed.
-
-runsystem(move "rating_model_errors_svg-tex.pdf" "./svg-inkscape/rating_model_errors_svg-tex.pdf")...executed.
-
-runsystem(move "rating_model_errors_svg-tex.pdf_tex" "./svg-inkscape/rating_model_errors_svg-tex.pdf_tex")...executed.
-
-Package svg Info: Last page of `./svg-inkscape/rating_model_errors_svg-tex.pdf' is 1 on input line 283.
 (svg-inkscape/rating_model_errors_svg-tex.pdf_tex
-<./svg-inkscape/rating_model_errors_svg-tex.pdf, id=54, page=1, 462.52798pt x 346.89601pt>
+<./svg-inkscape/rating_model_errors_svg-tex.pdf, id=56, page=1, 462.52798pt x 3
+46.89601pt>
 File: ./svg-inkscape/rating_model_errors_svg-tex.pdf Graphic file (type pdf)
 <use ./svg-inkscape/rating_model_errors_svg-tex.pdf, page 1>
-Package pdftex.def Info: ./svg-inkscape/rating_model_errors_svg-tex.pdf , page1 used on input line 56.
+Package pdftex.def Info: ./svg-inkscape/rating_model_errors_svg-tex.pdf , page1
+ used on input line 56.
+(pdftex.def)             Requested size: 217.42265pt x 163.06761pt.
+)
+Package svg Info: Last page of `./svg-inkscape/rating_model_errors20000_svg-tex
+.pdf' is 1 on input line 301.
+
+(svg-inkscape/rating_model_errors20000_svg-tex.pdf_tex
+<./svg-inkscape/rating_model_errors20000_svg-tex.pdf, id=58, page=1, 462.52798p
+t x 346.89601pt>
+File: ./svg-inkscape/rating_model_errors20000_svg-tex.pdf Graphic file (type pd
+f)
+<use ./svg-inkscape/rating_model_errors20000_svg-tex.pdf, page 1>
+Package pdftex.def Info: ./svg-inkscape/rating_model_errors20000_svg-tex.pdf , 
+page1 used on input line 56.
 (pdftex.def)             Requested size: 452.9679pt x 339.74403pt.
-) [8 <./figures/gradient_updates_1.png> <./figures/gradient_updates_8.png>] [9 <./figures/Nonzero_reward_positions.png (PNG copy)>] [10 <./svg-inkscape/rating_model_errors_svg-tex.pdf>] (Notes.bbl) [11
+)
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+
+[8 <./figures/gradient_updates_1.png> <./figures/gradient_updates_8.png>]
+
+[9 <./figures/Nonzero_reward_positions.png (PNG copy)>]
+
+[10 <./svg-inkscape/rating_model_errors18000steps_svg-tex.pdf> <./svg-inkscape/
+rating_model_errors_svg-tex.pdf
+
+pdfTeX warning: pdflatex.exe (file ./svg-inkscape/rating_model_errors_svg-tex.p
+df): PDF inclusion: multiple pdfs with page group included in a single page
+> <./svg-inkscape/rating_model_errors20000_svg-tex.pdf
+
+pdfTeX warning: pdflatex.exe (file ./svg-inkscape/rating_model_errors20000_svg-
+tex.pdf): PDF inclusion: multiple pdfs with page group included in a single pag
+e
+>] (Notes.bbl)
+
+[11
 
 ] (Notes.aux)
  ***********
-LaTeX2e <2025-11-01>
-L3 programming layer <2025-10-24>
+LaTeX2e <2025-06-01>
+L3 programming layer <2025-05-26>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 8234 strings out of 467871
- 156155 string characters out of 5418375
- 680307 words of memory out of 5000000
- 36943 multiletter control sequences out of 15000+600000
- 638369 words of font info for 81 fonts, out of 8000000 for 9000
+ 8254 strings out of 468225
+ 157730 string characters out of 5432974
+ 674153 words of memory out of 5000000
+ 36604 multiletter control sequences out of 15000+600000
+ 637473 words of font info for 81 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 94i,9n,93p,699b,546s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <C:\Users\aatus\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb>
-Output written on Notes.pdf (11 pages, 709573 bytes).
+ 94i,11n,93p,739b,657s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <C:\Users\aatus\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm
+1200.pk><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
+ts/cm/cmbx12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/publ
+ic/amsfonts/cm/cmmi12.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/t
+ype1/public/amsfonts/cm/cmmi6.pfb><C:/Users/aatus/AppData/Local/Programs/MiKTeX
+/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/aatus/AppData/Local/Program
+s/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/aatus/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/aatus/AppDa
+ta/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/aat
+us/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Us
+ers/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.p
+fb><C:/Users/aatus/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm
+/cmsy8.pfb>
+Output written on Notes.pdf (11 pages, 821574 bytes).
 PDF statistics:
- 256 PDF objects out of 1000 (max. 8388607)
+ 709 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 78 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 98 words of extra memory for PDF output out of 10000 (max. 10000000)
 

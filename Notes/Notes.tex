@@ -277,10 +277,29 @@ Because we generate $G$ positions with the same conditioning, the model often ge
 
 \section{18.2}
 
-Found a good value for RL $\beta = 10^{-3}$. Implemented a rating model that predicts the difficulty of a puzzle based on themes and a fen. The following is an image of a checkpoint (training still continues and the model is getting better) of the errors of the model. The average error in the elo rating is around 284 and the median error is 231.
+Found a good value for RL $\beta = 10^{-3}$. Implemented a rating model that predicts the difficulty of a puzzle based on themes and a fen. The following is an image of a checkpoint (training still continues and the model is getting better) of the errors of the model. The average error in the elo rating is around 278 and the median error is 223.
 
-\begin{figure}
-    \includesvg[width=\textwidth]{figures/rating_model_errors.svg}
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includesvg[width=\textwidth]{figures/rating_model_errors18000steps.svg}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includesvg[width=\textwidth]{figures/rating_model_errors.svg}
+    \end{subfigure}
+    \caption{Errors on the test set after 18 000 training steps for the reward model (left) and after 10 500 steps (right).}
+\end{figure}
+
+\section{19.2}
+
+Realized that \cite{feng2025generatingcreativechesspuzzles} only checks the pv distance for the first move and not the whole solution line during RL.
+
+\begin{figure}[h]
+    \includesvg[width=\textwidth]{figures/rating_model_errors20000.svg}
+    \caption{Errors up to 20 000 steps. In the orange histogram, the themes used to help the regression are shuffled to make the model's dependence on the themes clearer.}
 \end{figure}
 
 \clearpage
