@@ -11,6 +11,7 @@
 
 \usepackage[style=verbose, backend=bibtex]{biblatex}
 \usepackage{svg}
+\usepackage[dvipsnames]{xcolor}
 
 \addbibresource{references.bib}
 
@@ -30,12 +31,16 @@
     \textbf{What is our plan:}
     \begin{itemize}
         \item Follow your paper on chess puzzle generation with the masked diffusion model \footcite{feng2025generatingcreativechesspuzzles}
-        \item Condition the generation on the themes and the difficulty of the puzzles
-        \item Apply RL for the masked diffusion model
+        \item Novel contributions
         \begin{itemize}
-            \item Specifically, we plan to use  ELBO-based Sequence-level Policy Optimization (ESPO)\footcite{ou2025principledrldiffusionllms}
+            \item Condition the generation on the themes and the difficulty of the puzzles
+            \item Apply RL for the masked diffusion model
+            \begin{itemize}
+                \item Specifically, we plan to use  ELBO-based Sequence-level Policy Optimization (ESPO)\footcite{ou2025principledrldiffusionllms}
+            \end{itemize}
+            \item Open source implementation: \url{https://github.com/naapeli/Generating-open-source-chess-puzzles}
+            \item Perhaps make a UI for people to use the model
         \end{itemize}
-        \item Perhaps make a UI for people to use the model
     \end{itemize}
 \end{frame}
 
@@ -121,22 +126,32 @@
 \begin{frame}
     \begin{figure}
         \includesvg[width=0.65\textwidth]{figures/smothered_mate_setup.svg}
-        \caption{Themes: middlegame, mate, one move, smothered mate. Rating: 2174}
+        \caption{Themes: \textcolor{Green}{middlegame}, \textcolor{Green}{mate}, \textcolor{red}{one move}, \textcolor{Green}{smothered mate}. Rating: 2174}
     \end{figure}
 \end{frame}
 
 \begin{frame}
     \begin{figure}
         \includesvg[width=0.65\textwidth]{figures/anastasia_mate_setup.svg}
-        \caption{Themes: long, mate, opening, anastasia mate, mate-in-5. Rating: 1135}
+        \caption{Themes: \textcolor{Green}{long}, \textcolor{Green}{mate}, \textcolor{Green}{opening}, \textcolor{Green}{anastasia mate}, \textcolor{red}{mate-in-5}. Rating: 1135}
     \end{figure}
 \end{frame}
 
 \begin{frame}
     \begin{figure}
         \includesvg[width=0.65\textwidth]{figures/endgame_setup.svg}
-        \caption{Themes: crushing, long, endgame, pawnendgame, intermezzo. Rating: 1249}
+        \caption{Themes: \textcolor{red}{crushing}, \textcolor{Green}{long}, \textcolor{Green}{endgame}, \textcolor{Green}{pawnendgame}, \textcolor{red}{intermezzo}. Rating: 1249}
     \end{figure}
+\end{frame}
+
+\begin{frame}
+    \textbf{Questions:}
+    \begin{itemize}
+        \item What terms exactly did the final counter-intuitiveness metric have in your paper and what features actually contributed to the final metric?
+        \item Did you experiment with other reward structures, such as an adding the uniqueness and counter-intuitiveness metrics?
+        \item Did you experiment with only board and pv distances and no entropy constraint?
+        \item Do you have any suggestions how you would incorporate ratings of puzzles to the rewards?
+    \end{itemize}
 \end{frame}
 
 \end{document}
