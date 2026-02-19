@@ -12,7 +12,7 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 
 base_path = Path("./src")
 dataset_path = base_path / "dataset" / "validation" / "validationset.pt"
-rating_model_path = base_path / "rating_model_checkpoints" / "model_0010500.pt"
+rating_model_path = base_path / "rating_model_checkpoints" / "model_0018000.pt"
 
 checkpoint = torch.load(rating_model_path, map_location="cpu", weights_only=False)
 

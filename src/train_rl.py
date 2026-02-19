@@ -21,8 +21,9 @@ from PIL import Image, ImageDraw
 import numpy as np
 
 from MaskedDiffusion.model import MaskedDiffusion
+from RatingModel.model import RatingModel
 from rl.espo import espo_loss, generate_grouped_positions, generate_random_themes, compute_elbo, theme_reward
-from tokenization.tokenization import theme_preprocessor, scale_ratings, tokens_to_fen
+from tokenization.tokenization import theme_preprocessor, scale_ratings, unscale_ratings, tokens_to_fen
 from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
 from metrics.cook import cook
 from metrics.diversity_filtering import ReplayBuffer
@@ -82,6 +83,8 @@ model = MaskedDiffusion(config)
 model.load_state_dict(checkpoint["model"])
 model.to(device=device)
 
+if master_process: rating_model = RatingModel(config)
+
 reference_model = deepcopy(model)
 reference_model.to(device=device)
 
@@ -139,8 +142,7 @@ def save_board(fen, themes, rating, tag):
     except Exception:
         pass
 
-def get_rewards(fen_tokens, themes, ratings):
-    # TODO: add rating dependence
+def get_rewards(fen_tokens, theme_tokens, ratings):
     legal_position = torch.zeros(len(fen_tokens), dtype=bool)
     unique_solution = torch.zeros(len(fen_tokens), dtype=bool)
     counter_intuitive_solution = torch.zeros(len(fen_tokens), dtype=bool)
@@ -150,6 +152,14 @@ def get_rewards(fen_tokens, themes, ratings):
     inter_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     themes_match = torch.zeros(len(fen_tokens), dtype=bool)
+
+    themes = theme_preprocessor.inverse_transform(theme_tokens.cpu().numpy())
+
+    predicted_ratings = unscale_ratings(rating_model(fen_tokens, theme_tokens))  # call the rating_model
+    true_ratings = unscale_ratings(ratings)
+    rating_penalty = -torch.abs(predicted_ratings - true_ratings) / 1000  # penalty of 1 for 1000 elo point difference and scales linearly 
+
+    fen_tokens = fen_tokens.cpu()
 
     fens = []
     for tokens in fen_tokens:
@@ -163,7 +173,7 @@ def get_rewards(fen_tokens, themes, ratings):
 
     group_size = len(fen_tokens) // len(ratings)
     for i, fen in enumerate(fens):
-        theme, rating = themes[i // group_size], ratings[i // group_size]
+        theme = themes[i // group_size]
         if fen is None or not legal(fen):
             continue
         legal_position[i] = 1
@@ -188,7 +198,9 @@ def get_rewards(fen_tokens, themes, ratings):
         #     buffer.add(fen, pv)
 
     # distance_rewards = inter_batch_fen_dist + inter_batch_pv_dist + intra_batch_fen_dist + intra_batch_pv_dist
-    rewards = 1 + 2 * counter_intuitive_solution + 0.1 * piece_counts + 0.5 * themes_match# + 0.5 * distance_rewards
+    intra_distances = intra_batch_fen_dist * intra_batch_pv_dist
+    # rewards = 1 + 2 * counter_intuitive_solution + 0.1 * piece_counts + 0.5 * themes_match + 0.5 * rating_penalty# + 0.5 * distance_rewards
+    rewards = 1 + 2 * counter_intuitive_solution + 0.1 * piece_counts + 0.5 * themes_match + 0.5 * rating_penalty + 0.5 * intra_distances
     rewards = torch.where(unique_solution, rewards, 0)
     rewards = torch.where(legal_position, rewards, -2)
 
@@ -207,6 +219,7 @@ def get_rewards(fen_tokens, themes, ratings):
         "dist_intra_fen": intra_batch_fen_dist.float().mean().item(),
         "dist_inter_pv": inter_batch_pv_dist.float().mean().item(),
         "dist_intra_pv": intra_batch_pv_dist.float().mean().item(),
+        "all_distances_good": (inter_batch_fen_dist * intra_batch_fen_dist * inter_batch_pv_dist, intra_batch_pv_dist).float().mean().item(),
     }
     for key, value in log_data.items():
         writer.add_scalar(f"Components/{key}", value, step)
@@ -250,8 +263,7 @@ while not end:
             global_fens = torch.cat(gather_fens)
             global_themes = torch.cat(gather_themes)
             global_ratings = torch.cat(gather_ratings)
-            global_themes_str = theme_preprocessor.inverse_transform(global_themes.cpu().numpy())
-            global_rewards = get_rewards(global_fens.cpu(), global_themes_str, global_ratings.cpu()).to(device=device, dtype=torch.float32)
+            global_rewards = get_rewards(global_fens, global_themes, global_ratings).to(device=device, dtype=torch.float32)
             reward_chunks = list(global_rewards.chunk(world_size, dim=0))
         rewards = torch.zeros(len(step_fens), device=device, dtype=torch.float32)
         scatter(rewards, scatter_list=reward_chunks if master_process else None, src=0)

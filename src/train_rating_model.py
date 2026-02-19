@@ -28,7 +28,7 @@ def main():
     base_path = Path("./src")
     
     # ====================== LOAD CHECKPOINT ======================
-    if continue_from_checkpoint: checkpoint = torch.load(base_path / "rating_model_checkpoints" / "model_0004500.pt", map_location="cpu", weights_only=False)  # as the config was saved as well, cannot use weights_only=True
+    if continue_from_checkpoint: checkpoint = torch.load(base_path / "rating_model_checkpoints" / "model_0020000.pt", map_location="cpu", weights_only=False)  # as the config was saved as well, cannot use weights_only=True
 
     # ====================== DEVICE ======================
     if distributed:
@@ -54,7 +54,7 @@ def main():
     # ====================== CONFIG ======================
     if continue_from_checkpoint:
         config = checkpoint["config"]
-        config.n_steps = 20_000
+        config.n_steps = 100_000
     else:
         config = Config(train_logging_interval=1, validation_interval=50, n_steps=5000, save_interval=500, batch_size=512)
 
