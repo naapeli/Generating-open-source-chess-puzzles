@@ -199,8 +199,8 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
 
     # distance_rewards = inter_batch_fen_dist + inter_batch_pv_dist + intra_batch_fen_dist + intra_batch_pv_dist
     intra_distances = intra_batch_fen_dist * intra_batch_pv_dist
-    # rewards = 1 + 2 * counter_intuitive_solution + 0.1 * piece_counts + 0.5 * themes_match + 0.5 * rating_penalty# + 0.5 * distance_rewards
-    rewards = 1 + 2 * counter_intuitive_solution + 0.1 * piece_counts + 0.5 * themes_match + 0.5 * rating_penalty + 0.5 * intra_distances
+    inter_distances = inter_batch_fen_dist * inter_batch_pv_dist
+    rewards = 1 + 2 * counter_intuitive_solution + 0.1 * piece_counts + 0.5 * themes_match + 0.5 * rating_penalty# + 0.5 * distance_rewards
     rewards = torch.where(unique_solution, rewards, 0)
     rewards = torch.where(legal_position, rewards, -2)
 
@@ -219,7 +219,9 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
         "dist_intra_fen": intra_batch_fen_dist.float().mean().item(),
         "dist_inter_pv": inter_batch_pv_dist.float().mean().item(),
         "dist_intra_pv": intra_batch_pv_dist.float().mean().item(),
-        "all_distances_good": (inter_batch_fen_dist * intra_batch_fen_dist * inter_batch_pv_dist, intra_batch_pv_dist).float().mean().item(),
+        "intra_dist": intra_distances.float().mean().item(),
+        "inter_dist": inter_distances.float().mean().item(),
+        "all_dist": (intra_distances * inter_distances).float().mean().item(),
     }
     for key, value in log_data.items():
         writer.add_scalar(f"Components/{key}", value, step)
