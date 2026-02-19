@@ -20,3 +20,6 @@ Stockfish/
 src/supervised_checkpoints
 src/rl_checkpoints
 src/rating_model_checkpoints
+
+# tensorboard logs
+src/runs

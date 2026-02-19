@@ -1165,5 +1165,7 @@
 1164 1167
 1165 1167
 1166 1167
-tensor(278.8412)
-tensor(223.2998)
+Standard Mean: 277.4497
+Standard Median: 226.1737
+Shuffled Mean: 521.4712
+Shuffled Median: 453.2275
