@@ -83,7 +83,10 @@ model = MaskedDiffusion(config)
 model.load_state_dict(checkpoint["model"])
 model.to(device=device)
 
-if master_process: rating_model = RatingModel(config)
+if master_process:
+    rating_model_checkpoint = torch.load(base_path / "rating_model_checkpoints" / "model_0028500.pt", map_location="cpu", weights_only=False)
+    rating_model = RatingModel(rating_model_checkpoint["config"])
+    rating_model.load_state_dict(rating_model_checkpoint["model"])
 
 reference_model = deepcopy(model)
 reference_model.to(device=device)
@@ -251,7 +254,8 @@ while not end:
     scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
 
     # generate the fens from the old_model
-    step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=128)
+    with torch.autocast(torch.bfloat16):  # make the sampling a little faster with less precision
+        step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=128)
 
     # compute the rewards (on the master process)
     if distributed:
