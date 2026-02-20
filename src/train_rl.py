@@ -84,9 +84,10 @@ model.load_state_dict(checkpoint["model"])
 model.to(device=device)
 
 if master_process:
-    rating_model_checkpoint = torch.load(base_path / "rating_model_checkpoints" / "model_0028500.pt", map_location="cpu", weights_only=False)
+    rating_model_checkpoint = torch.load(base_path / "rating_model_checkpoints" / "model_0063000.pt", map_location="cpu", weights_only=False)
     rating_model = RatingModel(rating_model_checkpoint["config"])
     rating_model.load_state_dict(rating_model_checkpoint["model"])
+    rating_model.to(device=device)
 
 reference_model = deepcopy(model)
 reference_model.to(device=device)
@@ -156,11 +157,15 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
     intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     themes_match = torch.zeros(len(fen_tokens), dtype=bool)
 
+    group_size = len(fen_tokens) // len(ratings)
+
     themes = theme_preprocessor.inverse_transform(theme_tokens.cpu().numpy())
 
-    predicted_ratings = unscale_ratings(rating_model(fen_tokens, theme_tokens))  # call the rating_model
-    true_ratings = unscale_ratings(ratings)
-    rating_penalty = -torch.abs(predicted_ratings - true_ratings) / 1000  # penalty of 1 for 1000 elo point difference and scales linearly 
+    with torch.no_grad():
+        predicted_ratings = unscale_ratings(rating_model(fen_tokens, theme_tokens.repeat_interleave(group_size, dim=0)))  # call the rating_model  # TODO: remove the repeat_interleave and take the correct tensor as an input to this function
+        true_ratings = unscale_ratings(ratings).repeat_interleave(group_size, dim=0)
+        rating_penalty = -torch.abs(predicted_ratings - true_ratings) / 1000  # penalty of 1 for 1000 elo point difference and scales linearly
+        rating_penalty = rating_penalty.cpu()
 
     fen_tokens = fen_tokens.cpu()
 
@@ -174,7 +179,6 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
 
     puzzles = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle)(fen) for fen in fens))
 
-    group_size = len(fen_tokens) // len(ratings)
     for i, fen in enumerate(fens):
         theme = themes[i // group_size]
         if fen is None or not legal(fen):
@@ -205,6 +209,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
     inter_distances = inter_batch_fen_dist * inter_batch_pv_dist
     rewards = 1 + 2 * counter_intuitive_solution + 0.1 * piece_counts + 0.5 * themes_match + 0.5 * rating_penalty# + 0.5 * distance_rewards
     rewards = torch.where(unique_solution, rewards, 0)
+    rewards = torch.where(intra_distances, rewards, -1)  # if one generates a position that is similar to the ones in the same batch, yield no reward
     rewards = torch.where(legal_position, rewards, -2)
 
     index = torch.argmax(rewards)
@@ -225,6 +230,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
         "intra_dist": intra_distances.float().mean().item(),
         "inter_dist": inter_distances.float().mean().item(),
         "all_dist": (intra_distances * inter_distances).float().mean().item(),
+        "rating_abs_diff": -rating_penalty.float().mean().item(),
     }
     for key, value in log_data.items():
         writer.add_scalar(f"Components/{key}", value, step)
@@ -254,7 +260,7 @@ while not end:
     scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
 
     # generate the fens from the old_model
-    with torch.autocast(torch.bfloat16):  # make the sampling a little faster with less precision
+    with torch.autocast(device_type=device_type, dtype=torch.bfloat16):  # make the sampling a little faster with less precision
         step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=128)
 
     # compute the rewards (on the master process)
