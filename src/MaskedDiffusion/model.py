@@ -11,12 +11,9 @@ class SwiGLU(nn.Module):
         self.linear1 = nn.Linear(config.embed_dim, hidden_dim, bias=False)
         self.linear2 = nn.Linear(config.embed_dim, hidden_dim, bias=False)
         self.linear3 = nn.Linear(hidden_dim, config.embed_dim, bias=False)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        y = self.linear1(x)
-        swish = y * self.sigmoid(y)
-        return self.linear3(swish * self.linear2(x))
+        return self.linear3(F.silu(self.linear1(x)) * self.linear2(x))
 
 class Block(nn.Module):
     def __init__(self, config):
@@ -24,14 +21,18 @@ class Block(nn.Module):
 
         self.norm1 = nn.LayerNorm(config.embed_dim)
         self.attention = nn.MultiheadAttention(config.embed_dim, config.n_heads, batch_first=True)
+        self.norm_cross = nn.LayerNorm(config.embed_dim)
+        self.cross_attn = nn.MultiheadAttention(config.embed_dim, config.n_heads, batch_first=True)
         self.norm2 = nn.LayerNorm(config.embed_dim)
         self.swiglu = SwiGLU(config)
     
-    def forward(self, x):
-        # check where normalization should be applied
+    def forward(self, x, context):
         y = self.norm1(x)
         attn_output, _ = self.attention(y, y, y, need_weights=False)
         x = x + attn_output
+        y = self.norm_cross(x)
+        cross_out, _ = self.cross_attn(query=y, key=context, value=context, need_weights=False)
+        x = x + cross_out
         x = x + self.swiglu(self.norm2(x))
         return x
 
@@ -42,7 +43,6 @@ class MaskedDiffusion(nn.Module):
         self.FEN_embedding = nn.Embedding(config.n_fen_tokens + 1, config.embed_dim)  # one additional mask token
         self.theme_embedding = nn.Linear(config.n_themes, config.embed_dim, bias=False)
         self.ratings_embedding = nn.Linear(config.rating_dim, config.embed_dim, bias=True)
-        # self.positional_embedding = nn.Parameter(torch.randn((1, config.fen_length, config.embed_dim)))
         self.positional_embedding = nn.Embedding(config.fen_length, config.embed_dim)
 
         self.blocks = nn.ModuleList([Block(config) for _ in range(config.n_layers)])
@@ -53,10 +53,13 @@ class MaskedDiffusion(nn.Module):
     def forward(self, fen_tokens, theme_tokens, ratings):
         pos = torch.arange(0, self.config.fen_length, dtype=torch.long, device=fen_tokens.device)
         x = self.positional_embedding(pos) + self.FEN_embedding(fen_tokens)
-        x = x + self.theme_embedding(theme_tokens).unsqueeze(1) + self.ratings_embedding(ratings.unsqueeze(1)).unsqueeze(1)
+
+        context = self.theme_embedding(theme_tokens).unsqueeze(1)
+        emb_ratings = self.ratings_embedding(ratings.unsqueeze(1)).unsqueeze(1)
+        context = torch.cat([context, emb_ratings], dim=1)
 
         for block in self.blocks:
-            x = block(x)
+            x = block(x, context)
 
         logits = self.classifier(x)
         return logits
@@ -68,6 +71,7 @@ class MaskedDiffusion(nn.Module):
         loss = -torch.sum(mask * weight * F.cross_entropy(torch.movedim(logits, 2, 1), true_fen_tokens, reduction="none"), dim=1)
         return loss
     
+    @torch.compile
     @torch.no_grad()
     def sample(self, theme_tokens, ratings, steps=256):
         batch_size = len(ratings)
@@ -92,11 +96,14 @@ class MaskedDiffusion(nn.Module):
             probs = torch.cat([probs * p_unmask, torch.full((batch_size, fen_length, 1), p_mask, device=device, dtype=probs.dtype)], dim=2)
 
             is_masked = (fen == mask_token)
-            if is_masked.any():
-                flattened_probs = probs.view(-1, self.config.n_fen_tokens + 1)
-                new_samples = torch.multinomial(flattened_probs, num_samples=1).view(batch_size, fen_length)
-                fen = torch.where(is_masked, new_samples, fen)
-            else:
-                break
+            flattened_probs = probs.view(-1, self.config.n_fen_tokens + 1)
+            new_samples = torch.multinomial(flattened_probs, num_samples=1).view(batch_size, fen_length)
+            fen = torch.where(is_masked, new_samples, fen)
+            # if is_masked.any():
+            #     flattened_probs = probs.view(-1, self.config.n_fen_tokens + 1)
+            #     new_samples = torch.multinomial(flattened_probs, num_samples=1).view(batch_size, fen_length)
+            #     fen = torch.where(is_masked, new_samples, fen)
+            # else:
+            #     break
         
         return fen

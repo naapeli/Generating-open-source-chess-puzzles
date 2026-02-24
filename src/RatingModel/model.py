@@ -33,7 +33,7 @@ class Block(nn.Module):
         x = x + attn_out
         y = self.norm_cross(x)
         cross_out, _ = self.cross_attn(query=y, key=context, value=context, need_weights=False)
-        x = x + cross_out        
+        x = x + cross_out
         x = x + self.swiglu(self.norm2(x))
         return x
 
@@ -55,5 +55,4 @@ class RatingModel(nn.Module):
             x = block(x, context)
 
         x = torch.mean(x, dim=1)
-        # x = torch.flatten(x, start_dim=1)
         return self.regressor_head(x).squeeze(1)  # (batch_size,)
