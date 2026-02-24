@@ -58,15 +58,13 @@ def main():
     # config = Config(n_layers=1, batch_size=1024, n_steps=1000, train_logging_interval=1, validation_interval=100, save_interval=500, n_validation_generations=1)
     if continue_from_checkpoint:
         config = checkpoint["config"]
-        config.n_steps = 300_000
-        config.n_validation_generations = 1
     else:
-        config = Config(train_logging_interval=10, validation_interval=5000, n_steps=100_000)
+        config = Config(train_logging_interval=10, validation_interval=10000, n_steps=1_000_000, save_interval=20_000, batch_size=1024)
 
     # ====================== SEED AND PRECISION ======================
-    torch.manual_seed(0)
+    torch.manual_seed(rank)
     if torch.cuda.is_available():
-        torch.cuda.manual_seed(0)
+        torch.cuda.manual_seed(rank)
     torch.set_float32_matmul_precision("high")
 
     # ====================== LOGGING ======================
@@ -99,6 +97,7 @@ def main():
 
     if distributed:
         model = DistributedDataParallel(model, device_ids=[local_rank])
+    model = torch.compile(model)
 
     # ====================== OPTIMIZER ======================
     params_adam = [p for p in model.parameters() if p.ndim != 2]
@@ -110,6 +109,7 @@ def main():
 
     # ====================== LOSS FUNCTION ======================
     def compute_loss(model: MaskedDiffusion, fens, themes, ratings):
+        # could use the variance reduced version in rl.espo, but for supervised learning, this is good enough (variance is not a problem)
         batch_size = len(ratings)
         t = (torch.rand(1) + torch.arange(1, batch_size + 1, 1) / batch_size) % 1
         alpha_t = config.masking_schedule(t).unsqueeze(1).to(device)
@@ -196,8 +196,11 @@ def main():
 
     def save_state():
         checkpoint_path = base_path / "supervised_checkpoints" / f"model_{step:07d}.pt"
+        base_model = model.module if distributed else model
+        if hasattr(base_model, "_orig_mod"):
+            base_model = base_model._orig_mod
         checkpoint = {
-            "model": model.module.state_dict() if distributed else model.state_dict(),
+            "model": base_model.state_dict(),
             "config": config,
             "adam": adam.state_dict(),
             "muon": muon.state_dict(),
@@ -212,12 +215,12 @@ def main():
     if continue_from_checkpoint: step = checkpoint["step"]
     if continue_from_checkpoint: epoch = checkpoint["epoch"]
     ended = False
+    total = torch.zeros(3, dtype=torch.float32, device=device)
     while not ended:
         epoch += 1
         if distributed:
             trainsampler.set_epoch(epoch)
 
-        total = torch.zeros(3, dtype=torch.float32, device=device)
         for fen, theme, rating in trainloader:
             fen, theme, rating = fen.to(dtype=torch.long, device=device), theme.to(dtype=torch.float32, device=device), rating.to(dtype=torch.float32, device=device)
 
@@ -244,12 +247,15 @@ def main():
 
             # validation
             if step % config.validation_interval == 0 or step == 1:
+                model.eval()
                 if distributed:
                     validationsampler.set_epoch(step // config.validation_interval)
 
                 write_logits(step)
                 write_fen(step)
                 write_validation_loss(step)
+
+                model.train()
             
             # create a checkpoint
             if step % config.save_interval == 0 and master_process:
@@ -260,6 +266,7 @@ def main():
                 ended = True
                 break
 
+    model.eval()
     validation_loss = compute_validation_loss()
     if master_process:
         train_writer.add_hparams({
