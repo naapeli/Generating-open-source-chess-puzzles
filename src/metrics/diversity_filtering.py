@@ -3,16 +3,17 @@ from pathlib import Path
 import json
 
 import numpy as np
-from torchaudio.functional import edit_distance
+# from torchaudio.functional import edit_distance
+from rapidfuzz.distance import Levenshtein
 
 
 def PV_distance(pv1: str, pv2: str) -> bool:
     pv1 = pv1.split(" ", 1)[0]  # only check if the first move is the same
     pv2 = pv2.split(" ", 1)[0]  # only check if the first move is the same
-    return edit_distance(pv1, pv2) / max(len(pv1), len(pv2)) >= 1  # max length of edit_distance is max(len(pv1), len(pv2))
+    return Levenshtein.distance(pv1, pv2) / max(len(pv1), len(pv2)) >= 1  # max length of edit_distance is max(len(pv1), len(pv2))
 
 def board_distance(fen1: str, fen2: str) -> bool:
-    return edit_distance(fen1, fen2) >= 6
+    return Levenshtein.distance(fen1, fen2) >= 6
 
 
 class ReplayBuffer:

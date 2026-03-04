@@ -76,7 +76,7 @@ if master_process:
     writer = SummaryWriter(logging_path)
 
 base_path = Path("./src")
-checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0280000.pt", map_location="cpu", weights_only=False)
+checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
 
 config = checkpoint["config"]
 model = MaskedDiffusion(config)
@@ -100,7 +100,7 @@ buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
 total_steps = 80_000  # 20_000 generation steps, but 80_000 gradient updates
-batch_size = 16
+batch_size = 8
 local_batch_size = batch_size // world_size
 group_size = 8
 eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
@@ -156,21 +156,17 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
     inter_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     themes_match = torch.zeros(len(fen_tokens), dtype=bool)
+    rating_penalty = torch.zeros(len(fen_tokens), dtype=torch.float32)
 
     group_size = len(fen_tokens) // len(ratings)
-
     themes = theme_preprocessor.inverse_transform(theme_tokens.cpu().numpy())
+    true_ratings = unscale_ratings(ratings).repeat_interleave(group_size, dim=0)
 
-    with torch.no_grad():
-        predicted_ratings = unscale_ratings(rating_model(fen_tokens, theme_tokens.repeat_interleave(group_size, dim=0)))  # call the rating_model  # TODO: remove the repeat_interleave and take the correct tensor as an input to this function
-        true_ratings = unscale_ratings(ratings).repeat_interleave(group_size, dim=0)
-        rating_penalty = -torch.abs(predicted_ratings - true_ratings) / 1000  # penalty of 1 for 1000 elo point difference and scales linearly
-        rating_penalty = rating_penalty.cpu()
-
-    fen_tokens = fen_tokens.cpu()
+    device = fen_tokens.device
+    fen_tokens_cpu = fen_tokens.cpu()
 
     fens = []
-    for tokens in fen_tokens:
+    for tokens in fen_tokens_cpu:
         try:
             fen = tokens_to_fen(tokens)
             fens.append(fen)
@@ -178,6 +174,9 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
             fens.append(None)
 
     puzzles = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle)(fen) for fen in fens))
+
+    valid_indices = []
+    valid_gen_themes = []
 
     for i, fen in enumerate(fens):
         theme = themes[i // group_size]
@@ -204,18 +203,34 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
         # if counter_intuitive_solution[i] and piece_counts[i] and intra_batch_fen_dist[i] and intra_batch_pv_dist[i] and inter_batch_fen_dist[i] and inter_batch_pv_dist[i]:
         #     buffer.add(fen, pv)
 
-    # distance_rewards = inter_batch_fen_dist + inter_batch_pv_dist + intra_batch_fen_dist + intra_batch_pv_dist
+        valid_indices.append(i)
+        valid_gen_themes.append(generation_themes)
+
+    if valid_indices:
+        gen_theme_tokens = torch.tensor(theme_preprocessor.transform(valid_gen_themes), dtype=theme_tokens.dtype, device=device)
+        valid_fen_tokens = fen_tokens[valid_indices]
+        
+        with torch.no_grad():
+            predicted_ratings = unscale_ratings(rating_model(valid_fen_tokens, gen_theme_tokens))
+            valid_true_ratings = true_ratings[valid_indices].to(device)
+            
+            penalties = -torch.clamp(torch.abs(predicted_ratings - valid_true_ratings) / 1000, 0, 1)
+            rating_penalty[valid_indices] = penalties.cpu()
+
     intra_distances = intra_batch_fen_dist * intra_batch_pv_dist
     inter_distances = inter_batch_fen_dist * inter_batch_pv_dist
-    rewards = 1 + 2 * counter_intuitive_solution + 0.1 * piece_counts + 0.5 * themes_match + 0.5 * rating_penalty# + 0.5 * distance_rewards
+    
+    rewards = 1 + 0.1 * piece_counts + 0.5 * themes_match + 0.1 * rating_penalty  #  + 2 * counter_intuitive_solution
+    # TODO: Change to one where statement and conditions connected with an and.
+    rewards = torch.where(counter_intuitive_solution, rewards, 0)
     rewards = torch.where(unique_solution, rewards, 0)
-    rewards = torch.where(intra_distances, rewards, -1)  # if one generates a position that is similar to the ones in the same batch, yield no reward
+    rewards = torch.where(intra_distances, rewards, 0)
     rewards = torch.where(legal_position, rewards, -2)
 
     index = torch.argmax(rewards)
-    save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Generations")  # log the position with the highest reward
+    save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Generations")
     index = torch.median(rewards, dim=0).indices
-    save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Median")  # log the position with the median reward
+    save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Median")
 
     log_data = {
         "legal_rate": legal_position.float().mean().item(),
@@ -230,8 +245,10 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
         "intra_dist": intra_distances.float().mean().item(),
         "inter_dist": inter_distances.float().mean().item(),
         "all_dist": (intra_distances * inter_distances).float().mean().item(),
-        "rating_abs_diff": -rating_penalty.float().mean().item(),
+        # "rating_abs_diff": -rating_penalty.float().mean().item(),
+        "rating_abs_diff": -torch.abs(predicted_ratings - valid_true_ratings).float().mean().item(),
     }
+    
     for key, value in log_data.items():
         writer.add_scalar(f"Components/{key}", value, step)
     writer.add_scalar("Reward", rewards.float().mean().item(), step)
