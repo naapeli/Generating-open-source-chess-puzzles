@@ -29,7 +29,7 @@ def main():
     base_path = Path("./src")
     
     # ====================== LOAD CHECKPOINT ======================
-    if continue_from_checkpoint: checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0200000.pt", map_location="cpu", weights_only=False)  # as the config was saved as well, cannot use weights_only=True
+    if continue_from_checkpoint: checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0760000.pt", map_location="cpu", weights_only=False)  # as the config was saved as well, cannot use weights_only=True
 
     # ====================== DEVICE ======================
     if distributed:
@@ -70,7 +70,7 @@ def main():
     # ====================== LOGGING ======================
     if master_process:
         if continue_from_checkpoint:
-            logging_path = base_path / "runs"/ "supervised" / "real_model_v1"
+            logging_path = base_path / "runs"/ "supervised" / "real_model_v2"
         else:
             current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
             logging_path = base_path / "runs"/ "supervised" / current_time

@@ -1,0 +1,1001 @@
+target_themes,target_rating,fen,is_legal,is_puzzle,counter_intuitive,actual_themes,predicted_rating,themes_match
+"['crushing', 'discoveredAttack', 'master', 'middlegame', 'short']",48.0,2rr4/1Qq2pkp/6p1/p2BP3/1p4P1/5N1P/P4P2/2R3K1 b - - 2 33,True,False,False,,,
+"['endgame', 'master', 'mate', 'mateIn1', 'oneMove']",-16.0,2k5/2r5/K1PRp1p1/p3ppPp/7P/n4P2/8/3R4 w - - 3 47,True,False,False,,,
+"['advancedPawn', 'crushing', 'defensiveMove', 'endgame', 'veryLong']",66.0,8/8/5KPk/5r1p/8/8/8/8 w - - 0 56,True,False,False,,,
+"['advantage', 'middlegame', 'pin', 'short']",12.0,r1q1R1k1/p1p2ppp/8/8/Q2P4/1K3b2/PP1N1PPP/R1B4K b - - 0 21,False,False,,,,
+"['crushing', 'deflection', 'endgame', 'exposedKing', 'veryLong']",-104.0,2k5/p3n1rN/1pp1p1r1/3pP2p/3R1P2/P5P1/5P2/3R2K1 w - - 3 26,True,False,False,,,
+"['crushing', 'endgame', 'short']",-91.0,6k1/1pr1rq1p/p1pp2pP/6Q1/2P3R1/5P2/KP3P2/6R1 w - - 0 30,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-103.0,6k1/pb2r1pp/1p4P1/2r1pP2/2P1n3/1P6/P2R4/3R2K1 w - - 0 32,True,True,False,"['endgame', 'mateIn2', 'mate', 'short']",574.8419189453125,True
+"['crushing', 'endgame', 'long', 'rookEndgame', 'skewer']",57.0,1k1r3r/pp3pp1/8/2p1p3/3RP2p/1P5P/P4PP1/3R2K1 w - - 0 26,True,True,False,"['endgame', 'crushing', 'rookEndgame', 'queensideAttack', 'short']",273.7086181640625,True
+"['advantage', 'middlegame', 'short']",-40.0,1k2q3/1p5p/p1nR4/2Q5/4b1p1/2P3P1/PP4BP/4R2K b - - 1 26,True,False,False,,,
+"['advantage', 'fork', 'long', 'middlegame']",-21.0,3r2k1/1p1q2pp/1bp2p2/1nP1pP2/1P6/3R3P/P4PP1/3R1NK1 w - - 1 23,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'quietMove', 'veryLong']",-88.0,8/8/2K4p/7k/7Q/8/8/8 b - - 19 71,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'long', 'queensideAttack']",-45.0,2k5/pqb3p1/1p1r2p1/6Pn/7P/7K/PPQ2P2/2R5 w - - 7 31,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-35.0,7k/q5p1/5Rp1/1p1p1p2/1Pr5/6P1/1Q4PK/8 w - - 1 40,True,False,False,,,
+"['advantage', 'fork', 'master', 'masterVsMaster', 'middlegame', 'short']",-123.0,3r2k1/1p4pp/4bp2/p1q1n3/Pp2p3/1P2P3/1BPR2PP/1N1Q2K1 w - - 0 23,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",19.0,r1b1r1k1/pp3ppp/1n1p4/1Q1p1q2/3P4/2P2PP1/PP3KBP/2KR4 w - - 0 24,False,False,,,,
+"['long', 'mate', 'mateIn3', 'middlegame']",48.0,2r3k1/5ppp/2Rppn2/6N1/q3P3/3r4/bB3PPP/7R w - - 0 28,False,False,,,,
+"['crushing', 'endgame', 'long']",0.0,1kr5/ppq2p2/4b3/4p3/4P1P1/P2PQ2B/1P3PPp/2R4K b - - 3 28,True,True,False,"['endgame', 'advantage', 'short']",1037.63720703125,False
+"['endgame', 'master', 'mate', 'mateIn1', 'oneMove']",-121.0,4r1k1/6q1/p4r2/4n1Q1/2p3R1/2P2PK1/PP6/8 w - - 0 42,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",872.9921875,True
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-104.0,3r3k/1p3pp1/1b2p2p/4P2b/5B2/2P5/R3NPBP/3R1K2 b - - 0 35,True,True,False,"['middlegame', 'mateIn1', 'mate', 'hangingPiece', 'oneMove']",603.5263671875,True
+"['advantage', 'kingsideAttack', 'long', 'middlegame']",106.0,3r2k1/pp4pp/1np1bn2/2q2p2/5P2/2NQP2N/PP4PP/2KR1B2 w - - 1 21,True,False,False,,,
+"['mate', 'mateIn1', 'oneMove', 'opening']",-124.0,r1b1r2k/5p1p/p4qpb/1p6/8/2P3Pq/PP2QP1P/RN1BR1K1 w - - 0 20,True,False,False,,,
+"['advantage', 'middlegame', 'short']",13.0,2r3k1/p1r2ppp/B2pbB2/4p3/8/PP2P3/3PQPPP/R3K2R b KQ - 0 17,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'quietMove', 'veryLong']",105.0,4r3/4R3/6k1/1pQp1p2/7p/2P5/PP4r1/K3BR2 b - - 0 44,True,False,True,,,
+"['attraction', 'crushing', 'endgame', 'fork', 'long']",-24.0,4rr1k/6pp/2pp4/p5P1/P2PR3/2P5/1PK2Q1P/4R3 b - - 0 32,True,False,False,,,
+"['backRankMate', 'endgame', 'long', 'mate', 'mateIn3', 'sacrifice']",60.0,3r4/6pk/3r3p/4N3/4R3/1B6/1B3PPP/6K1 b - - 0 34,True,True,False,"['endgame', 'mateIn3', 'mate', 'backRankMate', 'sacrifice', 'long']",693.939697265625,True
+"['mate', 'mateIn4', 'middlegame', 'veryLong']",-30.0,1r4k1/5ppp/q1b1p3/b5P1/n1P5/3PB1Q1/2P4P/7K w - - 0 34,True,False,False,,,
+"['advantage', 'exposedKing', 'long', 'middlegame']",-34.0,2b3qk/4br2/5r1p/2pPp3/P3P1R1/5P2/1PP2K1N/6R1 w - - 4 41,True,True,False,"['middlegame', 'advantage', 'fork', 'short']",922.419189453125,False
+"['crushing', 'discoveredAttack', 'middlegame', 'short']",-37.0,1r4k1/1q3pp1/1r2p3/1p1p3p/p2P4/P3PP1P/R3Q1P1/1RN1K3 b - - 0 36,True,False,True,,,
+"['crushing', 'middlegame', 'short']",-81.0,7k/5ppb/p2p1b1p/qp1P2p1/1NQP2P1/1PP4P/5P2/4rBK1 w - - 3 28,True,False,False,,,
+"['advantage', 'discoveredAttack', 'middlegame', 'short']",-87.0,4r1k1/1pp1q1r1/p1b3n1/3pp1p1/8/2P1RNRP/PP3PPK/4Q3 w - - 10 31,True,False,True,,,
+"['advancedPawn', 'crushing', 'defensiveMove', 'endgame', 'promotion', 'short']",79.0,8/8/8/5K2/8/6k1/6Rp/8 b - - 2 81,True,False,False,,,
+"['endgame', 'master', 'mate', 'mateIn1', 'oneMove']",-119.0,6k1/p6p/Pp1P2r1/3P4/2B5/1P3b1q/1B2R1P1/6K1 w - - 0 41,True,False,False,,,
+"['endgame', 'master', 'mate', 'mateIn1', 'oneMove']",88.0,4b1k1/pp3pp1/3r3p/8/8/qP1B4/2P2PPP/4Q1K1 w - - 0 27,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'oneMove']",688.7315673828125,True
+"['advantage', 'defensiveMove', 'endgame', 'short']",83.0,5k2/5p2/p4p2/2q5/5PN1/8/2p3P1/2R3K1 w - - 1 40,True,False,False,,,
+"['mate', 'mateIn1', 'oneMove', 'opening', 'smotheredMate']",-92.0,r4rk1/pp1Pnppp/8/5b2/B7/3n1N2/PP3BPP/R2N2KR b - - 0 18,True,False,False,,,
+"['backRankMate', 'endgame', 'hangingPiece', 'mate', 'mateIn1', 'oneMove']",42.0,2bQq1k1/p1r2ppp/1p6/3P4/8/P5P1/5P1P/R5K1 w - - 4 26,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'oneMove']",526.3516845703125,True
+"['crushing', 'endgame', 'short', 'trappedPiece']",98.0,2r2k2/2R2pp1/2Rp3p/p2P4/1p2P1b1/1P1n4/P4PPP/6K1 w - - 0 29,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",-98.0,r2q1rk1/p4ppp/5n2/2Q5/8/2P2N2/PP3PPP/R1B3K1 b - - 0 16,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'sacrifice', 'veryLong']",-79.0,7k/pp2q1b1/4prpp/4Q3/2Pp2P1/1P6/P2PR3/6K1 w - - 1 28,True,False,False,,,
+"['mate', 'mateIn2', 'opening', 'short']",-94.0,r1b1k1nr/ppq2p1p/6R1/4p3/QB1p4/3Q1N2/P2NPPPP/4KB1R b KQq - 0 17,False,False,,,,
+"['advantage', 'doubleCheck', 'fork', 'long', 'middlegame']",-71.0,b1r3k1/2q3p1/p4p1p/Pppp3P/8/B2PRPP1/2N5/4R1K1 w - - 0 39,True,False,True,,,
+"['long', 'mate', 'mateIn3', 'middlegame', 'sacrifice']",-113.0,2k5/pbpR4/1p3rn1/1n5r/8/4P1Pp/4K3/2KR4 w - - 0 37,False,False,,,,
+"['crushing', 'endgame', 'master', 'short']",19.0,7k/4r2n/p2p2pp/1p1P2p1/1P2P3/2R3PP/P1B5/7K w - - 0 38,True,False,False,,,
+"['crushing', 'endgame', 'knightEndgame', 'master', 'quietMove', 'short']",50.0,8/6K1/8/p6N/1n5P/2k5/8/8 w - - 4 57,True,False,False,,,
+"['crushing', 'endgame', 'short']",53.0,8/5p2/p4k1p/6p1/1Pp3P1/2r1R1KP/3N4/8 b - - 3 36,True,False,False,,,
+"['advantage', 'deflection', 'long', 'middlegame']",97.0,1R3nk1/p4pqp/b1p4p/2Pp2r1/6QN/4PPP1/P6P/2bR2K1 w - - 2 27,True,False,False,,,
+"['anastasiaMate', 'attraction', 'kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",-6.0,7k/1bpn2rp/1p1p2pr/p1qP4/2P5/P3RP1P/1P2QP1K/4R3 w - - 2 26,True,False,False,,,
+"['crushing', 'middlegame', 'pin', 'short']",108.0,4r1k1/p2b1Bpp/5P2/1p4P1/7P/b1N5/1P1q4/2KR2R1 w - - 0 25,False,False,,,,
+"['crushing', 'master', 'middlegame', 'short']",-122.0,7k/2r1n1pp/bp6/p7/1n2p3/PPN1P1P1/3R1P1P/2KR4 w - - 3 29,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'short']",95.0,r1n1k1q1/5p1r/p1p1bB2/4Pp1p/1b1Q4/8/P4PPP/3R2K1 w q - 0 28,True,False,False,,,
+"['advantage', 'endgame', 'intermezzo', 'short']",-125.0,6k1/p2r2pn/bp2pr1p/8/p7/2K1P3/3R2PP/3R4 w - - 0 35,True,False,False,,,
+"['crushing', 'endgame', 'short']",-6.0,5q1k/6pp/2Pr2P1/4p2n/P5P1/1P6/B5BQ/6K1 b - - 1 40,True,False,False,,,
+"['deflection', 'endgame', 'long', 'mate', 'mateIn3']",-6.0,8/1N2k3/p4b2/2R5/6P1/1P1R4/P1P5/1KB3r1 b - - 9 37,True,False,True,,,
+"['advantage', 'long', 'middlegame']",86.0,3rr2k/p2q1pbp/1pp2pp1/3n4/3PR3/1N1B3P/PP2QPP1/4R1K1 w - - 3 20,True,False,False,,,
+"['clearance', 'kingsideAttack', 'mate', 'mateIn2', 'opening', 'sacrifice', 'short']",-123.0,1r1q1bkr/1bpp1p1p/4p2B/p3P2p/1p6/8/P1P2PPP/RN1QR1NK w - - 0 15,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",95.0,r2k1b1r/ppp1q1pp/3p4/8/3R4/5Q2/PPP2PPP/R1B3K1 b - - 0 13,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",560.90673828125,True
+"['endgame', 'mate', 'mateIn2', 'short']",-118.0,7k/p7/2R1P3/8/1P1r4/P5bP/2B1R1P1/5K2 b - - 0 39,True,False,False,,,
+"['crushing', 'middlegame', 'pin', 'short']",-71.0,2r2r1k/bp4pp/pn3p2/3RpP2/b1B5/1P2P3/P2R1BPP/1K6 w - - 1 24,True,False,False,,,
+"['discoveredAttack', 'master', 'mate', 'mateIn4', 'opening', 'veryLong']",66.0,rnnk3r/2p2Pbp/4q3/pb5P/2P5/P3P3/1P1K1P2/RNBQ3R w KQ - 1 18,False,False,,,,
+"['crushing', 'endgame', 'long', 'rookEndgame']",2.0,6r1/5kr1/5p2/p3pP2/4P1R1/R2K4/8/8 w - - 0 37,True,False,False,,,
+"['advantage', 'middlegame', 'pin', 'short']",89.0,3r1k2/ppp2r1p/3p2p1/1P1P1n2/2P2PPq/4R3/1P2R2P/4Q1K1 w - - 0 25,True,False,False,,,
+"['advantage', 'middlegame', 'short']",-96.0,3r2k1/1pprnppp/1b6/pB2Pn2/7P/P7/1P1RNPP1/3R2K1 w - - 4 23,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-79.0,3rr1k1/ppp3pb/5p2/3p4/3P1Pp1/2P1RNP1/PP1N1nPK/R4Q2 b - - 0 21,True,False,False,,,
+"['crushing', 'discoveredAttack', 'kingsideAttack', 'middlegame', 'short']",54.0,r3q1k1/p1p5/1p1pb2P/n3p1r1/P3P1B1/2P4P/2P2PQ1/R4RK1 w - - 1 22,True,True,False,"['middlegame', 'crushing', 'discoveredAttack', 'kingsideAttack', 'short']",1045.660888671875,True
+"['endgame', 'mate', 'mateIn1', 'oneMove', 'rookEndgame']",70.0,8/8/p1Pk4/8/8/1P4Pp/7P/3rR2K b - - 2 48,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'rookEndgame', 'oneMove']",519.3543701171875,True
+"['crushing', 'defensiveMove', 'middlegame', 'short']",-87.0,r2k4/p1p1n1pp/2p2p2/4qP2/1Q2P3/2P2KP1/1R1P3r/2B2R2 w - - 10 27,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'rookEndgame', 'short']",99.0,5r2/2k1k3/3pp3/3Pp3/p3P3/Pp1P1R2/1P6/1K6 b - - 0 51,False,False,,,,
+"['advancedPawn', 'crushing', 'kingsideAttack', 'long', 'middlegame', 'sacrifice']",46.0,4r2k/7b/p1q2Pp1/2bp3N/1ppP4/2P5/PP2Q2P/R3R1K1 w - - 1 28,True,False,False,,,
+"['crushing', 'middlegame', 'pin', 'short']",-23.0,2r3k1/2r4p/3p2p1/P1q1p3/1p2p1R1/1P1P3P/3Q1PP1/RN4K1 b - - 1 28,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-116.0,4r1k1/6pp/p1pb4/1p1n1pq1/3P4/P1P5/1P2Q1PP/4BK2 w - - 0 26,True,False,False,,,
+"['hangingPiece', 'long', 'mate', 'mateIn3', 'middlegame']",-47.0,3r2k1/1pp2p1p/p3bnpP/2q5/5p2/2N5/PP4P1/2KR1B2 w - - 0 23,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'long']",126.0,6k1/5pbp/p2p2p1/2pP4/P1P5/2qBRp2/4QKPP/r7 w - - 0 32,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'master', 'short']",-103.0,4r1k1/p4rpp/8/6P1/2P1R2p/1P5P/Pp3PK1/2b5 w - - 0 34,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'sacrifice', 'short']",54.0,8/p1r2k2/1p2p1pp/2r1Pp2/5PPP/3pR2N/PP1N4/3K4 b - - 3 48,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",617.14697265625,False
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",12.0,r1b1r1kb/pp3p1p/1qp3pB/n2p1p1P/6P1/5P2/PPP1Q3/2K1RB1R w - - 0 22,True,True,False,"['middlegame', 'mateIn1', 'mate', 'hangingPiece', 'kingsideAttack', 'oneMove']",591.7509765625,True
+"['crushing', 'endgame', 'rookEndgame', 'short']",-125.0,1k6/1p3r1R/pp1p4/3p1p2/P4P2/2P2P2/1KP1R1rP/8 w - - 4 30,True,False,False,,,
+"['crushing', 'deflection', 'fork', 'long', 'middlegame']",2.0,2k2b2/1pq1r3/1pp1P3/3p2p1/1P1P2P1/P6r/1BK2Q2/1N3R2 w - - 0 28,True,False,False,,,
+"['crushing', 'endgame', 'master', 'masterVsMaster', 'short']",103.0,8/3k4/2p1p3/1rKn4/3P3p/1Q6/1P6/8 w - - 1 45,True,False,True,,,
+"['advancedPawn', 'crushing', 'endgame', 'knightEndgame', 'long', 'quietMove']",19.0,8/8/2K5/7p/1P4k1/P5n1/8/8 w - - 6 51,True,False,False,,,
+"['advantage', 'exposedKing', 'hangingPiece', 'middlegame', 'pin', 'veryLong']",-83.0,4r2k/ppp3q1/8/4Q2b/8/N1P3P1/PP1B1b2/R3R2K w - - 0 28,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-11.0,1k1r4/bp6/p2r1p2/8/5PQ1/6pP/1P1R2P1/3R3K b - - 0 46,True,False,False,,,
+"['crushing', 'fork', 'middlegame', 'short']",75.0,5qk1/4r2p/bp2rppP/1N1p4/P1p2P1R/2P4Q/2P3P1/3R2K1 b - - 1 42,True,False,False,,,
+['endgame'],-4.0,2k1r3/ppp5/7p/3P2p1/8/1P2r1N1/P1Q2PPP/B5K1 b - - 1 26,True,False,True,,,
+"['crushing', 'defensiveMove', 'endgame', 'master', 'veryLong']",-54.0,r5k1/5npp/5p2/2R2P2/1K3PP1/2R5/7P/8 w - - 4 38,True,False,False,,,
+"['advantage', 'hangingPiece', 'master', 'opening', 'veryLong']",116.0,r1b1k1nr/pp1Bqpbp/2n3p1/2p5/8/6P1/PPPPNP1P/RNBQR1K1 b kq - 0 9,True,False,False,,,
+"['advantage', 'fork', 'master', 'middlegame', 'pin', 'short']",112.0,4n1k1/p2rrpp1/1p3qn1/1Pp5/2Pp4/2RP2P1/PB3P1P/2Q3RK w - - 3 24,True,False,True,,,
+"['advantage', 'endgame', 'master', 'short']",-31.0,4r3/Q3rp1k/2P3n1/5pp1/8/1B3P1P/1P4P1/K7 b - - 0 33,True,False,False,,,
+"['crushing', 'endgame', 'long', 'master', 'pawnEndgame']",55.0,8/7p/4kp2/3p2p1/3P1Pp1/5P2/K6P/8 w - - 0 29,True,False,False,,,
+"['advancedPawn', 'bishopEndgame', 'crushing', 'defensiveMove', 'endgame', 'long']",-91.0,8/8/3KPk1p/p1pP3P/b1P5/8/8/8 w - - 1 47,True,False,False,,,
+"['advantage', 'discoveredAttack', 'middlegame', 'short']",42.0,3r2k1/1p2rqb1/pNp3pp/P1Pb1n2/3PQP2/7P/1P2R1K1/R5B1 w - - 11 45,True,False,False,,,
+"['mate', 'mateIn1', 'oneMove', 'opening']",62.0,r1bkr3/ppp2p1Q/2n1q3/8/8/P1Pp1PPN/P2P2BP/R1B2K1R b - - 2 14,True,True,False,"['opening', 'mateIn1', 'mate', 'oneMove']",926.5423583984375,True
+"['advantage', 'endgame', 'long']",-65.0,r4b1k/1p1n2pp/1p6/p4q1P/2pP4/2P1R1P1/4Q3/R4K2 w - - 0 32,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",21.0,5rk1/pp5p/1qn1p1pB/3n4/B1p5/2P4P/PP5P/R4R1K w - - 0 27,True,True,False,"['middlegame', 'mateIn1', 'mate', 'kingsideAttack', 'oneMove']",651.4871215820312,True
+"['advantage', 'endgame', 'short']",-33.0,5rk1/5ppp/p5b1/8/2Pq2P1/1P5P/3Q1P2/3R1RK1 w - - 0 32,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'sacrifice', 'short']",-29.0,4r2k/p3r1p1/1p5p/3Q4/P7/1P1B4/3B2PP/7K b - - 2 38,True,True,False,"['endgame', 'mateIn3', 'mate', 'backRankMate', 'sacrifice', 'long']",782.2294921875,True
+"['endgame', 'mate', 'mateIn2', 'short']",28.0,2r3k1/5pp1/r4p1p/3p3q/3P1P2/2Q1P3/P5PP/2R3K1 w - - 0 25,True,True,False,"['endgame', 'advantage', 'fork', 'hangingPiece', 'short']",992.3199462890625,False
+"['endgame', 'mate', 'mateIn1', 'oneMove']",80.0,rn4k1/p1pp1p1p/1p3Bp1/2P2r2/2P5/3P3P/P5b1/2K1R3 w - - 0 24,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",686.0060424804688,True
+"['endgame', 'mate', 'mateIn2', 'short']",117.0,3r2k1/p4ppp/2p5/2B5/8/PP2p1P1/2n1R1PP/6K1 b - - 0 24,True,False,False,,,
+"['crushing', 'long', 'middlegame']",100.0,2r2b2/1p3kpp/p3pp2/2r1P3/3P4/P2QBN2/1P3PPP/2R3K1 b - - 0 29,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-117.0,2k2r2/1pp5/p1b5/8/6p1/N1P3Pp/PP1R3B/R1N3K1 b - - 0 25,True,False,True,,,
+"['endgame', 'mate', 'mateIn2', 'quietMove', 'short']",89.0,2Q5/3r2b1/7k/p5p1/P7/1P3nPp/5P2/7K b - - 2 38,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",571.8468017578125,False
+"['crushing', 'endgame', 'rookEndgame', 'short']",24.0,3r4/3rkppp/p3p3/2p1P3/1pP2P2/3R2P1/PP5P/3R3K b - - 0 28,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",33.0,r4r1Q/p2k1qBp/1p1pp1p1/1P6/n1P3p1/P5P1/6PP/5RK1 b - - 0 25,True,False,False,,,
+"['advantage', 'attraction', 'deflection', 'endgame', 'long']",12.0,7r/k1p2pp1/1ppp2p1/4p3/q3P2P/2PP1P2/2Q2P2/rNK5 w - - 0 23,True,False,True,,,
+['endgame'],-119.0,4rk2/1p3p2/p2pr1p1/2p4p/5p1P/2NP4/PPPR4/2K2B1R b - - 5 23,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",27.0,r1b3k1/1p3ppp/p3pn2/8/2q5/2B5/PP1Q1PPP/R5K1 w - - 0 18,True,True,False,"['middlegame', 'mateIn2', 'mate', 'kingsideAttack', 'short']",613.9732666015625,True
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-74.0,3rq1k1/Rp3pp1/n2P4/2p2QB1/2P5/8/1P3PPP/6K1 b - - 0 25,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",737.0884399414062,True
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",106.0,6k1/5ppp/8/8/rp6/6P1/1P2rP1P/3R2K1 w - - 0 28,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'rookEndgame', 'short']",580.8567504882812,True
+"['mate', 'mateIn2', 'middlegame', 'short']",-16.0,3r3k/5r1p/2pqbp1B/QpR5/8/P7/2Pp1PPP/3R2K1 b - - 0 28,True,False,False,,,
+"['advantage', 'attraction', 'endgame', 'fork', 'long', 'sacrifice']",-13.0,6k1/2p3p1/p3r3/8/2p5/2PR2P1/7P/1Q5K b - - 0 35,True,False,False,,,
+"['crushing', 'endgame', 'long', 'rookEndgame']",114.0,3r2k1/pp5p/3r2p1/5p2/2PRp3/8/PP3PPP/3R2K1 b - - 0 23,True,False,False,,,
+"['advantage', 'master', 'middlegame', 'short']",-65.0,r2q4/pp2k1Q1/2p1r3/2P5/N2R4/5b2/1PP4P/R5K1 b - - 0 26,True,False,False,,,
+"['endgame', 'master', 'masterVsMaster', 'mate', 'mateIn1', 'oneMove', 'pin']",-89.0,2k5/2p1r3/Pb6/3R4/1P3p2/P1K1pn2/4R1P1/7r w - - 0 42,True,False,False,,,
+"['advantage', 'deflection', 'exposedKing', 'master', 'middlegame', 'veryLong']",-115.0,6k1/2br2rp/4p3/2P1p3/1Q4P1/1R2PP1P/1P3q2/1R5K w - - 1 33,True,False,False,,,
+"['advantage', 'long', 'middlegame']",66.0,3r2k1/3q1p1p/p2rb1p1/1p6/1P6/P3PB2/4QPPP/2RR2K1 b - - 0 26,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'long']",-60.0,2b4k/6p1/1p1b3p/1P1B4/3PNP2/6PP/5QK1/1q6 w - - 0 40,True,False,False,,,
+"['advantage', 'opening', 'short']",-37.0,2kr1b1r/pppq1ppp/5n2/4p3/1PQ5/1B3N2/1P3PPP/RN1R2K1 b - - 3 13,True,True,False,"['opening', 'advantage', 'kingsideAttack', 'long']",842.3704833984375,True
+"['advantage', 'endgame', 'fork', 'short']",46.0,3r4/pp1r2kp/8/4Pp1p/8/7P/Q5PN/3R3K b - - 0 33,True,False,False,,,
+"['advantage', 'doubleCheck', 'middlegame', 'short']",-32.0,2rr2k1/2q3pp/p3b3/8/3B1P2/P1P3P1/2PRB2P/2K1R3 w - - 0 26,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'long', 'quietMove']",41.0,6q1/5QK1/p7/8/8/6PP/1k6/8 b - - 0 56,False,False,,,,
+"['crushing', 'exposedKing', 'long', 'middlegame']",-54.0,r3r1k1/pp1n1pb1/2p2pp1/5n2/2PPR1Pp/1PB2P1N/P3Q3/4R1K1 w - - 2 24,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove', 'queenEndgame']",-97.0,4q1k1/p5p1/1p1p3p/5p1P/2P5/5pP1/PPP3P1/4Q1K1 b - - 0 25,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'long']",-60.0,1r6/Q7/3pRppk/2pPpP2/P6p/2P2P2/6PP/1R4K1 b - - 0 34,True,False,True,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-85.0,5rk1/p6p/1p2r1p1/2p5/q7/5Q1P/1BP3P1/5RK1 w - - 1 27,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",748.722900390625,True
+"['advantage', 'middlegame', 'short']",-18.0,1r4k1/p1p2pp1/3pbn1p/1p6/qQP1PP1P/P2P1B2/1R4PP/1rB4K w - - 0 22,True,False,False,,,
+"['endgame', 'fork', 'mate', 'mateIn2', 'short']",-78.0,q1b3k1/2p3p1/7p/1p1n4/2pPRP2/2P1Q3/7P/6K1 w - - 5 36,True,False,False,,,
+"['crushing', 'discoveredAttack', 'endgame', 'long']",-109.0,1k1r4/p4rp1/Pp2b3/3qP2p/3pR3/8/2P3PK/3RQ3 w - - 0 31,True,False,True,,,
+"['advantage', 'endgame', 'fork', 'long']",61.0,2b1r2k/p1p2qpp/5r2/3P4/1P6/7P/P3QPP1/4R1K1 w - - 0 33,True,False,False,,,
+"['crushing', 'deflection', 'kingsideAttack', 'long', 'middlegame', 'sacrifice']",51.0,3r2k1/2r2p1p/p3bnpP/1p3p2/1q3P2/2b5/PPPR4/2KQ1B1R w - - 0 24,True,False,False,,,
+"['attraction', 'capturingDefender', 'crushing', 'fork', 'long', 'middlegame']",-9.0,r1bkr3/pppnrp1p/3p1qp1/1P6/2P1R3/4Q3/P5PP/4RK2 w - - 0 27,True,False,True,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",67.0,6k1/5ppp/p2rp3/8/1n6/7P/2R3PK/8 w - - 0 40,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",539.978271484375,True
+"['advantage', 'endgame', 'fork', 'short']",-67.0,1k1q1r2/pp6/8/3p1R2/P6p/4P1nP/1PPP3K/2B2R2 w - - 0 28,True,False,False,,,
+"['crushing', 'endgame', 'rookEndgame', 'short']",-46.0,3r2k1/5pp1/3r2p1/8/1p6/1P3P2/P4P1P/2RR2K1 b - - 3 24,True,True,False,"['endgame', 'crushing', 'rookEndgame', 'short']",605.177734375,True
+"['crushing', 'long', 'middlegame']",15.0,2r4k/1bq3bp/p4pp1/4p3/8/1B2PP1P/PB3QP1/2R4K b - - 2 28,True,False,False,,,
+"['crushing', 'endgame', 'pin', 'short']",-87.0,5bk1/p4p2/1q2p3/1p2P1P1/1P1r2Q1/P7/5RP1/3R2K1 b - - 0 31,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'long', 'promotion']",8.0,8/8/8/2P5/1K6/2P2R1p/1P4k1/8 b - - 0 55,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-31.0,2k1r2b/1bpp3p/1p1P2pP/p4pB1/6n1/2P5/PP1N1PP1/4R1K1 w - - 0 21,True,True,False,"['middlegame', 'mateIn1', 'mate', 'hangingPiece', 'oneMove']",585.2066650390625,True
+"['crushing', 'long', 'middlegame']",-93.0,2r3k1/bp4bp/p1q3pB/3pP3/P2P4/5NN1/1n2Q1PP/2R3K1 b - - 10 29,True,False,False,,,
+"['advantage', 'bishopEndgame', 'endgame', 'short']",-46.0,8/2p5/p3k2b/Pp1p1p2/1P1Pp1P1/2P1P3/5K2/8 w - - 0 39,True,False,True,,,
+"['advantage', 'clearance', 'kingsideAttack', 'middlegame', 'short']",-100.0,4q1k1/3r2p1/p2Pr2p/1pp5/2p1R2b/P4P2/1P3P1P/3RQ1K1 w - - 0 28,True,False,False,,,
+"['advantage', 'discoveredAttack', 'long', 'middlegame']",75.0,2b4k/1p1r2bp/1p1r2p1/1Pp1p3/2P5/P2NPP1P/1B4P1/2RR2K1 w - - 3 25,True,False,False,,,
+"['crushing', 'opening', 'short']",-92.0,rnk1r3/ppp4b/2n3p1/3p4/8/1P1K4/P1PR1PPP/2bBQ2R w - - 8 26,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'pawnEndgame', 'promotion', 'quietMove', 'veryLong']",-28.0,8/8/1K6/7p/P7/6k1/8/8 b - - 1 45,True,False,False,,,
+"['crushing', 'deflection', 'interference', 'long', 'middlegame', 'sacrifice']",-85.0,1rk5/1rp5/pq4p1/2Np4/3P4/PB1N4/1PPR3P/2K4Q b - - 0 28,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",-54.0,7k/ppp3pp/4p3/4p3/4Pr2/2P4P/PP1R2PK/8 w - - 0 31,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'rookEndgame', 'short']",537.3240966796875,True
+"['advantage', 'deflection', 'fork', 'long', 'middlegame']",127.0,4kb1r/3q1bp1/1p2ppp1/1P6/r1Pp1NPP/8/P4K2/3R1R2 w k - 0 23,True,False,True,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'oneMove', 'opening']",116.0,r1bqnrk1/p1p2ppp/1bp4B/4P3/3Pp3/2P3Q1/PP4PP/RN1K3R w Q - 0 15,False,False,,,,
+"['crushing', 'middlegame', 'short']",-87.0,3r2k1/2p2pp1/3r1b1p/p4P2/7P/P5B1/2P2PP1/2KRRB2 b - - 0 23,True,False,False,,,
+"['endgame', 'master', 'mate', 'mateIn2', 'short']",47.0,5k2/2R2r1p/1p3p1P/3rn1p1/8/2R5/1PP5/1K6 w - - 1 41,True,False,True,,,
+"['advancedPawn', 'advantage', 'kingsideAttack', 'long', 'master', 'masterVsMaster', 'middlegame']",-15.0,7k/4qpp1/4r3/ppNp4/3P1P2/P1P3Nb/1P1Q3P/4R1K1 b - - 5 34,True,False,False,,,
+"['long', 'mate', 'mateIn3', 'middlegame']",34.0,3Rr1k1/6pp/4n1P1/qpp2r2/5P2/pPN5/P1P3P1/K2R4 w - - 0 37,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",14.0,rn4k1/p5pp/b1pr4/5p1P/Pp1P1Pq1/4Q3/1P2PP2/R1B1K2R w KQ - 0 18,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",648.1551513671875,True
+['endgame'],-17.0,7k/7p/2p5/p1p5/8/2NP4/2P1QK1P/q7 w - - 0 28,True,False,False,,,
+"['advantage', 'master', 'opening', 'short']",39.0,r3kb1r/ppq2bpp/2n2p2/8/2Np4/5N2/PPP1QPPP/R1B1R1K1 b kq - 3 15,True,False,False,,,
+"['advantage', 'deflection', 'opening', 'short']",68.0,r1k2b1r/pp2n2p/4qn2/2p1p1p1/2P1Pp2/P2Q1N2/1P4PP/R1B2RK1 w - - 0 19,True,False,False,,,
+"['crushing', 'endgame', 'hangingPiece', 'queenRookEndgame', 'short']",44.0,3rR1k1/p5p1/1p1p2q1/2pP3p/8/5rP1/P4P1P/R5K1 w - - 0 28,False,False,,,,
+"['mate', 'mateIn2', 'middlegame', 'short']",-2.0,6k1/r1r3bp/6p1/3p1bP1/1B3P1P/P3R3/1pP5/1K2R3 w - - 0 31,True,False,True,,,
+"['crushing', 'defensiveMove', 'endgame', 'master', 'short']",115.0,6k1/8/6r1/4pNr1/RpPpPp2/1P1P4/5R2/3K4 b - - 17 58,True,False,True,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",91.0,6k1/5ppp/p3r3/1p3p2/1P2bq2/2P2Nb1/P5P1/R2Q1KB1 w - - 0 26,True,True,False,"['middlegame', 'mateIn2', 'mate', 'kingsideAttack', 'short']",602.0936889648438,True
+"['bishopEndgame', 'clearance', 'crushing', 'endgame', 'long']",-119.0,8/8/1p2p3/pP1pPpk1/P2P1pPp/5P1P/8/1bKB4 b - - 1 63,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'master', 'pin', 'short']",113.0,6k1/4r1bp/5P2/p1p3B1/1p6/n7/7P/7K w - - 0 29,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'short']",119.0,1r6/5k2/4p3/1r2P3/7P/p2R1PP1/R1P1N3/K7 b - - 0 34,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",850.3009643554688,False
+"['advantage', 'defensiveMove', 'middlegame', 'short']",62.0,1r1r2k1/2p3pp/p4pq1/2P2b2/P2p4/1PRQ2P1/2B2P1K/5R2 w - - 6 32,True,False,False,,,
+"['endgame', 'fork', 'mate', 'mateIn2', 'short']",-31.0,2k1r3/pp2r1p1/2p5/6p1/1PR5/6Pp/P4P1P/3Q2KB b - - 0 30,True,True,False,"['endgame', 'mateIn2', 'mate', 'fork', 'short']",574.6427612304688,True
+"['advantage', 'defensiveMove', 'hangingPiece', 'long', 'middlegame']",-82.0,5r2/p2b1k2/1p2p3/n2p1q2/3P1P2/Q1P1P3/Pr1R4/1K6 w - - 1 36,True,False,False,,,
+"['crushing', 'master', 'middlegame', 'short']",11.0,4r1k1/p1q3rp/1p2bR2/2n1P2P/5Q2/P5p1/1PP3P1/1K3R2 w - - 8 37,True,True,False,"['middlegame', 'mateIn2', 'mate', 'kingsideAttack', 'short']",980.6385498046875,False
+"['advantage', 'endgame', 'fork', 'short']",19.0,3r2k1/5ppp/1pprp3/p3Q3/P7/1P3R2/6PP/B5K1 b - - 0 20,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'hangingPiece', 'short']",-76.0,8/1KQ1rk2/6p1/5p2/4pP2/4P1P1/8/2q5 w - - 24 77,True,False,False,,,
+"['advantage', 'fork', 'middlegame', 'short']",106.0,1qr3k1/5ppp/5b2/3p4/p2P4/2R1BN2/2b2PPP/4R1K1 w - - 0 28,True,False,False,,,
+"['crushing', 'endgame', 'long']",30.0,8/2kr4/1pQ1q1p1/4Pp1p/8/6P1/P6P/1KR2R2 b - - 0 27,True,False,False,,,
+"['crushing', 'endgame', 'short']",-58.0,8/1r3pk1/2p2bp1/7p/p4N2/3pP1P1/3R2BP/7K b - - 1 32,True,False,False,,,
+"['advantage', 'endgame', 'exposedKing', 'pin', 'veryLong']",-62.0,6k1/1p3r1p/p3p1pP/2q2pP1/b4P2/8/1PPR4/3R2K1 w - - 0 30,True,False,False,,,
+['endgame'],-103.0,1r6/1pQ3kp/p5p1/8/N7/1PP1p3/1P4PP/3r1R1K b - - 0 44,True,False,True,,,
+"['advantage', 'endgame', 'fork', 'short']",55.0,4r3/4r1k1/pp3n1p/2p2PpP/P1b3P1/8/1P2R3/4R1K1 w - - 0 49,True,False,False,,,
+"['clearance', 'crushing', 'middlegame', 'pin', 'veryLong']",30.0,2k3r1/1p1r1pq1/p6p/8/4R3/P1P5/1PB2RPP/3Q3K b - - 16 39,True,False,False,,,
+"['crushing', 'discoveredAttack', 'exposedKing', 'long', 'middlegame']",-42.0,2r1kn2/4br2/2p1p3/1b6/p1RP1P2/P3P1P1/1BRK3P/8 w - - 10 37,True,False,False,,,
+"['crushing', 'endgame', 'master', 'veryLong']",31.0,7k/pp4rp/1b6/5r2/1P6/P3R1P1/6BP/4R2K w - - 0 31,True,False,False,,,
+"['crushing', 'middlegame', 'short']",66.0,8/3rrkp1/1Bp5/PpN2p1p/1np2P2/4R1P1/2b2N1P/4R1K1 b - - 3 46,True,False,False,,,
+"['crushing', 'deflection', 'endgame', 'short']",-64.0,4k3/3rb1r1/8/p1p1P2R/PpP5/7P/6PK/8 w - - 0 39,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",-81.0,4rk2/Qpp1qpp1/3p4/2nP4/8/1PP4p/P1B4P/RN5K b - - 1 31,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'queenRookEndgame', 'short']",-109.0,4rk2/1p6/2p5/P2pr3/1P3P2/6p1/2K1R3/6Q1 b - - 0 45,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",5.0,r4q1k/p5pp/6r1/8/1P1P4/7P/3B1RP1/5RK1 w - - 0 33,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",599.9559936523438,True
+"['backRankMate', 'long', 'mate', 'mateIn3', 'middlegame']",-59.0,1k6/pppr3p/4R2R/bb1p4/3P4/1B3rq1/PPP5/1K6 w - - 0 35,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'short']",694.5254516601562,True
+"['advantage', 'deflection', 'long', 'middlegame']",-57.0,2k5/1qp1n1r1/1rb1Pp2/p2p1P2/P2P2R1/KPPR3p/8/6Q1 w - - 1 38,True,False,True,,,
+"['crushing', 'fork', 'middlegame', 'short']",121.0,r2q2k1/p1p1r1pp/2p2n2/2b3N1/8/2P5/PP3PPP/R1BNR1K1 w - - 0 16,True,False,True,,,
+"['advantage', 'endgame', 'master', 'short']",-9.0,4r2k/4q3/p3r1p1/2p5/1pPp1P2/1P3P2/P4Q2/1K5R b - - 0 42,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'master', 'short']",47.0,7r/7P/8/7R/1b1B2P1/1N1k4/1P1p4/3K4 b - - 0 44,True,False,True,,,
+"['mate', 'mateIn2', 'middlegame', 'short']",-77.0,3r1rk1/p4ppp/1p6/1R2p3/2Q1Pn2/5P2/B1P3PP/3R3K b - - 0 30,True,True,False,"['middlegame', 'mateIn2', 'mate', 'hangingPiece', 'kingsideAttack', 'short']",813.1719970703125,True
+"['advantage', 'discoveredAttack', 'middlegame', 'short']",-91.0,2r2nk1/2q3bp/pp3pp1/3p4/2QP1PP1/4P3/PP2B2P/2R3K1 w - - 0 23,True,False,False,,,
+"['endgame', 'master', 'mate', 'mateIn2', 'short']",3.0,4r1k1/2p2p1p/p1b2PpB/8/3q4/1P5P/P3RPP1/4R1K1 w - - 0 34,True,True,False,"['endgame', 'mateIn2', 'mate', 'short']",535.0056762695312,True
+"['advantage', 'endgame', 'short']",2.0,4rk2/p3rppp/1p6/3B4/1P6/R2p4/2pB2PP/2R3K1 b - - 1 26,True,False,True,,,
+"['crushing', 'endgame', 'master', 'pin', 'short']",71.0,3r1k2/p3n1pp/1p2p3/3rNpP1/1P1RKP2/1B2P3/P6P/8 w - - 0 28,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",114.0,8/1p3k2/p4b2/4q3/5p2/7Q/PP3RPP/4R2K b - - 0 32,True,True,False,"['endgame', 'mateIn2', 'mate', 'fork', 'hangingPiece', 'short']",679.042236328125,True
+"['endgame', 'mate', 'mateIn1', 'oneMove', 'queenEndgame']",-109.0,7k/2p3pp/ppq5/8/1P6/P3P2P/6P1/3Q2K1 w - - 0 29,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'queenEndgame', 'short']",612.79248046875,True
+"['crushing', 'long', 'middlegame']",-89.0,1k1r4/3q1p1p/pr5n/1p2P1p1/3Q4/4N3/4BPPP/2RR2K1 b - - 0 33,True,False,False,,,
+"['crushing', 'deflection', 'endgame', 'knightEndgame', 'short']",-15.0,8/8/7p/1p6/2p4P/nkP5/3KN3/8 w - - 11 51,True,False,False,,,
+"['advancedPawn', 'bishopEndgame', 'crushing', 'defensiveMove', 'endgame', 'veryLong']",48.0,8/8/1k5p/2p3p1/K1Pp2P1/5B2/8/8 b - - 0 59,True,False,False,,,
+"['advantage', 'endgame', 'short']",-53.0,1r3k2/p3qpb1/3p4/3P2pp/B2p4/2RP2P1/P4PP1/2R3K1 w - - 0 23,True,False,False,,,
+"['advantage', 'middlegame', 'short']",-127.0,2r2bk1/2rn2p1/5p1p/3p4/3P4/5N1P/Q4PPB/2R3K1 b - - 0 27,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'hangingPiece', 'short']",584.754638671875,True
+"['kingsideAttack', 'master', 'mate', 'mateIn2', 'middlegame', 'short']",-52.0,r2r2k1/pp2Qn1p/6p1/5pN1/P3n3/8/1P4PP/R1B3K1 b - - 3 21,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",678.3613891601562,False
+"['crushing', 'endgame', 'fork', 'rookEndgame', 'short']",-68.0,k7/4r2p/5r2/1K6/p1PB4/8/5P1P/8 w - - 0 42,True,False,False,,,
+"['crushing', 'endgame', 'long']",-50.0,4rrk1/5R1p/p3p1pP/8/p5P1/1q2P3/5QK1/5R2 w - - 1 40,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'master', 'rookEndgame', 'veryLong']",70.0,8/1K4k1/r7/6pp/1R6/1P3P2/8/8 w - - 0 56,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'sacrifice', 'short']",81.0,5rk1/6p1/p3pr2/2p1Q1N1/2P3Pn/7p/P6P/3R3K b - - 0 36,True,True,False,"['endgame', 'mateIn2', 'mate', 'short']",712.8447875976562,True
+"['advantage', 'long', 'middlegame']",74.0,4r2k/pp3bp1/8/5pP1/1r5p/8/3R1B2/K2B3R w - - 8 79,True,False,False,,,
+"['advantage', 'discoveredAttack', 'endgame', 'short']",117.0,2r2k2/2p3p1/2p1rp1p/8/p1Q5/P1B5/2P2PPP/R4K2 b - - 1 36,True,False,True,,,
+"['advantage', 'endgame', 'fork', 'long', 'sacrifice']",-100.0,4r1k1/5pp1/p1b3q1/1p4P1/2pp1P2/P3R3/1P2Q1PK/4B3 w - - 5 33,True,True,False,"['endgame', 'advantage', 'short']",914.2343139648438,False
+"['advantage', 'discoveredAttack', 'middlegame', 'pin', 'short']",-90.0,2r3k1/1b1r2p1/p3q2p/5p2/P1B2P2/4b1PP/4Q1PB/7K w - - 0 30,True,False,False,,,
+"['crushing', 'endgame', 'long', 'rookEndgame']",34.0,4RR2/7k/8/3P4/P1P4p/1r4pP/6P1/6K1 b - - 0 53,True,False,False,,,
+"['endgame', 'hangingPiece', 'mate', 'mateIn1', 'oneMove', 'queensideAttack']",-109.0,2krQ3/ppp5/4P1p1/1P5p/n4p2/7P/2P2PKB/4q3 w - - 4 42,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-105.0,rn2r1k1/ppp2ppp/8/3P3q/2PP4/4Q3/P5PP/R3R1K1 w - - 0 24,True,True,False,"['middlegame', 'mateIn1', 'mate', 'hangingPiece', 'kingsideAttack', 'oneMove']",522.0399780273438,True
+"['crushing', 'discoveredAttack', 'long', 'master', 'middlegame']",50.0,3r2k1/4bpp1/p4n2/1p1B4/6b1/3RP1Pp/PP2NP1P/3R1K2 w - - 4 24,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'hangingPiece', 'short']",-24.0,8/8/8/2P4k/p6q/Pr3p1Q/1P5K/2r5 w - - 7 60,True,False,False,,,
+"['advantage', 'master', 'middlegame', 'short']",60.0,6k1/p7/1p1b1Pp1/n1pP4/2P1R3/PnBKP3/7r/2R5 w - - 5 37,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'short']",-109.0,1q5k/pp4p1/1n4Pr/8/7P/P7/1P2RP2/4R1K1 w - - 1 38,True,True,False,"['endgame', 'mateIn2', 'mate', 'fork', 'short']",514.7203979492188,True
+"['advantage', 'long', 'middlegame']",7.0,4qrk1/2p2qpp/p1p1pr2/3p4/3PP3/2N1Q1P1/PPP4P/4RR1K b - - 1 20,True,False,False,,,
+"['mate', 'mateIn1', 'oneMove', 'opening']",63.0,r4k1r/1b1p1ppp/p1n5/1pPq1n2/1p6/5N2/PPP1QPPP/RN2R1K1 w - - 6 15,True,False,True,,,
+"['crushing', 'endgame', 'hangingPiece', 'master', 'short']",92.0,8/4rP2/3kP3/p2p4/3P2B1/1K2p3/2p3PP/Qq6 w - - 4 49,True,False,False,,,
+"['advantage', 'opening', 'short']",51.0,r1q1k2r/pp3ppp/3bpn2/1b1p4/8/2Q1P3/PP3PPP/RNR1K3 w Qkq - 0 13,True,False,False,,,
+"['advantage', 'endgame', 'rookEndgame', 'short', 'skewer']",66.0,7r/R1p5/1p1k3p/8/7p/3r4/5PP1/5RK1 w - - 0 30,True,False,True,,,
+"['master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-49.0,r1b2k1r/3p1ppp/1pp2q2/3p2b1/8/PN1B4/2P1QPPP/4R1K1 w - - 1 20,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",673.2638549804688,True
+"['endgame', 'mate', 'mateIn2', 'short']",0.0,4k1r1/3n1ppp/3Pp3/8/3r4/B7/5PPP/2R2R1K w - - 0 29,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-70.0,1r3r1k/pb4p1/1pp1p3/3pp2q/3P1P2/2P1P2R/PP1B2PP/R5K1 w - - 0 19,True,False,False,,,
+"['backRankMate', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-84.0,4r1k1/1p3ppp/2p2n2/p1Pp4/1n1P4/1P3B2/P4PPP/R1N1Q1K1 b - - 0 22,True,True,False,"['middlegame', 'mateIn1', 'mate', 'backRankMate', 'hangingPiece', 'oneMove']",667.1779174804688,True
+"['crushing', 'long', 'middlegame']",14.0,3r2k1/1p1q1pp1/n3pb1p/8/Np2Q3/1P3NP1/P2R1P1P/6K1 b - - 2 26,True,False,False,,,
+"['crushing', 'endgame', 'exposedKing', 'fork', 'long', 'sacrifice']",-121.0,2k5/2r3p1/1qN1p2p/R4p1P/2pP4/2P3P1/P1K5/8 w - - 0 36,True,False,True,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",-55.0,r6k/p2pqp1p/2b2r2/2p5/1nP2P1P/N3p1QK/PP2B3/6Rn w - - 0 28,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",837.3776245117188,False
+"['crushing', 'endgame', 'long', 'rookEndgame']",49.0,1r1r2k1/p4pp1/1p6/1P2p3/4P1p1/2PR4/P4P1P/3R2K1 w - - 0 25,True,True,False,"['endgame', 'crushing', 'rookEndgame', 'short']",478.7851867675781,True
+"['advantage', 'middlegame', 'short']",99.0,4r1k1/2p1qpp1/1p1p3p/1Qp3N1/3P2P1/P1P1RN2/1P3P1P/2K5 b - - 0 18,True,False,False,,,
+"['advantage', 'deflection', 'middlegame', 'short']",60.0,2k4r/pb1p1Rb1/2p1p1p1/2B1P3/PPr3P1/8/6K1/5R2 w - - 8 29,True,False,False,,,
+"['advantage', 'endgame', 'short', 'skewer']",17.0,4k1r1/pp3p1p/2RPp3/1r3p2/1P1b4/6P1/P4P1P/2R3K1 w - - 0 21,True,False,False,,,
+"['attraction', 'crushing', 'long', 'middlegame', 'sacrifice']",107.0,5k2/2q1rp2/1pB5/1Pb5/3R1pp1/8/1P3PP1/2BR1K2 w - - 0 29,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",89.0,1k1r2r1/pp5q/3b4/8/3P4/2P1PQ2/P3BKP1/8 w - - 0 33,True,False,True,,,
+"['crushing', 'long', 'master', 'middlegame']",37.0,2r3k1/1pq2pbp/3np3/1Prp1p2/5P1p/3BPN2/4QBPP/2R3KR b - - 4 24,True,False,False,,,
+"['crushing', 'deflection', 'long', 'middlegame']",-79.0,2r4k/2r4p/4p1p1/NP3p2/P4P1n/2RRP3/7P/2B4K b - - 0 36,True,False,True,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove', 'queenEndgame']",-119.0,8/k2q4/1p6/p4p2/2P5/7Q/1P5P/7K b - - 0 42,True,False,False,,,
+"['advantage', 'fork', 'middlegame', 'short']",45.0,1k3r2/bp4q1/2b1p2p/3pP3/3P3N/2P4P/5RP1/5RK1 w - - 0 32,True,False,False,,,
+"['endgame', 'master', 'mate', 'mateIn2', 'short']",40.0,n1k5/1p1r3p/pP3p1B/6p1/6P1/2Pp4/1K5P/4R3 w - - 2 35,True,False,False,,,
+"['bishopEndgame', 'crushing', 'defensiveMove', 'endgame', 'long', 'quietMove']",125.0,8/7K/6p1/8/6k1/3p4/3B4/8 b - - 0 53,True,True,True,"['endgame', 'advantage', 'advancedPawn', 'quietMove', 'bishopEndgame', 'veryLong']",1788.97998046875,False
+"['advantage', 'defensiveMove', 'middlegame', 'short']",70.0,4Rrkr/1p4pp/p1pp4/2q2b2/2P5/2NP4/P4PPP/3QR2K b - - 0 24,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn1', 'oneMove']",-31.0,4r1k1/1pr2ppp/p7/P1Bp1b1n/3P4/2P2P2/5P1P/4R1K1 w - - 0 29,True,True,False,"['endgame', 'mateIn1', 'mate', 'backRankMate', 'hangingPiece', 'oneMove']",586.7791748046875,True
+"['bishopEndgame', 'crushing', 'endgame', 'long']",53.0,8/8/8/5k1p/2bP1pp1/2K2P1P/3B2P1/8 b - - 0 44,True,False,True,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",-56.0,k7/1r3p1p/p7/P7/8/2P1P3/3R1PPP/6K1 b - - 2 42,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'rookEndgame', 'short']",524.7572021484375,True
+"['crushing', 'fork', 'long', 'middlegame', 'trappedPiece']",-55.0,7r/1p1b2kq/2p1p1r1/1p1pPp2/pP1P1P2/P3P1Q1/6R1/6RK w - - 0 36,True,False,True,,,
+"['crushing', 'fork', 'middlegame', 'short']",-120.0,2k4r/pp1n1q2/2nr3p/2p1p3/2P1P2P/PP1Q1P2/3K4/3R2NR w - - 0 24,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-15.0,5k1r/pp3ppq/2n5/6B1/2P2P2/6p1/PPQ4P/3R1BNK b - - 0 26,True,False,False,,,
+"['backRankMate', 'mate', 'mateIn2', 'middlegame', 'short']",104.0,2kr3r/ppp1Rppp/1n6/8/5B2/2P5/PP3PPP/RN4K1 b - - 0 15,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'short']",639.5874633789062,True
+"['advantage', 'endgame', 'queensideAttack', 'veryLong']",110.0,1k6/p3R3/Bppr1r2/3p4/2PP2p1/3PKbPp/P6P/8 w - - 1 32,True,False,False,,,
+['middlegame'],125.0,3r4/4kppp/1pN1p1n1/3q4/1P2p3/6B1/1PR2PPP/Q5K1 b - - 0 30,True,False,True,,,
+"['advantage', 'defensiveMove', 'endgame', 'veryLong']",-49.0,6k1/5prp/1p2p1p1/8/q2Q1PP1/2P4P/Pr6/K2R4 w - - 0 31,True,False,False,,,
+"['deflection', 'mate', 'mateIn2', 'middlegame', 'short']",95.0,6k1/5p1p/p1b1pPpb/4P3/2PR2P1/rr6/4K2P/1B1R4 w - - 3 28,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'long']",119.0,2r4k/1r1p1ppp/p7/2q5/1n4P1/1PP2P2/PKQ4P/2R5 w - - 0 31,True,False,True,,,
+"['crushing', 'intermezzo', 'middlegame', 'short']",-45.0,6k1/p2r1ppp/bp1qnb2/3Qp3/4P3/P4P2/1PP2RPP/3R2K1 w - - 0 21,True,False,False,,,
+['endgame'],-1.0,1k1r4/ppb2p2/8/Q7/8/7P/P4PP1/6K1 b - - 0 34,True,False,False,,,
+"['crushing', 'deflection', 'discoveredAttack', 'endgame', 'exposedKing', 'long', 'rookEndgame']",-78.0,8/6pp/r3kr2/8/2P1p1P1/4P3/3K3P/R7 w - - 1 35,True,False,False,,,
+"['crushing', 'fork', 'long', 'middlegame']",-80.0,r3r1k1/1b1q3p/p1n1Rpp1/1p1p2p1/2pP4/8/PPPNQPPP/4R1K1 w - - 0 18,True,False,False,,,
+"['advancedPawn', 'advantage', 'attraction', 'deflection', 'discoveredAttack', 'middlegame', 'pin', 'sacrifice', 'veryLong']",78.0,2k1r3/p1p2r2/1pP1P1p1/8/2Qp1P1p/2K5/PB3q2/2R4B w - - 5 38,True,False,False,,,
+"['advantage', 'defensiveMove', 'endgame', 'short']",-62.0,8/1p1Q2k1/3b1p1p/p2Pr3/2BP4/6PP/8/7K b - - 2 30,True,False,False,,,
+"['crushing', 'endgame', 'short']",103.0,r4rk1/p5qp/1pp2p2/4p3/3P2RP/3P2Q1/1PP5/7K w - - 0 31,True,False,False,,,
+"['crushing', 'endgame', 'rookEndgame', 'short']",-74.0,7k/3r3p/p4prp/2p5/2P1pP2/1P1R4/6PP/3R2K1 w - - 0 34,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'long', 'rookEndgame']",-103.0,8/K4kp1/3p1p1p/2p1pP1P/p3P1R1/1rPP1P2/rP4R1/8 w - - 0 29,True,False,False,,,
+"['crushing', 'deflection', 'endgame', 'interference', 'long']",-105.0,1R6/3b1r1p/2p1p1pP/p2kP3/P2P2P1/2P1K3/3R4/8 w - - 0 31,True,False,False,,,
+"['crushing', 'endgame', 'short']",40.0,3r4/5kp1/3r3p/4R3/5n2/P1B2P1P/1P6/5K2 b - - 2 41,True,False,False,,,
+"['advantage', 'discoveredAttack', 'kingsideAttack', 'long', 'middlegame']",30.0,r1b2r1k/pp1p2pp/3P4/q2BB2n/4p3/2P5/P1P2P1P/R4R1K w - - 0 20,True,False,False,,,
+"['attraction', 'crushing', 'kingsideAttack', 'middlegame', 'short']",52.0,4r3/1b3p1k/p2Brp1p/2P3p1/2B5/6PR/P4P1P/4R1K1 b - - 4 28,True,False,False,,,
+"['endgame', 'master', 'mate', 'mateIn1', 'oneMove', 'rookEndgame']",118.0,4r2k/6p1/6P1/1p1p3p/p7/P7/1P4P1/4R1K1 w - - 0 39,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'rookEndgame', 'oneMove']",642.677978515625,True
+"['advancedPawn', 'crushing', 'endgame', 'long', 'promotion']",-106.0,3r1qK1/8/2k4P/1p6/3p4/8/5Q1P/8 w - - 0 38,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",78.0,8/2r3k1/3b4/3p4/Pp1PpPpP/8/2Q3P1/K4R2 b - - 0 37,True,False,False,,,
+"['crushing', 'middlegame', 'short']",51.0,3q2k1/p4pp1/4b2p/n1R2P2/P2r2B1/4Q2P/5PP1/R5K1 b - - 0 29,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'short']",9.0,1k2r3/pp1n1rpB/2pq4/1P6/5p2/8/3B1P1P/2R1R1K1 w - - 0 35,True,False,False,,,
+"['advantage', 'endgame', 'master', 'short']",-99.0,4r1k1/p6p/2b3p1/1pNpR3/5nP1/1PP2r1P/P4P2/4R2K w - - 0 31,True,False,False,,,
+"['mate', 'mateIn1', 'oneMove', 'opening']",33.0,r1b3k1/p1q3pp/1pn2b1n/2pn4/5p2/2P2N1P/PP1P2PK/R1BBQR2 w - - 0 19,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",701.1597900390625,True
+"['deflection', 'endgame', 'mate', 'mateIn2', 'queensideAttack', 'short']",-98.0,1kb5/ppp5/3p1p1b/3P1Q2/P1P2Ppp/1P4PP/3q4/R5K1 w - - 0 29,True,False,True,,,
+"['crushing', 'discoveredAttack', 'endgame', 'short']",48.0,3r3k/pp4rp/1bp1p2p/4P3/2PN1P2/1P2P2P/1PK5/3R4 w - - 1 28,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",-62.0,1k1q4/pp5p/2B2r2/1Ppp4/3p1P2/P4P2/1KrR3P/3R4 w - - 0 28,True,False,False,,,
+"['advantage', 'middlegame', 'pin', 'short']",-68.0,5k2/pp3krp/1b2b1n1/3p1p2/8/BN6/PP3qPP/3R1QK1 w - - 0 27,False,False,,,,
+"['crushing', 'endgame', 'long']",-92.0,3k2r1/2pn4/3p4/6b1/3P1p2/2P1R3/r4P1P/3KR3 w - - 2 34,True,False,False,,,
+"['advancedPawn', 'advantage', 'endgame', 'fork', 'long', 'master', 'promotion']",85.0,6q1/8/2P2R2/1K4k1/8/6n1/6p1/8 w - - 6 72,True,False,True,,,
+"['crushing', 'fork', 'opening', 'short']",56.0,r1b1q1k1/1p1p1ppp/p1pB1n2/1B6/8/8/PPPN1PPP/RN1KR3 w - - 0 13,True,False,False,,,
+"['crushing', 'discoveredAttack', 'endgame', 'long', 'queenEndgame']",-13.0,8/p4qp1/1p2k3/1P1p1p1p/P1pPpP1P/2K1P1P1/8/Q7 w - - 2 35,True,False,False,,,
+"['advantage', 'middlegame', 'short']",-17.0,2k4r/ppp5/2n1q2p/3RP1p1/2P5/P7/1K1QB1r1/4R3 w - - 0 34,True,False,False,,,
+"['advantage', 'long', 'middlegame']",96.0,1r4k1/4Rp2/1q1p2p1/1r1P3p/1P6/2b2P2/2P1Q1P1/1K2R3 w - - 1 36,True,False,False,,,
+"['advantage', 'hangingPiece', 'long', 'middlegame']",12.0,r7/p1p1nk2/1p3b1p/3r1PpP/2N1Q3/2P2n2/PP6/3RK3 w - - 2 34,True,False,False,,,
+"['crushing', 'endgame', 'pin', 'short']",113.0,8/1pr5/5P1p/1p6/3B4/8/1p4PP/1R4K1 b - - 0 39,False,False,,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",59.0,r1b2rk1/pp4pp/1qp5/8/2nP4/8/PPP2QPP/R1B2RK1 w - - 1 16,True,True,False,"['middlegame', 'mateIn1', 'mate', 'kingsideAttack', 'oneMove']",550.5748291015625,True
+"['crushing', 'middlegame', 'short']",25.0,4r1k1/4rp2/1bRp2p1/p2P3p/P7/2N3PB/3B3P/7K b - - 1 29,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'quietMove', 'veryLong']",-9.0,5K2/1r6/1Q6/8/2P4k/8/5n2/8 b - - 1 68,True,False,False,,,
+"['advancedPawn', 'attackingF2F7', 'attraction', 'crushing', 'fork', 'opening', 'sacrifice', 'veryLong']",23.0,4kbnr/pbq3pp/1pq1R3/2pp3P/3p2P1/P2P4/1PPB1PB1/RN1QK3 b Qk - 0 15,True,False,False,,,
+"['kingsideAttack', 'long', 'mate', 'mateIn3', 'middlegame']",-103.0,6k1/pp2rppp/q3br2/4p2P/2p1P3/4K1P1/PP1RN1B1/3R4 w - - 7 27,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'short']",589.6407470703125,False
+"['advantage', 'long', 'middlegame']",-37.0,4r2k/2p3pp/1pnbqn2/p2p1p2/P7/4Q1P1/1PP2P1P/2B1RRK1 w - - 5 24,True,True,False,"['middlegame', 'advantage', 'short']",969.0260009765625,True
+"['crushing', 'endgame', 'long']",75.0,7k/3r2bp/p7/1p6/8/1P4P1/1P1rRB1P/6K1 w - - 4 33,True,False,False,,,
+"['crushing', 'intermezzo', 'master', 'middlegame', 'short']",9.0,6k1/1r3p1p/pp2rPpP/2q5/2pR4/2Pn4/PP6/R3QK2 w - - 0 44,True,False,False,,,
+"['advantage', 'middlegame', 'short']",30.0,1r4k1/3r1p2/n2P3p/p1pn4/P7/1P6/1B3PPP/1K2R3 w - - 1 30,True,False,True,,,
+"['advantage', 'endgame', 'fork', 'long']",92.0,2k1r3/1p4p1/1p3p1p/p1pPrP2/P1P5/2P4P/5RP1/Q6K b - - 0 32,True,True,False,"['endgame', 'advantage', 'fork', 'queenRookEndgame', 'short']",695.4444580078125,True
+"['crushing', 'deflection', 'kingsideAttack', 'opening', 'pin', 'short']",2.0,rn4kr/pp3qpp/1bp1b3/8/P7/6P1/1PPPQPP1/RNB3K1 w - - 0 15,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-21.0,r1b2k2/pp2nppp/4pq2/1Bb5/1n6/5N2/PP1Q1PPP/R3K2R w KQ - 0 13,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",674.4041748046875,True
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",111.0,rn1qk2r/p4p1p/4pnp1/1bP5/1pP1P3/5N1P/Pb1Q1PP1/2KR1B1R w kq - 0 16,True,False,False,,,
+"['advantage', 'discoveredAttack', 'endgame', 'veryLong']",113.0,3r3k/p5pb/1ppr1p1p/8/1PnNP3/2P3P1/P4P2/3RR1K1 w - - 1 27,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'knightEndgame', 'master', 'short']",-118.0,8/8/PKn5/3k4/8/8/8/8 w - - 0 55,True,False,True,,,
+"['advantage', 'long', 'middlegame', 'pin']",48.0,3r4/pp1q1pk1/4p1n1/4PB1Q/P1r5/2b2N2/5PPP/2RR2K1 b - - 0 23,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'short']",90.0,r5k1/p4ppp/2r5/3NPPN1/6n1/P7/1R2R1PP/6K1 b - - 0 25,True,True,False,"['middlegame', 'mateIn2', 'mate', 'short']",691.9716796875,True
+"['endgame', 'mate', 'mateIn1', 'oneMove']",6.0,5r2/p2k1r2/2pPp3/1p1p3Q/3P4/2P4P/PP1R4/4KR2 b - - 0 39,True,False,False,,,
+"['crushing', 'long', 'middlegame']",-38.0,3r3k/b5pb/pqp1B2p/4p3/1P2P3/P1PQP2P/6P1/3R2K1 w - - 3 26,True,True,False,"['middlegame', 'crushing', 'kingsideAttack', 'short']",554.03515625,True
+"['crushing', 'endgame', 'exposedKing', 'long', 'master', 'skewer']",81.0,1n6/2r1r3/4k1p1/3pP3/3P1p2/pPP2P2/P7/2K1Q3 b - - 10 38,True,False,False,,,
+"['advantage', 'endgame', 'long']",-14.0,2r3k1/ppb2qpp/2p1b3/8/3P4/2P5/PP2QPPP/4R1K1 w - - 0 29,True,False,False,,,
+"['backRankMate', 'hangingPiece', 'master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-68.0,r2bn1k1/5ppp/p1rp4/1p1P4/5P2/P1N3P1/1P1nR1KP/8 w - - 0 27,True,True,False,"['middlegame', 'mateIn1', 'mate', 'backRankMate', 'hangingPiece', 'oneMove']",596.6195678710938,True
+"['endgame', 'mate', 'mateIn1', 'oneMove', 'rookEndgame']",-87.0,6k1/1p4p1/p1r3P1/8/1p6/P1P3p1/1P4P1/3R3K w - - 0 37,True,True,False,"['endgame', 'mateIn1', 'mate', 'rookEndgame', 'oneMove']",507.5311279296875,True
+"['endgame', 'master', 'mate', 'mateIn1', 'oneMove', 'rookEndgame']",-26.0,5k2/1pr2pp1/4p2p/7P/p5P1/2P2P2/1PK5/3R4 w - - 1 30,True,False,False,,,
+"['crushing', 'intermezzo', 'middlegame', 'short']",-60.0,8/3rk2p/1q3bpP/1bp5/1p4P1/5P2/PP1R1N2/2KQ4 w - - 0 42,True,False,False,,,
+"['crushing', 'endgame', 'hangingPiece', 'long']",-34.0,4n2k/6pp/3p4/1p1P3P/1Pp2P2/4rR1K/q2Q4/8 w - - 6 40,True,False,False,,,
+['endgame'],83.0,5rk1/p4q2/2Np2p1/1p2p2p/8/1P2P1R1/1P4PP/5QK1 b - - 0 24,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",730.0357666015625,True
+"['crushing', 'deflection', 'middlegame', 'queensideAttack', 'short']",-75.0,2k3r1/pp1r2pp/4R3/2b2p2/b2p4/P4N2/P1P2PPP/1NK4R w - - 0 20,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'long', 'pawnEndgame']",-6.0,8/8/8/p1kp2p1/P4pP1/4KP2/8/8 w - - 0 44,True,False,False,,,
+"['advantage', 'defensiveMove', 'endgame', 'long', 'pawnEndgame']",27.0,8/2p5/1k2p3/1p1pP1p1/pP1P2P1/P1P5/6P1/1K6 w - - 3 33,True,False,False,,,
+"['attraction', 'crushing', 'endgame', 'fork', 'long', 'master', 'sacrifice']",-58.0,8/3r1kp1/3q4/p1pN4/P3QPK1/2P1P2R/8/8 b - - 0 42,True,False,False,,,
+"['advantage', 'deflection', 'middlegame', 'pin', 'short']",107.0,2k3r1/pp1r1p1p/4p3/8/Pb1N1P2/3QB2P/2P1R1P1/3K4 b - - 0 34,True,False,True,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",-77.0,6k1/5ppp/p7/1p6/1B1R4/4rP2/P1q3PP/3R2K1 w - - 0 25,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove', 'pin']",88.0,1n4k1/2r2ppp/4b3/4P1P1/7b/2N2P2/PP6/2KR2Nq w - - 0 25,True,True,False,"['middlegame', 'mateIn1', 'mate', 'backRankMate', 'oneMove']",610.1839599609375,True
+"['advantage', 'fork', 'master', 'masterVsMaster', 'middlegame', 'short']",44.0,5rk1/1B4pp/1b6/5r2/pPpPR3/P1P5/1B4PP/2Q2R1K b - - 0 23,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'fork', 'short']",786.0103759765625,False
+"['master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",49.0,2r3k1/5p1p/1br3p1/p7/P2P4/1B1b1QP1/1P5P/K1R1B2R b - - 0 30,True,False,False,,,
+"['crushing', 'kingsideAttack', 'long', 'opening', 'pin', 'sacrifice', 'trappedPiece']",51.0,rnbq1r1k/ppp3p1/5pBp/3p4/3P3B/2P2QP1/PP3PP1/RNK3NR b - - 1 16,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-108.0,2r5/5k1p/p2B4/5p2/6p1/1P1pRp2/P2P1P1P/6KN b - - 2 26,True,True,False,"['endgame', 'mateIn2', 'mate', 'short']",742.3095703125,True
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-76.0,5rk1/3b2pp/2p1p3/2B1p2q/3P4/8/P5PP/5Q1K w - - 0 24,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",568.3248291015625,True
+"['crushing', 'endgame', 'pawnEndgame', 'short', 'zugzwang']",75.0,8/3k3p/1p4p1/pPp1PpP1/P1K2P2/6P1/8/8 w - - 7 37,True,False,True,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",117.0,2r4k/7p/b1p1p1p1/3p3Q/1p1P1P2/4P2R/4qB2/b5K1 w - - 0 36,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",849.008056640625,True
+"['advantage', 'endgame', 'exposedKing', 'fork', 'long']",20.0,7k/pbp4q/np3r2/P7/1P1R2p1/2P1P1Pp/5P1P/1K1R4 w - - 0 37,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",85.0,6k1/1p1r3p/4r1p1/6PP/pp1RP3/8/5K1N/8 w - - 0 37,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",84.0,7k/1pp3p1/6Pp/p7/P2P1r2/1BP2b2/7P/4R1K1 w - - 2 24,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",93.0,2r5/6kp/pN3bp1/3R4/8/1P6/P3RPPP/6K1 b - - 1 26,True,True,False,"['endgame', 'mateIn3', 'mate', 'backRankMate', 'long']",578.4214477539062,True
+"['advantage', 'capturingDefender', 'long', 'middlegame']",-118.0,6k1/1p1b1ppp/p4n2/8/1q2r1P1/7P/P1P1RPQ1/4RK2 w - - 0 30,True,True,False,"['middlegame', 'advantage', 'long']",1393.2216796875,True
+"['crushing', 'defensiveMove', 'endgame', 'short']",84.0,7R/ppp5/1k1p4/3P4/2PNP3/1P1Kq3/7p/8 w - - 4 46,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",-18.0,2k5/3R4/ppp5/4r3/2P3Pp/3Q1p1P/PP3b2/7K b - - 0 35,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",127.0,6k1/5ppp/p3p3/3nP3/P1r2PP1/1R4B1/7P/3b2K1 w - - 0 33,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",577.1927490234375,True
+"['crushing', 'discoveredAttack', 'endgame', 'master', 'queensideAttack', 'short']",15.0,2kr4/1p2b2p/2b2pp1/3Rp3/4P3/2P1KP1P/1P4P1/3R4 w - - 3 26,True,False,False,,,
+['opening'],-60.0,r3kb1r/1pqnnppp/2pp4/p3p3/3PP3/P1P2Q1P/BP3PP1/RNB2RK1 w kq - 1 11,True,False,False,,,
+"['endgame', 'master']",48.0,4k3/3p1p2/1p2pP2/5p2/r4P1R/8/7K/8 w - - 4 44,True,True,False,"['endgame', 'mateIn1', 'mate', 'rookEndgame', 'oneMove']",557.1222534179688,False
+"['advantage', 'middlegame', 'short']",15.0,6k1/1p1r2bp/2pBR1p1/P2p4/1Pb4r/4R2P/6BP/7K w - - 6 35,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",-28.0,2kr3r/p1p1Rppp/2p5/8/8/2P5/PP3PPP/RN4K1 b - - 0 15,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",562.351806640625,True
+"['advancedPawn', 'advantage', 'clearance', 'kingsideAttack', 'middlegame', 'sacrifice', 'veryLong']",112.0,4r2k/4qr1p/1pp1p1p1/5p2/QPP5/R3PpP1/1B2RP1P/6K1 b - - 3 25,True,False,False,,,
+"['advantage', 'middlegame', 'veryLong']",48.0,4r1k1/pp3p1p/2q3p1/5rPn/4RP2/2Bp3P/PP3R2/4Q1K1 w - - 1 25,True,True,False,"['middlegame', 'mateIn2', 'mate', 'kingsideAttack', 'short']",678.5799560546875,False
+"['advantage', 'long', 'middlegame']",109.0,2r2bk1/p1q2ppp/8/3pP3/1P6/PNQp2B1/5PPP/K1R5 b - - 0 28,True,False,False,,,
+"['bishopEndgame', 'crushing', 'discoveredAttack', 'endgame', 'short']",119.0,8/1kp5/1pbp4/8/P1P1p3/5B2/5PP1/6K1 w - - 0 37,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",104.0,r1bR1nk1/ppp4p/4rppB/n7/8/2P4P/P1P2PP1/2K2B1R w - - 0 19,True,False,False,,,
+"['crushing', 'endgame', 'pawnEndgame', 'quietMove', 'short']",115.0,8/8/8/7p/5P1k/8/4K3/8 w - - 0 58,True,True,False,"['endgame', 'advantage', 'defensiveMove', 'zugzwang', 'pawnEndgame', 'short']",1772.1981201171875,True
+"['advantage', 'endgame', 'short']",-71.0,k7/pp6/4pR2/1qb1n3/n3PQ2/4P1P1/3K4/8 w - - 0 32,True,True,False,"['endgame', 'mateIn3', 'mate', 'backRankMate', 'sacrifice', 'long']",937.7855834960938,False
+"['crushing', 'endgame', 'rookEndgame', 'short']",76.0,3r1k2/p4p2/7p/2pr4/4PP2/8/PP4PP/R2R1K2 b - - 0 24,True,True,False,"['endgame', 'crushing', 'rookEndgame', 'short']",631.574951171875,True
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-18.0,3r1k2/5p2/p3pP1P/4Pb1p/5P2/8/PP6/2KR4 w - - 0 31,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'oneMove']",533.8367919921875,True
+"['crushing', 'endgame', 'short']",-116.0,4r3/4qpb1/p2p3k/2pP1Ppp/2p3P1/2P4P/PP3QB1/4RK2 b - - 11 32,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",101.0,4r1k1/p1b1qpp1/Np4np/2p4Q/2Pp4/1P3N1P/P4PP1/R1B3K1 b - - 5 30,True,True,False,"['middlegame', 'mateIn2', 'mate', 'sacrifice', 'kingsideAttack', 'short']",812.0294189453125,True
+"['advantage', 'hangingPiece', 'opening', 'short']",-61.0,r1bq2k1/1p3ppB/p1n2n2/2b5/5N2/5N2/PPP2PPP/R1BQ2K1 b - - 0 13,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'short']",24.0,3r2k1/pp1q3p/6p1/2Q1RnN1/5R2/P5Pb/1P2P2P/6K1 b - - 0 31,True,True,True,"['middlegame', 'mateIn2', 'mate', 'short']",1050.0205078125,True
+"['advantage', 'master', 'masterVsMaster', 'middlegame', 'veryLong']",-39.0,7k/p1b2r1p/5Qp1/4r3/1P6/P1BB4/2P2P2/5RK1 b - - 0 30,True,False,False,,,
+"['advantage', 'kingsideAttack', 'middlegame', 'sacrifice', 'short']",-41.0,7k/1pp2rp1/r2p1b1p/Pp1p1b2/1P1P2P1/2P4P/4R3/4RN1K w - - 0 31,True,False,True,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-55.0,r2q2k1/ppp2ppp/2b5/2Q5/5P2/2P1Pp2/PP3N1P/R1B3K1 b - - 0 23,True,False,False,,,
+"['deflection', 'kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",99.0,r1b3k1/pbqp1p1p/1p3Pp1/8/8/8/P1P1QPPP/R1B3K1 w - - 0 19,True,False,False,,,
+"['crushing', 'discoveredAttack', 'endgame', 'master', 'short']",-9.0,7k/8/p2b4/3r2pp/4qp2/1P1R1R1K/6Q1/8 w - - 0 37,True,False,True,,,
+['endgame'],17.0,4r1k1/pp1n1ppp/1qp2p2/8/3P4/P4N1P/1PP1QPP1/R5K1 w - - 0 19,True,False,False,,,
+"['advantage', 'clearance', 'long', 'middlegame']",-55.0,6k1/pr3pbp/5np1/8/1qPpN3/3P4/P3QPPP/4R1K1 w - - 0 24,True,False,True,,,
+"['crushing', 'endgame', 'rookEndgame', 'short']",59.0,1r6/1r6/6k1/3p2p1/2pP1pP1/2P5/2P4P/RR2p1K1 b - - 1 37,False,False,,,,
+"['advantage', 'middlegame', 'pin', 'short']",-115.0,1r2r1k1/2p3pp/4bp2/p7/B4q2/5N1P/Q2R1KP1/8 w - - 0 34,True,False,True,,,
+"['advantage', 'long', 'middlegame', 'quietMove']",-18.0,1Q2b2k/1p3ppp/p1r1p3/P7/1nP1P3/b3R1P1/5PBP/4N1K1 b - - 0 30,True,False,True,,,
+"['advantage', 'long', 'middlegame']",45.0,2r3k1/p1r1n2p/1b4p1/1Q3p2/3p4/3N2P1/3NRPBP/6K1 b - - 0 33,True,False,True,,,
+"['advantage', 'fork', 'long', 'middlegame']",108.0,4rrk1/pp4pp/2pp2q1/6p1/P2PR3/7b/1PP1QP1P/2K1R3 w - - 0 24,True,False,False,,,
+"['crushing', 'middlegame', 'short']",101.0,5k2/3rnp1p/1p2r1p1/pq2P3/1P4P1/P6P/3QRP2/1K1R4 w - - 0 33,True,False,False,,,
+"['endgame', 'kingsideAttack', 'mate', 'mateIn2', 'short']",-127.0,6k1/1pp2ppp/pn6/6P1/1P2q2P/P2Rp1Pr/2P1N3/3R2K1 w - - 0 28,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn1', 'oneMove', 'rookEndgame']",77.0,6k1/p5pp/5r2/8/P2R4/1P6/2P3PP/5R1K b - - 0 35,True,True,False,"['endgame', 'mateIn1', 'mate', 'backRankMate', 'hangingPiece', 'rookEndgame', 'oneMove']",606.2013549804688,True
+"['mate', 'mateIn1', 'oneMove', 'opening']",12.0,2b1rk1r/p1pn1ppp/2pq4/2b5/8/8/PPPPQPPP/RNB1R1K1 w - - 0 12,True,True,False,"['opening', 'mateIn1', 'mate', 'oneMove']",492.8914794921875,True
+"['crushing', 'endgame', 'short']",-109.0,r7/k1p3p1/q4p1p/3pp3/Q7/2P1P1B1/5PPP/1RK5 b - - 0 33,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-127.0,5k2/5p2/2p1bPp1/3p2Kn/1r6/8/R3R3/8 w - - 2 43,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-117.0,r3r1k1/1Q3p1p/p1p1q1p1/2B5/8/2P5/PP1R1PPP/4R1K1 b - - 0 29,True,True,False,"['middlegame', 'mateIn1', 'mate', 'hangingPiece', 'kingsideAttack', 'oneMove']",718.7764892578125,True
+"['advancedPawn', 'advantage', 'long', 'middlegame', 'pin']",114.0,2r5/pp3pq1/6k1/3p4/7r/BPP5/P1QN1p2/R1K3R1 b - - 1 31,True,False,False,,,
+"['crushing', 'endgame', 'long']",0.0,k3r3/1p3q2/p1b5/6p1/3B3p/1P2Q3/6P1/4R1K1 w - - 4 37,True,False,False,,,
+"['advantage', 'discoveredAttack', 'opening', 'short']",-106.0,rnb1r1k1/pppp3p/6p1/b5q1/8/1P2R3/P1PP1P1P/R1BQK2R w KQ - 0 12,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",88.0,r4k1r/ppb3p1/2pp4/n7/3P1P1q/7P/PPP1Q1P1/R3R1K1 w - - 0 19,True,False,False,,,
+"['attraction', 'crushing', 'kingsideAttack', 'long', 'middlegame', 'sacrifice']",-9.0,2rr2k1/4np1p/q3p1p1/p3P3/Pp2P3/1P1RQ3/3RN1PP/6NK w - - 7 29,True,False,False,,,
+"['blindSwineMate', 'master', 'masterVsMaster', 'mate', 'mateIn1', 'middlegame', 'oneMove']",56.0,2k5/1pPrnp1p/r3p1p1/2q5/8/p2R2PP/2P2PB1/3R2K1 w - - 0 35,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'exposedKing', 'long']",-100.0,6k1/5qb1/3pP1p1/pbpP1n1p/1p2QP2/7P/PP2R1P1/6K1 w - - 0 37,True,False,False,,,
+"['crushing', 'opening', 'short']",7.0,r2krb2/1bqp1Ppp/ppn2n2/2p5/8/1B3N2/PPPPQPPP/R1B1R1K1 w - - 0 12,True,False,False,,,
+"['crushing', 'endgame', 'master', 'rookEndgame', 'short']",-122.0,8/p1r1rk1p/3r4/3p1p2/4r3/6P1/7P/2RR2K1 w - - 0 37,True,False,True,,,
+"['endgame', 'long', 'mate', 'mateIn3']",-3.0,7k/p5rp/2p5/2b5/4q3/1P1R4/P5P1/3Q3K w - - 0 37,True,False,False,,,
+"['crushing', 'deflection', 'long', 'middlegame']",115.0,6kq/5p1r/Rp2p1p1/3pP1Pr/2P2PQ1/1P3NK1/5BP1/8 b - - 0 39,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'long', 'quietMove']",-7.0,7k/1r2q2p/1P4p1/8/5P2/P5P1/5P1P/K7 w - - 0 44,True,False,False,,,
+"['advantage', 'middlegame', 'veryLong']",68.0,4k3/1p2np1p/p4pp1/8/1Pbr1b2/P7/2P1RPPP/1K2R3 w - - 0 22,True,False,False,,,
+"['attraction', 'kingsideAttack', 'long', 'mate', 'mateIn3', 'middlegame', 'sacrifice']",-29.0,r2q4/1p4k1/1bp2p1p/p1P1P1p1/2R5/QB3N2/P4PPP/6K1 b - - 0 24,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'queensideAttack', 'sacrifice', 'short']",-13.0,2k5/2qp3r/1p2p3/R3P2r/1PP1bp2/6Pp/5Q2/R5K1 w - - 2 34,True,False,False,,,
+"['advantage', 'capturingDefender', 'endgame', 'pin', 'veryLong']",-101.0,2r3k1/2p3pp/1p1pbp2/8/2q5/P7/2P3PP/1K1BR3 w - - 0 30,True,False,True,,,
+"['advancedPawn', 'advantage', 'bishopEndgame', 'endgame', 'promotion', 'veryLong']",60.0,8/p7/4pK2/k1P4P/4p1P1/4Pb2/8/8 w - - 3 37,True,False,False,,,
+"['bishopEndgame', 'crushing', 'defensiveMove', 'endgame', 'short']",20.0,8/4k1p1/2b2pPp/3p1P1P/2pP2K1/2P5/8/8 w - - 61 58,True,False,False,,,
+"['advantage', 'middlegame', 'short']",19.0,r2r1b2/k5p1/p2q1p2/1p2p3/4BP1P/1NP2Q2/PPR5/1K1R4 b - - 3 32,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",101.0,8/p2k1pp1/1p5p/3pr3/8/P1P1rP2/1P1R1RPP/6K1 b - - 1 25,True,False,False,,,
+"['crushing', 'endgame', 'veryLong']",-96.0,3r2k1/p2q1pp1/4p3/2p5/4Q3/3r4/PP3PPP/1K1RR3 b - - 1 30,True,False,False,,,
+"['crushing', 'endgame', 'pin', 'short']",-10.0,8/p2r1p1k/1p6/P1p5/4p2P/8/5RP1/3Q2K1 b - - 0 37,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",-112.0,6k1/5p1p/2r2PpP/8/8/1p6/1P1R4/1K6 w - - 0 44,True,True,False,"['endgame', 'mateIn1', 'mate', 'rookEndgame', 'oneMove']",502.8691711425781,True
+"['crushing', 'endgame', 'master', 'short']",-116.0,8/7b/1pkr3P/p3pP2/1pP1P3/1P6/PK1R4/8 w - - 0 50,True,False,False,,,
+"['crushing', 'endgame', 'long', 'quietMove']",30.0,8/1r6/1K6/8/P7/5k2/8/8 w - - 0 59,True,False,False,,,
+"['advantage', 'endgame', 'master', 'short']",-48.0,4k1r1/1p1b1p2/2pp4/3Pp3/2p3R1/2K1P3/P3BP2/8 w - - 1 32,True,False,False,,,
+"['attackingF2F7', 'endgame', 'mate', 'mateIn1', 'oneMove']",26.0,5r1k/ppp2q1p/6p1/4p3/P5P1/1P4P1/1BPPNQ2/R3KR2 b Q - 2 19,True,False,False,,,
+"['advancedPawn', 'mate', 'mateIn1', 'middlegame', 'oneMove', 'pin', 'promotion']",43.0,1Q1kn3/4p2b/1pp1P3/p2pBP2/3P2n1/1NP4q/PP6/KB3q2 w - - 11 36,False,False,,,,
+"['clearance', 'crushing', 'defensiveMove', 'long', 'middlegame']",75.0,4r3/p1k1q3/1ppn3p/2n2Pp1/3Q4/2P2pP1/PPB4P/R1B4K b - - 3 26,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",103.0,3r2nk/7p/2R5/1p3pp1/4p3/2B1P3/4NPPP/3R1K2 b - - 0 31,True,False,True,,,
+"['advantage', 'long', 'middlegame']",-27.0,1r4k1/5qp1/2b1p2p/P7/5np1/2P3P1/1P1R1P1P/R2Q2K1 w - - 0 26,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",28.0,6k1/p4pp1/1r3n1p/8/8/P3P1P1/5P2/1B1R2K1 w - - 0 30,True,True,False,"['endgame', 'mateIn2', 'mate', 'short']",533.0346069335938,True
+"['advantage', 'clearance', 'middlegame', 'veryLong']",-42.0,2rr2k1/3Rq2p/1pp1P1p1/p1b1Pp2/8/2PRP3/3Q1P1P/2K5 w - - 0 28,True,False,False,,,
+"['crushing', 'long', 'middlegame']",104.0,4r3/3nrk2/1qb2p1p/pp1p1Pp1/2pP2P1/P3R1BP/1PP1Q3/2K1R3 w - - 0 25,True,True,False,"['middlegame', 'crushing', 'short']",943.0844116210938,True
+"['attraction', 'endgame', 'mate', 'mateIn4', 'sacrifice', 'veryLong']",-110.0,7k/p3qppp/3R4/2p5/P3r3/5RP1/1P4QP/7K b - - 1 39,True,False,True,,,
+"['advantage', 'opening', 'veryLong']",-47.0,2k2knr/ppq1nr2/2pbb2p/2p5/8/6P1/PPPP1Q1P/R1B2RKN w - - 0 19,False,False,,,,
+"['crushing', 'endgame', 'fork', 'short']",-64.0,2r5/8/p1r1pk1p/8/3pBP2/P7/6PP/1Q5K b - - 0 39,True,False,False,,,
+"['crushing', 'endgame', 'long', 'pin']",54.0,2k3r1/1rq2p2/p2p1p2/3P1P2/1Rp1P1Pp/1Q5P/8/KR6 w - - 0 38,True,True,False,"['endgame', 'advantage', 'long']",1883.2064208984375,False
+"['crushing', 'defensiveMove', 'endgame', 'master', 'rookEndgame', 'short']",-34.0,6R1/8/pr4R1/8/PK3Pp1/6k1/8/8 w - - 29 68,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",-112.0,1k2r3/ppp2p2/3p4/1P1Pr3/5P2/6p1/P1Q1R1K1/8 b - - 0 40,True,True,False,"['endgame', 'crushing', 'fork', 'queenRookEndgame', 'short']",904.0287475585938,True
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",-28.0,r2q4/1b3Qpk/p3p2p/1p2R3/8/2P5/PP3PPP/R1B3K1 b - - 0 19,True,True,False,"['middlegame', 'mateIn2', 'mate', 'kingsideAttack', 'short']",624.5480346679688,True
+"['crushing', 'discoveredAttack', 'middlegame', 'short', 'skewer']",26.0,2r3k1/p4p1p/4p3/8/2r1P1p1/8/1P3B1P/1BQ2KNR b - - 4 34,True,False,False,,,
+"['advantage', 'endgame', 'hangingPiece', 'master', 'short']",-74.0,2k5/1pp3p1/p4q2/3p4/4P3/2NP2P1/PPP2Q1P/7K b - - 0 29,True,False,False,,,
+"['advantage', 'long', 'middlegame']",124.0,2r2nk1/1pq1p3/5b1p/3N1npP/1Q1P4/1N3P1R/PP3BP1/K1R5 b - - 0 28,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'short']",795.0775146484375,False
+"['endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",-47.0,1k6/1p5p/1P6/3r3p/K7/8/5R1P/8 w - - 5 33,True,True,False,"['endgame', 'mateIn2', 'mate', 'rookEndgame', 'short']",556.8985595703125,True
+"['crushing', 'endgame', 'long', 'skewer']",70.0,2k2r2/1p1n1p2/2ppr3/1p2p1p1/1P2P2p/R1PP1P1P/4BPK1/R7 w - - 1 27,True,False,False,,,
+"['kingsideAttack', 'master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-75.0,4r2k/ppbn3p/6p1/2P5/6PP/1BN1Q3/PPP2P1q/1K6 w - - 0 25,True,False,False,,,
+"['crushing', 'endgame', 'short']",-85.0,r7/3q1k1p/p1p1prp1/3pP3/3P2PP/2P2Q2/PP6/3R2K1 w - - 0 36,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'short']",14.0,8/8/8/6pP/6P1/4r3/1k2K3/8 w - - 0 58,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-74.0,r5k1/1bN3pp/pp1B4/2pP4/q7/8/6PP/5QK1 w - - 0 30,True,False,False,,,
+"['advantage', 'master', 'middlegame', 'short']",82.0,r2qk2r/1p3ppp/p3pnb1/2b5/8/2P2NN1/PP4PP/R1BQK2R w KQkq - 0 16,True,False,False,,,
+"['crushing', 'middlegame', 'short', 'trappedPiece']",73.0,5rk1/1p6/p2p2pB/3P4/P2b3q/7P/1P2QrK1/2R2R2 w - - 0 29,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'short']",-6.0,3r4/p7/3r4/2p5/k1b5/3R1P2/5KPP/2B5 w - - 1 42,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'short']",-99.0,7k/7p/2Rq3n/p3p3/1P1pP3/P2P4/5rPP/2K5 w - - 0 31,True,False,False,,,
+"['crushing', 'endgame', 'long', 'pin']",-11.0,5kq1/ppp1nrp1/8/2b5/1P6/P7/3RPP1P/3R2K1 w - - 0 20,True,True,False,"['endgame', 'mateIn1', 'mate', 'backRankMate', 'oneMove']",609.380859375,False
+"['advantage', 'intermezzo', 'middlegame', 'short']",-25.0,6k1/ppp2rpp/4q3/4R3/2P3b1/4n3/PPP4P/R1KBB3 w - - 0 20,True,False,False,,,
+"['attraction', 'long', 'mate', 'mateIn3', 'middlegame', 'sacrifice']",-30.0,6k1/1p3ppp/1N2pn2/1q6/3rPP2/r1R2P1P/5PK1/2R5 w - - 0 31,True,False,True,,,
+"['attraction', 'kingsideAttack', 'long', 'mate', 'mateIn3', 'middlegame']",106.0,6k1/pp3ppp/qnp3b1/4r3/PP6/2P5/3R1PPP/3Q2K1 w - - 0 24,True,False,False,,,
+"['advantage', 'long', 'middlegame']",-59.0,6r1/pp3pkq/6pb/3PB3/2P1NP1R/P1Q2bP1/1P6/4R2K b - - 1 39,False,False,,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-80.0,4r1kr/2p2p1p/p2p1Pp1/7q/3P4/P7/1P2R1PP/7K w - - 0 36,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'queenRookEndgame', 'oneMove']",628.7808227539062,False
+"['crushing', 'endgame', 'short']",105.0,3r2k1/1p2qpp1/p6p/8/3RP3/2N5/PPK3PP/3R4 w - - 0 28,True,False,False,,,
+"['advantage', 'middlegame', 'veryLong']",19.0,2r2k2/pp3pp1/2nn1q1p/3r4/3P4/4RNP1/PP2QP1P/4R1K1 w - - 4 22,True,False,True,,,
+"['crushing', 'defensiveMove', 'endgame', 'knightEndgame', 'master', 'quietMove', 'short']",50.0,8/p2N1K2/p1p3p1/6P1/5k2/8/8/8 w - - 2 49,True,False,False,,,
+"['advancedPawn', 'advantage', 'discoveredAttack', 'endgame', 'master', 'short']",74.0,6k1/p1n1qr1p/r1p2P2/P2p4/3P4/8/1PP3PP/R4RK1 w - - 0 26,True,False,False,,,
+"['crushing', 'middlegame', 'veryLong']",-40.0,7k/1p4pp/3p2n1/3P4/1pQ1N3/4P2N/1qPK2rb/8 w - - 0 29,True,False,True,,,
+"['endgame', 'fork', 'hangingPiece', 'mate', 'mateIn2', 'short']",-53.0,7k/p6p/1p4p1/3p4/8/3B4/P4RPP/q3Q2K b - - 0 32,True,False,False,,,
+"['crushing', 'fork', 'middlegame', 'pin', 'veryLong']",-57.0,2r1k3/1bqpr3/1p2pp2/pP5p/P2P1P1p/1QR5/2R3PP/B6K w - - 0 30,True,False,False,,,
+"['crushing', 'middlegame', 'short']",-38.0,2rr2k1/3q3p/p5p1/1p2p3/4R3/2P5/PPQ2BPP/3R2K1 b - - 0 25,True,True,False,"['middlegame', 'advantage', 'short']",798.1453857421875,True
+"['advantage', 'long', 'middlegame']",-39.0,r4k2/pp1b1pp1/1bp2q1p/8/1P2R3/P3RBP1/2P2P1P/2B3K1 w - - 5 24,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove', 'smotheredMate']",104.0,5rrk/p5bp/1qpp4/4pPN1/1P6/2PP4/P2R4/K7 w - - 0 33,True,False,True,,,
+"['deflection', 'mate', 'mateIn2', 'middlegame', 'pin', 'short']",14.0,RRbk4/2r2pb1/4p1p1/3pPnP1/3P1P2/2BK4/3N2r1/8 w - - 12 38,True,True,False,"['middlegame', 'advantage', 'attraction', 'pin', 'veryLong']",1774.2041015625,False
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-75.0,k2b2nr/pp4pp/5p2/q1p5/2b1P3/2N1P1B1/PP3PPP/1R1RK3 w - - 0 15,True,False,False,,,
+"['crushing', 'endgame', 'long', 'master', 'masterVsMaster', 'rookEndgame']",-3.0,2k5/3r3R/2r4P/4P3/5p2/1p6/1P4P1/1K6 w - - 0 54,True,False,False,,,
+"['advantage', 'discoveredAttack', 'endgame', 'fork', 'long']",69.0,7k/1b3qp1/p3p1r1/4p3/1PB4p/2P2R1P/5RK1/8 w - - 0 31,True,False,False,,,
+"['crushing', 'middlegame', 'pin', 'short']",-92.0,k2r1R2/1p1r4/p3p3/2P4P/b1pB1Q2/2Pp4/P4RP1/1q4K1 w - - 0 33,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",72.0,r3q3/2p3kp/3b4/6p1/2BQ2P1/PNN2R1P/1PP2P2/2K5 b - - 0 27,True,False,False,,,
+"['advantage', 'fork', 'middlegame', 'short']",51.0,3r2k1/ppq2ppp/n6r/5b2/3R4/2P1P3/PP3PPP/3QR1K1 w - - 0 18,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'short']",717.9633178710938,False
+"['endgame', 'exposedKing', 'long', 'mate', 'mateIn3', 'rookEndgame']",101.0,2r3k1/2r2p1p/7P/6P1/5P2/1p1R4/1R6/K7 b - - 0 43,True,False,False,,,
+"['crushing', 'endgame', 'short']",-80.0,5rk1/1p3qpp/1p6/3P4/2Q2r2/1P2R3/P5PP/4R2K b - - 0 30,True,False,False,,,
+"['crushing', 'long', 'middlegame']",-72.0,2r4k/p4ppp/2q2n2/3p4/1p1PpN2/1P2P1P1/PPrN1P1P/Q1R3K1 b - - 1 25,True,False,False,,,
+"['crushing', 'fork', 'middlegame', 'short']",-7.0,2b1r1k1/p5rp/2pq2pP/2n2pP1/8/2PP4/P1P1R3/R2BQ1K1 w - - 0 26,True,False,False,,,
+"['attraction', 'crushing', 'exposedKing', 'fork', 'long', 'middlegame', 'sacrifice']",87.0,3k4/1Bqrrp2/2P2b1p/p1P5/3R1P2/P2R3P/1P3PK1/3R4 w - - 1 36,True,False,False,,,
+"['crushing', 'middlegame', 'pin', 'short']",124.0,2r3k1/4nppp/1p2p1n1/3pP3/1B1N4/P4N2/Q2R1PPP/2q1K2R b K - 5 22,False,False,,,,
+"['advantage', 'endgame', 'fork', 'short']",-40.0,1k1r4/2q3p1/1pp5/1n6/4P1p1/1K1R4/PP3P1P/3R4 w - - 1 33,True,True,False,"['endgame', 'advantage', 'short']",722.874755859375,True
+"['endgame', 'mate', 'mateIn2', 'pin', 'short']",-43.0,1r1k4/4p2p/3p2p1/4prP1/p7/8/2R1Q1BP/1Q2K3 b - - 2 32,True,False,False,,,
+"['backRankMate', 'endgame', 'long', 'mate', 'mateIn3', 'sacrifice']",-63.0,2r5/1p4pp/1pr2p2/5k2/8/1R2PNP1/1B1R1PP1/6K1 b - - 4 32,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'long']",62.0,4r1k1/p5p1/1p2r3/7P/5Pp1/2PQ4/PP4PN/2K5 b - - 2 38,True,False,True,,,
+"['attackingF2F7', 'crushing', 'long', 'middlegame', 'skewer']",-50.0,7q/pp2bk2/2p2pp1/3pp3/1P4Q1/2PPN1r1/PB2PP2/R3K3 b Q - 5 21,True,False,False,,,
+"['advantage', 'middlegame', 'short']",79.0,6k1/pp2b1p1/3pp3/4p1rp/2P1Pr1n/1PB3P1/P5RK/4R3 w - - 0 30,True,False,False,,,
+"['crushing', 'middlegame', 'short']",-104.0,2r3k1/Bpq1n1pp/3rp3/5p2/8/5N1P/1Q2PPBP/2R3K1 b - - 0 22,True,True,False,"['middlegame', 'crushing', 'short']",845.461181640625,True
+"['crushing', 'endgame', 'long', 'quietMove']",-53.0,8/8/8/1p6/1P6/P5k1/6p1/1r2R1NK b - - 3 57,False,False,,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",102.0,r1b3k1/pp3r1p/1bp2PpB/1n1p4/3P4/2P1R1N1/6PP/R5K1 w - - 2 24,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'queensideAttack', 'short']",-103.0,2k2b1r/pp3p2/2p1p2p/5n2/4r2p/2P5/PPPR1BP1/2KR4 w - - 0 24,True,False,False,,,
+"['attraction', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",-13.0,4k3/4pp2/pp4p1/5bPp/1P5r/1nP1P3/1N1RKP1r/3R4 w - - 0 35,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",666.0452270507812,False
+"['advancedPawn', 'advantage', 'defensiveMove', 'endgame', 'long', 'rookEndgame']",-89.0,8/8/8/8/8/p2p2P1/kr1R1R1P/2K5 b - - 0 65,True,False,True,,,
+"['crushing', 'long', 'middlegame']",28.0,6k1/R1N2bqp/1p5n/1P6/3R2p1/4r3/2B4P/4N1K1 w - - 1 31,True,False,True,,,
+"['mate', 'mateIn2', 'middlegame', 'short']",-109.0,6k1/pppr1p1r/6pB/2pb4/5P1q/4R1NP/PP4P1/6K1 w - - 0 32,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",663.83154296875,False
+"['crushing', 'endgame', 'exposedKing', 'long']",-74.0,5k2/3r1bpp/pp3p2/2p5/2Pp1PPP/N2P4/PP2R3/7K w - - 0 29,True,False,False,,,
+"['mate', 'mateIn1', 'oneMove', 'opening']",116.0,r2q1rk1/ppbn1pp1/2p1pn1p/P7/3P4/2NQPN2/1PB2PPP/R1B2RK1 w - - 1 13,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'long']",-84.0,8/8/8/1p6/1Pp5/5P1k/6Q1/6K1 b - - 0 55,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",7.0,3b2k1/pp4pp/1q2b3/1Qp1p3/8/P1P1NnP1/1B3P1P/5K2 w - - 0 29,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",642.2505493164062,True
+"['advantage', 'middlegame', 'short']",124.0,1r4k1/pP2rppp/4b3/8/2nR4/b7/P2N1PPP/3R2K1 w - - 0 25,True,False,False,,,
+"['advantage', 'fork', 'middlegame', 'short']",113.0,r2qrk2/pp3p1B/n1p4P/6pb/8/PP2R3/1BPP1PPb/4R3 w - - 0 21,False,False,,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",118.0,r4nk1/1p1qb1pp/p2ppr2/2p5/4P1Q1/2P3R1/PP4PP/RNB3K1 w - - 0 17,True,True,False,"['middlegame', 'mateIn1', 'mate', 'kingsideAttack', 'oneMove']",679.0679931640625,True
+"['advantage', 'long', 'middlegame']",-126.0,7k/pp1b2p1/4rr1p/3q1p2/3P4/3NQ1P1/1P2R2P/4R1K1 w - - 6 33,True,False,False,,,
+"['advantage', 'middlegame', 'pin', 'short']",-41.0,3k4/p2r1p2/4p3/r1p1nP1p/2Q4P/1p2q3/1PPRNb2/2KR1B2 w - - 1 44,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",-33.0,8/5p2/5q1k/2p3r1/6Pp/2P3KP/3Q1R2/8 w - - 0 57,True,False,False,,,
+"['crushing', 'endgame', 'veryLong']",100.0,k4r2/5bp1/1pp1p2p/p1q1P2P/P4QP1/8/1PP5/1K3R2 w - - 0 40,True,False,True,,,
+"['clearance', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",72.0,4k3/3rb2r/p3p1P1/2pq4/2bp1R2/P4R2/1PP2Q2/4K3 w - - 5 39,True,False,False,,,
+"['crushing', 'discoveredAttack', 'kingsideAttack', 'master', 'middlegame', 'sacrifice', 'short']",-80.0,6k1/2q1brpp/2p1bn2/1p1p4/rPpP1P2/P1P1QPNp/1B5P/R3R1K1 w - - 0 25,True,False,False,,,
+"['crushing', 'endgame', 'master', 'short']",54.0,2k2r2/p1n2rpp/1p6/4P3/P1R5/1P2B1P1/8/2R3K1 b - - 2 25,True,False,True,,,
+"['advantage', 'endgame', 'hangingPiece', 'short']",-106.0,8/2b2ppp/2k1p3/3p4/1q6/1Pr5/P1QN2PP/2R4K w - - 6 25,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'short']",-25.0,8/2r3k1/7p/1p1Np3/4P2p/3R1P2/PP4P1/K1R3K1 b - - 0 36,False,False,,,,
+"['crushing', 'endgame', 'master', 'rookEndgame', 'short', 'skewer']",-61.0,8/2r2k2/4p3/8/P5P1/8/5P2/2R4K b - - 0 52,True,False,False,,,
+"['crushing', 'endgame', 'long']",-102.0,1r6/8/R1n1Rp2/2p1p1k1/2P1P3/1rPB2Pp/7P/1R4K1 b - - 1 38,True,False,False,,,
+"['advantage', 'attraction', 'clearance', 'long', 'middlegame']",47.0,3r1rk1/3q1p1p/p2BpbpP/2p5/2b2P2/4P1P1/P2R4/3R2K1 w - - 0 26,True,False,False,,,
+"['crushing', 'endgame', 'master', 'short']",-89.0,4r3/2knrp1p/p5pP/P1pP2P1/1p6/3B4/1PP5/2K1R1R1 b - - 2 34,True,True,False,"['endgame', 'advantage', 'queensideAttack', 'short']",795.165283203125,False
+"['advantage', 'defensiveMove', 'long', 'middlegame', 'sacrifice']",-65.0,7q/2Qbk2r/2p2p2/p3p3/4P1p1/Pr1PRpP1/1P5P/3N3K b - - 0 32,True,False,True,,,
+"['advancedPawn', 'crushing', 'endgame', 'pawnEndgame', 'short']",95.0,8/4k3/2p3K1/1p3P2/8/8/8/8 w - - 0 57,True,False,False,,,
+"['capturingDefender', 'crushing', 'endgame', 'intermezzo', 'master', 'short']",-111.0,8/8/p2Rb1k1/3r4/4K3/Pp2P1p1/6P1/8 w - - 0 43,True,True,False,"['endgame', 'crushing', 'hangingPiece', 'veryLong']",1748.2091064453125,False
+"['crushing', 'fork', 'opening', 'short']",-15.0,rnb1r1k1/ppb2ppp/2p5/3q4/3P4/2P2N2/PP2QPPP/R1B1R1K1 w - - 0 14,True,True,False,"['opening', 'mateIn1', 'mate', 'hangingPiece', 'kingsideAttack', 'oneMove']",626.2171630859375,False
+"['advantage', 'middlegame', 'short']",80.0,r5k1/1p3pp1/p3p2p/nqp5/2b2P2/P1PRP3/1P1RN1PP/1BK5 w - - 3 22,True,False,False,,,
+"['crushing', 'middlegame', 'short']",-106.0,5k2/p6b/2p1rp1P/6p1/4rp2/2R2N1R/5PPB/6K1 b - - 0 43,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'sacrifice', 'short']",775.8856811523438,True
+"['advantage', 'endgame', 'fork', 'long']",60.0,k7/p3q1Pp/1b5B/8/P2p2r1/2p5/2P2rPP/4R1K1 w - - 0 32,True,False,True,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",108.0,6k1/1p1q2b1/8/p1B2p1P/2Q2p2/2P2P2/PP6/1K6 b - - 1 34,True,False,False,,,
+"['attraction', 'endgame', 'mate', 'mateIn4', 'veryLong']",-44.0,7k/pp3r1p/2r1pp1P/5b2/2P5/1P1R2P1/PKPR1P2/8 w - - 1 31,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",107.0,r3r1k1/pp3p1p/2q2bpB/8/2p5/P3Q3/5PPP/1R2R1K1 w - - 0 22,True,False,False,,,
+"['crushing', 'long', 'middlegame']",-124.0,3r2k1/p1p2qpp/1p2r1n1/1P6/P3P3/2P1BP2/3Q2PP/3R2K1 w - - 0 29,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'master', 'short']",-92.0,8/2r2pkp/6p1/1Pr5/1R6/N2p4/1P1R2PP/1K6 b - - 0 38,True,False,True,,,
+"['advantage', 'deflection', 'middlegame', 'veryLong']",-31.0,2r2k2/1b2nqbp/p3p1p1/1p4P1/3r1P2/PB1p4/1PP1Q1P1/3NR1K1 w - - 0 29,True,False,True,,,
+"['attraction', 'kingsideAttack', 'long', 'mate', 'mateIn3', 'middlegame', 'sacrifice']",-13.0,7k/pp2p1rp/3p1Npb/3P1b2/qPQ1pP2/P1K1P1B1/2R3PP/8 w - - 3 29,True,False,False,,,
+"['crushing', 'endgame', 'hangingPiece', 'knightEndgame', 'master', 'short']",-53.0,8/2N5/4n3/4p3/4Pn1k/4KP2/8/8 w - - 0 60,True,False,True,,,
+"['crushing', 'defensiveMove', 'long', 'middlegame']",106.0,2r3k1/2q1b1pp/4pp2/3p4/3P1P2/P2PPN2/1R1Q2PP/2R3K1 b - - 0 24,True,False,False,,,
+"['crushing', 'long', 'middlegame']",43.0,2r3k1/ppr2ppp/4bn2/1Pqp4/Q2P4/6P1/P2N1PBP/R1R3K1 b - - 0 24,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'long']",58.0,4r3/4q3/P1p1r2k/1pPp1ppp/8/6P1/2Q2PP1/R3R1K1 b - - 0 36,True,True,False,"['endgame', 'advantage', 'short']",705.966064453125,False
+"['mate', 'mateIn2', 'middlegame', 'short']",-90.0,rn4k1/p4rpp/8/6Bn/4P3/2P5/P2R1PPP/2K4R w - - 0 19,True,False,False,,,
+"['advantage', 'fork', 'long', 'middlegame']",72.0,7k/1p4pp/p1pq1r2/1p1b2r1/5R2/P6B/P5PP/5RK1 w - - 0 29,True,False,True,,,
+"['advantage', 'discoveredAttack', 'long', 'middlegame', 'sacrifice']",33.0,6k1/2rr2Pp/1p2p2b/5p2/3P1n2/P1B2P2/1PR2P1P/2R2K2 w - - 5 38,True,False,False,,,
+"['advancedPawn', 'clearance', 'crushing', 'defensiveMove', 'endgame', 'short']",106.0,8/3k1p2/3P4/4P2p/5rp1/1KB5/B7/8 w - - 2 49,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",15.0,rk1r4/p6p/Bpb3p1/5p1q/8/5P2/PP4PP/2KR4 w - - 0 29,True,False,False,,,
+"['crushing', 'fork', 'middlegame', 'short']",-59.0,2k3q1/pppbn3/3p1r2/8/3P4/2P2R2/PP4PN/5RQK w - - 0 28,True,False,False,,,
+"['crushing', 'endgame', 'rookEndgame', 'short', 'skewer']",-19.0,4k3/ppp5/3pp3/1P6/r7/8/P2R1PP1/5K2 b - - 0 30,True,False,False,,,
+"['crushing', 'endgame', 'rookEndgame', 'short', 'skewer']",-118.0,2r3k1/2r2pp1/8/8/1P5P/8/1P6/1KR4R b - - 2 40,True,False,False,,,
+"['crushing', 'endgame', 'short']",76.0,5r1k/pp3Rpp/2bq4/P1p5/2Pp4/1B1P4/1P4PP/5QK1 w - - 1 26,True,True,False,"['endgame', 'mateIn2', 'mate', 'kingsideAttack', 'short']",488.06707763671875,True
+"['crushing', 'endgame', 'long']",8.0,4r2k/2p2qpp/p1b5/1p6/5P2/P6P/1P2Q1P1/4R1K1 w - - 0 31,True,False,True,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-55.0,5k2/5pp1/2Bp1K1p/3PpP2/R1P3PP/2r5/8/2bK4 w - - 3 40,False,False,,,,
+"['mate', 'mateIn1', 'oneMove', 'opening']",-85.0,2k2b1r/ppp2ppp/3q4/3n1b2/2n2P2/5N2/PPP3PP/RNB1Q1K1 w - - 0 12,True,False,True,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",109.0,r3r1k1/p3qppp/3p1n2/3p4/1B1Q4/8/PPP2PPP/RN2R1K1 b - - 2 15,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'short']",669.465087890625,True
+"['endgame', 'mate', 'mateIn2', 'short']",-112.0,1k6/1bp5/1p6/7B/5r2/N1P3n1/P5Pp/3R3K w - - 1 28,True,False,False,,,
+"['crushing', 'middlegame', 'pin', 'short']",107.0,6k1/1r3ppp/pqp1p3/3pN1P1/2pP1P2/PrP1P2P/2R3R1/3QK3 b - - 1 28,True,False,False,,,
+"['attraction', 'intermezzo', 'kingsideAttack', 'long', 'mate', 'mateIn3', 'middlegame', 'sacrifice']",-36.0,r1b3k1/2p2p1p/1pp1pP1b/p1q5/2pRP3/4Q1P1/PP1N3P/6K1 w - - 0 25,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",-97.0,2k3r1/ppq4p/4p2B/3pP3/P2P1r2/1KP5/2P5/6R1 w - - 0 31,True,True,False,"['endgame', 'advantage', 'hangingPiece', 'skewer', 'long']",1109.93701171875,False
+"['crushing', 'discoveredAttack', 'endgame', 'short']",57.0,6k1/1B3p1p/1b4p1/4p3/1pprP3/4QP2/6PP/3R2K1 b - - 1 28,True,False,False,,,
+"['advantage', 'hangingPiece', 'middlegame', 'short']",104.0,r4k2/5p1R/2prp1p1/1p2P1Q1/pP3P2/P1bP4/BKP5/3q4 w - - 0 27,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",119.0,3q4/1p4k1/p3r1p1/3p2Np/5P2/8/PP3KPP/8 w - - 0 32,True,True,False,"['endgame', 'advantage', 'fork', 'hangingPiece', 'short']",800.608642578125,True
+"['crushing', 'kingsideAttack', 'master', 'opening', 'veryLong']",113.0,b1kr2nr/b2p1ppp/p7/1p1N1P2/3NP3/2P5/PP5P/R1BQ1R1K b - - 4 19,True,False,True,,,
+"['defensiveMove', 'equality', 'fork', 'long', 'middlegame']",-31.0,7k/1p3rkp/p3p1p1/3p1r1n/1P6/2PP3P/4NRQ1/5R1K b - - 0 33,False,False,,,,
+"['advantage', 'middlegame', 'short']",-75.0,2r3k1/2r1nppp/1R2p3/1Q1pP3/3P4/1P3N2/1R3PPP/6K1 b - - 0 23,True,False,True,,,
+"['crushing', 'middlegame', 'short']",92.0,6k1/2q2ppn/1pr1b2p/7P/PQ1pNP2/1P1P2P1/4P1B1/1R2K2R b K - 1 23,True,False,True,,,
+"['advantage', 'defensiveMove', 'long', 'middlegame']",-49.0,2k5/p4p2/2KBrn2/2p5/2Pb3P/3P4/R7/3b4 w - - 19 34,True,False,True,,,
+"['crushing', 'endgame', 'long', 'pawnEndgame']",39.0,8/6p1/k3p1Pp/4P3/2Pp4/1p1P4/1K6/8 w - - 6 41,True,False,True,,,
+"['crushing', 'long', 'master', 'middlegame']",83.0,2k2b1r/1b1r1ppp/1Bp1p3/4P3/1nPR1PP1/1N1P4/6KP/1R6 w - - 5 24,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove', 'queenEndgame']",39.0,8/1pkq4/2p4p/p4P2/5Q2/7P/PPP5/2K4k b - - 0 36,False,False,,,,
+"['advantage', 'middlegame', 'short']",-44.0,5rk1/pb5p/1q1p1Rp1/2n3P1/8/2B5/PPP2PPP/R5K1 w - - 0 20,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-17.0,r5kq/1b1p3p/p3p1pP/1p1p2q1/4P3/1P3QP1/1PP2P1P/R3R1K1 w - - 2 22,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-105.0,3rk2r/pp1q1ppp/4pn2/6B1/2Q5/P3pP2/1PR1P1PP/K4BNR b k - 0 15,True,False,False,,,
+"['crushing', 'endgame', 'rookEndgame', 'short', 'skewer']",-61.0,3k4/ppp5/3p1p2/P2P4/1P2PPP1/7r/2P5/1R2K3 b - - 0 35,True,True,False,"['endgame', 'advantage', 'skewer', 'rookEndgame', 'short']",854.4998779296875,True
+"['crushing', 'defensiveMove', 'doubleCheck', 'endgame', 'long', 'sacrifice']",-40.0,8/Pkp2r2/1p6/1q1P3Q/r1P5/4P2P/6PK/8 w - - 1 45,True,False,False,,,
+"['crushing', 'endgame', 'short']",-89.0,6k1/p1p2ppp/p1P2q2/3p1r2/1P6/P4P2/6PP/2R1Q1K1 w - - 2 32,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",660.0823974609375,False
+"['advantage', 'deflection', 'endgame', 'exposedKing', 'long']",-69.0,4kr2/2q3r1/1pp1P1p1/3p4/1P1P2Q1/1K3P1P/3R2P1/8 w - - 7 39,True,False,False,,,
+"['advantage', 'kingsideAttack', 'middlegame', 'pin', 'short']",-114.0,r3n2k/pp2b1rp/4P3/2p2pP1/2Pp1P2/8/1PPR2P1/1N4K1 w - - 1 30,True,False,False,,,
+"['crushing', 'endgame', 'exposedKing', 'long', 'sacrifice']",89.0,4k1k1/p4b2/2p1p1p1/2r5/2NR4/3p1P2/P5PP/2K5 b - - 0 37,False,False,,,,
+"['advantage', 'long', 'middlegame']",44.0,2r2k2/1b1qb1pp/p3pp2/1p2B3/3P4/P3PP2/1PQ3PP/2R3K1 w - - 0 21,True,False,True,,,
+"['crushing', 'endgame', 'short']",-13.0,8/pp3k1p/2p1qbp1/5p2/2PPR1P1/PP3P1P/7K/8 w - - 0 29,True,False,False,,,
+"['mate', 'mateIn1', 'oneMove', 'opening']",68.0,rn2k2r/2qbb2p/p2p1pp1/1pp5/8/2N1QP2/PPP3PP/2K1RBNR w kq - 0 14,True,False,False,,,
+"['advancedPawn', 'bishopEndgame', 'crushing', 'endgame', 'promotion', 'sacrifice', 'veryLong']",0.0,3k4/5k2/4P2K/8/p3pp1p/8/B4P1P/8 b - - 0 56,False,False,,,,
+"['advancedPawn', 'advantage', 'endgame', 'long', 'promotion', 'rookEndgame']",-3.0,8/7K/1R6/6P1/8/p7/1k6/8 b - - 2 56,True,False,False,,,
+"['attraction', 'kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",-74.0,6k1/1r3ppp/3Rp3/p1n3P1/P3P2n/2P2P1N/KP5P/3R1r2 w - - 8 31,True,False,False,,,
+"['crushing', 'middlegame', 'pin', 'short']",69.0,1r2n1k1/3n2pp/6r1/p1q5/2Pp3P/1P4P1/P3RP2/1KB1Q3 w - - 6 36,True,False,False,,,
+"['backRankMate', 'long', 'mate', 'mateIn3', 'middlegame', 'sacrifice']",55.0,2r3k1/pb3ppp/p4p2/1qn5/4P3/5N1P/1B1Q1PP1/3R2K1 w - - 1 25,True,False,False,,,
+"['advancedPawn', 'crushing', 'defensiveMove', 'endgame', 'long', 'queenRookEndgame']",-72.0,8/4p3/4P2k/7p/1PQ3r1/1K6/8/8 b - - 0 49,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'short']",-4.0,6k1/p4p1p/rrb3pB/3RP3/1ppP4/1q3N1P/3Q2PK/8 w - - 1 34,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'master', 'promotion', 'rookEndgame', 'veryLong']",-124.0,8/8/8/8/1p4Rp/1k5P/8/1K6 b - - 0 50,True,False,True,,,
+"['advantage', 'attraction', 'endgame', 'long', 'master', 'pin']",115.0,3rkr2/8/p2Rp2p/1p2q2P/1P4R1/P3P1QP/3Q3K/8 b - - 0 40,True,False,True,,,
+"['advantage', 'master', 'opening', 'short']",-36.0,r2qkb1r/pp3ppp/2n1b3/1p6/4p3/3Q4/PP2NPPP/R1BR2K1 w kq - 0 12,True,False,False,,,
+"['advantage', 'capturingDefender', 'intermezzo', 'middlegame', 'short']",43.0,r4rk1/pp4pp/1p4p1/3p1b2/5R2/5RP1/PPP4P/R2B2K1 w - - 0 18,True,False,True,,,
+"['advantage', 'endgame', 'long', 'rookEndgame']",-36.0,3r2k1/1p1r1ppp/p7/8/4R3/2P2PP1/P1P4P/3R2K1 b - - 0 22,True,False,False,,,
+"['advantage', 'endgame', 'short']",2.0,3r4/3r2k1/R7/4p3/5p1p/5P1P/2R1BbP1/7K b - - 2 42,True,False,True,,,
+"['crushing', 'middlegame', 'pin', 'short']",-32.0,4k3/p2rb1Pp/1p4bP/2p2p2/2P2r1n/8/PPPR2P1/2KR4 w - - 0 27,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",44.0,6k1/p4ppp/8/8/1p6/3rQ2P/P1b2PP1/6K1 w - - 2 31,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'master', 'short']",41.0,8/8/8/3K4/8/Q1pp4/3k4/8 b - - 0 74,True,False,False,,,
+"['advantage', 'long', 'middlegame', 'pin', 'quietMove']",7.0,r5k1/1p3pp1/1p2p1n1/3p4/1P4R1/2PP4/5RPP/r2Q1BK1 b - - 0 23,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",44.0,3r2k1/pp4pp/8/8/1PP1R3/P7/5PPP/6K1 b - - 0 26,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'rookEndgame', 'short']",542.3592529296875,True
+"['advantage', 'long', 'middlegame']",-40.0,4r2k/1bpp2r1/p2b1p1p/1p1P4/5n2/1B2R1P1/P6P/5NK1 w - - 0 28,True,False,False,,,
+"['crushing', 'endgame', 'knightEndgame', 'master', 'short']",-18.0,8/4n3/3k1p2/1p2pPp1/1P2P1P1/2K3N1/8/8 w - - 3 38,True,False,True,,,
+"['crushing', 'discoveredAttack', 'kingsideAttack', 'opening', 'short']",42.0,rn4k1/ppp2rpp/3p4/2b4n/3pP2q/5PR1/PPPP1P1P/RNB1Q1K1 w - - 0 13,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'veryLong', 'zugzwang']",-57.0,2k4r/2r2p2/2q1p3/4P3/1p3PPp/1PRR4/P7/2Q3K1 b - - 0 32,True,False,False,,,
+"['crushing', 'discoveredAttack', 'middlegame', 'short']",61.0,3q2k1/p1r2rpp/1pp1p3/2b5/5P2/B1P3P1/P2QP2P/R2RK3 w Q - 2 20,True,False,False,,,
+"['endgame', 'killBoxMate', 'mate', 'mateIn2', 'sacrifice', 'short']",48.0,6k1/1p3rp1/pr5p/3P1ppP/2p5/Pq6/1P2Q3/2K1R3 w - - 5 34,True,False,True,,,
+"['advantage', 'kingsideAttack', 'middlegame', 'short']",-71.0,3r2k1/2p1nrb1/1p2b3/4n3/N5pp/PPN1P3/3R1PPP/3R2K1 w - - 0 22,True,False,False,,,
+"['advantage', 'defensiveMove', 'long', 'middlegame']",61.0,2r3k1/4b1pp/2Ppq3/p3p1pP/4P3/2r2RB1/5QP1/6K1 w - - 0 33,True,False,False,,,
+"['crushing', 'kingsideAttack', 'short']",-36.0,r3r1k1/5bq1/4pppp/1p1p4/p1pP1QP1/P1P4P/1KP2R2/5R2 w - - 10 31,True,False,True,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-96.0,1k1nr3/ppp2pp1/8/8/8/NQP2BpP/PP4P1/6K1 b - - 1 21,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",549.4373779296875,True
+"['advancedPawn', 'crushing', 'endgame', 'long', 'pawnEndgame']",-61.0,8/8/6k1/2p5/6P1/5KP1/8/8 b - - 0 58,True,False,True,,,
+"['endgame', 'mate', 'mateIn2', 'short']",54.0,2kr4/4R3/pb4R1/8/P7/2B3pP/1P4P1/7K b - - 7 40,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'master', 'short']",-51.0,4n3/p7/3q2k1/2r1pR1p/4P2P/1P1B3p/PKP5/8 w - - 0 34,True,False,True,,,
+"['advancedPawn', 'advantage', 'opening', 'short']",112.0,rnb1kq2/1p1p1r1Q/p2Pp1p1/8/4n3/B7/5P1P/RN3R1K w - - 0 28,True,False,False,,,
+"['advancedPawn', 'crushing', 'deflection', 'exposedKing', 'kingsideAttack', 'long', 'middlegame', 'sacrifice']",-63.0,2r2bkq/pb1p3P/1p2p1pr/2p3P1/P7/2P2R2/1PN2PP1/2K4Q w - - 6 30,False,False,,,,
+"['advantage', 'master', 'middlegame', 'pin', 'short']",117.0,4r1k1/5ppb/7p/1P1N1P2/8/3Q3P/1P3bB1/4rR1K b - - 0 32,True,False,False,,,
+"['crushing', 'endgame', 'long', 'queenRookEndgame']",-94.0,8/2p5/R2p4/1q1Pk1pp/4P3/3R4/5PPP/7K b - - 0 41,True,False,False,,,
+"['crushing', 'endgame', 'master', 'rookEndgame', 'short']",-60.0,3r4/3r3p/4k3/2P5/8/P3PPP1/7P/R4K2 b - - 4 38,True,False,False,,,
+"['mate', 'mateIn1', 'oneMove', 'opening', 'pin', 'smotheredMate']",-89.0,1rkRqnn1/bpp2ppp/8/8/2P1P3/2N2P1P/PP6/2K2BNR w - - 0 20,False,False,,,,
+"['crushing', 'endgame', 'queensideAttack', 'short']",-82.0,k1r5/1p6/1Pr2p1p/1n2p1p1/4P3/2R2PPP/p4B2/2R3K1 w - - 0 44,True,False,False,,,
+"['advancedPawn', 'endgame', 'exposedKing', 'long', 'mate', 'mateIn3']",-108.0,7R/8/6bP/1p6/5B2/pk6/8/K7 b - - 3 65,True,False,True,,,
+"['crushing', 'middlegame', 'pin', 'short']",-10.0,3rr1k1/5pbp/p3p1p1/p1p5/2P1bP1P/1P1RP2N/P2R2P1/2K5 w - - 0 21,True,False,False,,,
+"['advancedPawn', 'advantage', 'endgame', 'exposedKing', 'long']",-45.0,8/p3k3/2n1Pb2/2p2P2/8/P2R3P/1P2RKP1/8 w - - 0 36,True,False,False,,,
+"['attraction', 'crushing', 'endgame', 'kingsideAttack', 'short']",77.0,2r3k1/pb4p1/1pq1ppB1/3p4/1P1P4/4PP2/P4RPP/6K1 b - - 0 23,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",19.0,4r1k1/2P3p1/p5p1/P7/1P1rp3/4RpP1/1R3P1P/6K1 b - - 0 37,True,True,False,"['endgame', 'mateIn2', 'mate', 'rookEndgame', 'short']",571.1823120117188,True
+"['advantage', 'fork', 'master', 'middlegame', 'short']",-42.0,7k/pp2n1p1/4qp1p/3P4/1P2P3/P4Q1P/1r4P1/R5NK w - - 0 32,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",-79.0,3q2k1/p4p2/2p3p1/3rp2p/7P/PP2BP1b/1P3Q2/2RR2K1 b - - 0 31,True,False,False,,,
+"['advantage', 'endgame', 'short']",-4.0,5qk1/2p5/4prpp/1p6/p2P4/4R3/Q5P1/5RK1 b - - 0 38,True,False,False,,,
+"['master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",5.0,4r3/pp4k1/2p1q1pp/2Q5/5p2/2P2n1P/PP3N2/R1B1R2K b - - 0 25,True,False,False,,,
+"['kingsideAttack', 'master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-99.0,5r1k/1pp2qpp/2p3n1/p3p3/P1P5/1PNPP1Pb/3N1R2/R2Q2K1 b - - 0 21,True,False,False,,,
+"['crushing', 'deflection', 'endgame', 'long', 'rookEndgame', 'skewer']",-9.0,4r3/1p1k2p1/3p1p2/p1pP3p/P1P2PP1/1P2r2P/R3R3/6K1 w - - 3 32,True,False,False,,,
+"['blindSwineMate', 'endgame', 'mate', 'mateIn1', 'oneMove']",121.0,3r2k1/6p1/p6p/1p2p2P/2Br4/6R1/PPP3R1/2K5 b - - 0 26,True,False,False,,,
+"['crushing', 'endgame', 'knightEndgame', 'master', 'short']",-91.0,8/8/4p1kp/3pP1p1/3P2P1/5NPK/8/8 w - - 4 54,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'long']",54.0,8/8/8/4p3/4Pb2/5k2/6R1/5K2 b - - 0 73,True,False,True,,,
+"['anastasiaMate', 'long', 'mate', 'mateIn3', 'middlegame']",-3.0,r1b5/1p2Nqpk/5p2/8/p3rP2/P4R2/1nP3PP/R6K w - - 0 28,True,False,False,,,
+"['advantage', 'hangingPiece', 'opening', 'short']",-105.0,r1b1q1k1/ppp2rpp/2N2n2/8/4p3/8/PPP2bPP/RNBQR1K1 w - - 0 11,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'sacrifice', 'veryLong']",87.0,7k/6p1/7p/4Pq2/p2P3P/Pp1p1rQ1/1PpR4/2K1B3 b - - 1 32,True,False,True,,,
+"['advantage', 'fork', 'middlegame', 'sacrifice', 'veryLong']",38.0,7r/pb1k1pr1/1pp1pp2/8/4Pb2/1P2K2P/P1PR4/3R3B w - - 0 24,False,False,,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-38.0,7k/p5bp/1pq2pp1/n7/8/4R2P/P4PP1/4Q1K1 w - - 0 29,True,True,False,"['endgame', 'crushing', 'short']",1001.4352416992188,False
+"['advantage', 'long', 'middlegame']",72.0,r2r2kk/p4ppp/2p5/8/nq6/3Q4/B2R1PPP/3R2K1 w - - 0 21,False,False,,,,
+"['advantage', 'middlegame', 'short']",-89.0,6k1/1pq2p1p/1b1r2pB/p2PQ2n/P7/8/1PP1RPPP/6K1 w - - 1 29,True,False,False,,,
+"['attraction', 'crushing', 'endgame', 'long', 'pawnEndgame']",-8.0,8/7p/2k2p1P/2p3p1/4PpP1/1PP2Pr1/1K3R2/8 b - - 0 37,True,False,False,,,
+"['attraction', 'endgame', 'mate', 'mateIn2', 'short']",-54.0,kn2R3/ppp2ppp/2q5/8/2p5/2P1Q2P/5PPK/8 w - - 6 38,True,False,False,,,
+"['advantage', 'endgame', 'hangingPiece', 'short']",-92.0,5rk1/ppp1n1p1/6p1/PP2p1Pp/4P2P/2P5/5rK1/2R2R2 w - - 0 29,True,False,False,,,
+"['advantage', 'middlegame', 'short', 'skewer']",-68.0,2r1kb1r/3pp2p/1p3pp1/pN6/8/P2B1P2/1P4PP/RN2K2R b KQk - 0 21,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-34.0,6k1/p4p1p/3R1Ppn/2p5/5n2/6P1/1P5K/8 w - - 0 36,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",449.4534912109375,False
+['middlegame'],9.0,r1b4k/ppp3rB/2P5/8/1P5q/P7/2P2PPP/R3R2K w - - 2 22,True,False,False,,,
+"['clearance', 'crushing', 'long', 'middlegame']",-20.0,3r2k1/p3npp1/1pPq3p/4p1b1/2Q1N3/8/PB2RPPP/6K1 b - - 4 25,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short', 'vukovicMate']",-108.0,6r1/1p1k2r1/p7/2p1R3/P3P3/1NPP2pP/4R1P1/4n1K1 b - - 4 34,True,False,False,,,
+"['advantage', 'fork', 'master', 'middlegame', 'short']",-104.0,2k1r3/2p1Rpp1/3p4/p2P4/pn5q/2Nb3P/5PP1/2B1R1K1 w - - 0 24,True,False,False,,,
+"['crushing', 'deflection', 'endgame', 'short']",-71.0,2k5/3b4/p1P5/1p1PR3/5p1p/r7/8/5B1K w - - 2 40,True,False,True,,,
+"['crushing', 'deflection', 'endgame', 'intermezzo', 'sacrifice', 'veryLong']",82.0,7k/pp2q2p/3rb1r1/2P2p2/2Q4P/4RPP1/8/7K w - - 0 36,True,False,True,,,
+"['crushing', 'endgame', 'short']",-95.0,3r2k1/5pp1/2q2b1p/1p6/8/3Q1N2/1P3PPP/3R2K1 w - - 0 25,True,False,True,,,
+"['advancedPawn', 'advantage', 'endgame', 'pin', 'veryLong']",-67.0,6k1/2b3pp/4r1p1/1p1p4/8/1P5P/1P1NpPQ1/4R1K1 b - - 0 33,True,False,True,,,
+"['advancedPawn', 'crushing', 'endgame', 'long']",17.0,8/3Q1R1p/6k1/p7/7p/1KP5/5P2/8 b - - 0 52,True,False,False,,,
+"['attraction', 'crushing', 'endgame', 'sacrifice', 'short']",50.0,2r5/2r2k2/1p2p1p1/3pPp2/PP3P2/3Q1NPp/7P/6K1 b - - 0 35,True,False,False,,,
+"['advantage', 'hangingPiece', 'long', 'middlegame', 'queensideAttack']",-26.0,r1k3q1/1b3r2/1pn1p3/bN6/P1P1P1R1/R2P4/6PP/6K1 w - - 0 31,True,False,False,,,
+"['crushing', 'middlegame', 'short']",-10.0,r1r3k1/p1qR1ppp/Q3p3/2p1P2P/6P1/1NB5/PP3P2/K5R1 b - - 0 29,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'pin', 'short']",84.0,6k1/2p2rpp/1p2b3/2b1P3/5nPP/3R2B1/P2R1P2/5K2 w - - 0 26,True,False,False,,,
+"['crushing', 'endgame', 'quietMove', 'short']",-74.0,k7/2r5/p7/8/Pq1BRK2/8/1P6/8 w - - 9 40,True,False,True,,,
+"['attackingF2F7', 'master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-25.0,r4r1k/p2ppq1p/1pn1p1pR/3bP3/3P2P1/2P3N1/PP1B1P1Q/R2BK3 b Q - 5 24,True,False,True,,,
+"['crushing', 'endgame', 'short']",111.0,3r4/1p2kp2/p2r2b1/6P1/1P1R1P1p/7P/P5B1/3R2K1 b - - 0 33,True,False,False,,,
+"['crushing', 'discoveredAttack', 'long', 'middlegame']",101.0,3q2k1/p1nr1ppp/2pb1n2/1p6/6P1/1P2QN1P/1PP1NPB1/3R2K1 b - - 2 21,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",42.0,6k1/1p4pp/1pp5/6r1/7P/3Q4/PPP1p3/1K2B3 b - - 0 32,True,False,False,,,
+"['mate', 'mateIn1', 'oneMove', 'opening']",-82.0,rn2bk1r/p4Ppp/2p2b2/qp6/8/1B6/P1P1QPPP/RN2K2R w KQ - 1 19,True,False,False,,,
+"['attraction', 'crushing', 'deflection', 'endgame', 'exposedKing', 'fork', 'veryLong']",-75.0,8/pp5r/1n3k2/1bp2P2/4PPP1/PP6/2PR1N2/3K4 w - - 3 30,True,False,False,,,
+"['crushing', 'endgame', 'pawnEndgame', 'short']",25.0,8/p4p2/2P2k2/1p2p2p/2p1P3/PPP1K1Pp/5P1P/8 b - - 0 32,True,False,False,,,
+"['crushing', 'fork', 'long', 'middlegame']",85.0,4r1k1/7p/p1p1r1p1/5p2/1qb5/2N1R1P1/1PP1Q1PP/4R1K1 w - - 0 26,True,False,False,,,
+"['crushing', 'master', 'middlegame', 'short']",26.0,1b4r1/1k6/1p6/4p3/5r2/P2R3P/1PP2Pn1/3R1N1K w - - 3 29,True,False,False,,,
+"['advantage', 'middlegame', 'short']",98.0,2r1k3/b1Rb1pp1/p3pn2/3p4/PB1P3r/8/4NPBK/2R5 w - - 2 29,True,False,False,,,
+"['crushing', 'endgame', 'long', 'pin']",93.0,4rqk1/1p3rpp/1Rp2p2/3p4/3P4/2P1Q3/P5PP/4R1K1 w - - 5 25,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'master', 'short']",67.0,2r3k1/q5pp/4p3/p1b5/1pPp1P2/1P1P2P1/1P3N1P/R4K2 w - - 0 31,True,False,True,,,
+"['endgame', 'mate', 'mateIn2', 'short']",56.0,6k1/2p2ppp/8/4rnP1/pBP1r3/P7/6K1/2RR4 w - - 1 26,True,False,False,,,
+"['advantage', 'long', 'middlegame']",66.0,5k2/qb3pbp/p3p1p1/2n1P1B1/5P2/4P2P/3Q2P1/3R2K1 w - - 4 29,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",112.0,r1b1k2r/1p2npb1/p1q3pp/4P3/8/2N4P/PPPQ2PN/2KR3R w kq - 0 19,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",615.6238403320312,True
+"['crushing', 'endgame', 'long', 'pawnEndgame', 'quietMove', 'zugzwang']",-120.0,8/5k2/5p2/ppp2P1p/3p1p1P/1P1P1P1K/2P5/8 b - - 3 50,True,False,False,,,
+"['crushing', 'master', 'middlegame', 'short']",44.0,3r4/1p1rkpp1/p1b1p2p/4P2B/3Rp3/2P4P/P4PP1/R1B3K1 b - - 0 23,True,False,False,,,
+"['endgame', 'master', 'mate', 'mateIn1', 'oneMove']",-50.0,5k2/1pp3pp/pq3p2/2bP4/2P5/1P3N2/4QPPP/4R1K1 w - - 4 30,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-43.0,r4rk1/2pqb1pp/p1ppp3/3n4/8/1PQ1P3/PBPN1PPP/R4RK1 w - - 4 14,True,True,False,"['middlegame', 'mateIn1', 'mate', 'kingsideAttack', 'oneMove']",596.4295654296875,True
+"['mate', 'mateIn2', 'opening', 'short']",-41.0,r3kbnr/1bqp1p1p/pp4p1/4P3/1p1P4/1P1Q4/PB1NBPPP/RN2K2R b KQkq - 1 11,True,False,False,,,
+"['advantage', 'middlegame', 'short']",49.0,r5k1/1pp3pp/p3pq2/4p3/4Pn2/3P1Pb1/PPP4P/R2R1QK1 w - - 0 18,True,False,False,,,
+"['anastasiaMate', 'attraction', 'kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",-20.0,2r4k/p1r1pp1p/1p4pP/1n4P1/8/1P1RP3/q1P1NP2/2KQ4 w - - 2 25,True,True,False,"['middlegame', 'mateIn2', 'mate', 'kingsideAttack', 'short']",739.9486083984375,True
+"['advantage', 'kingsideAttack', 'middlegame', 'pin', 'veryLong']",-92.0,2b1r2k/1ppr2p1/2qppr1p/8/1p1P3Q/2N3RR/2P2N1P/3K4 w - - 0 33,True,False,False,,,
+"['crushing', 'deflection', 'endgame', 'long']",-60.0,6k1/p3rq1p/1p3pp1/3R3P/1p2PP2/PP1QK3/2P3P1/2K5 w - - 1 24,False,False,,,,
+"['crushing', 'deflection', 'discoveredAttack', 'endgame', 'exposedKing', 'long']",-76.0,r1r5/1k6/q3p3/Rp1pPp1p/1Q3PpP/2P1P1P1/R7/6K1 w - - 1 29,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-103.0,rn3rk1/p5pp/1bq1p3/3pP1B1/2p4P/5R2/P7/5R1K w - - 0 32,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",544.4141845703125,True
+"['mate', 'mateIn2', 'middlegame', 'short']",-52.0,4r1k1/p3rp2/1p4p1/5b2/2Bp1N1P/P5Q1/1P4R1/2K2R2 b - - 6 26,True,False,True,,,
+"['crushing', 'opening', 'short']",-76.0,rn2r1k1/p2bqp1p/2pN1np1/2P5/1P1p4/P2B1P2/3B2PP/2KQR2R b - - 3 18,True,False,False,,,
+"['crushing', 'long', 'master', 'opening']",-20.0,2kr1n1r/1p1qbppp/pnp1p3/8/2P1pP2/P3Q3/1P2NNPP/R1B1KB1R b KQ - 4 14,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",45.0,R7/8/1kr1p3/3pBp2/1P1Q1P1P/6p1/6P1/2R3K1 b - - 0 35,True,False,False,,,
+"['crushing', 'middlegame', 'short']",-75.0,5kr1/pR2pp2/2p2b2/4p1pp/4P1n1/1R4P1/4N2P/2B3K1 w - - 0 27,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'long']",-33.0,b7/5rp1/1p1qr2k/3p3p/3P4/P1P2R2/2P2PPP/4R1K1 w - - 0 31,True,False,False,,,
+"['crushing', 'endgame', 'knightEndgame', 'long']",-64.0,8/4n1k1/2p1P1p1/p2p2P1/3K3N/7p/P7/8 w - - 0 41,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove', 'queenEndgame']",45.0,5k2/p4pp1/7p/8/1P6/P7/1q3PP1/3Q2K1 w - - 4 37,True,True,False,"['endgame', 'mateIn1', 'mate', 'queenEndgame', 'oneMove']",513.6004638671875,True
+"['advantage', 'long', 'middlegame']",7.0,2r1k3/3n1p1p/1p2p1p1/qb1pP3/3P1P2/2R5/2Q2BPP/2K1B3 w k - 0 25,False,False,,,,
+"['crushing', 'long', 'middlegame']",-27.0,6r1/3n2qk/3p2rp/1p1Ppp2/1P6/P3Q2P/5PRN/2RB3K b - - 0 31,True,False,False,,,
+"['crushing', 'endgame', 'rookEndgame', 'short']",-84.0,2rk4/1p5R/3p1r1p/p2P1p2/2P2pp1/8/1K4PP/4R3 w - - 0 40,True,False,False,,,
+"['endgame', 'hangingPiece', 'mate', 'mateIn2', 'short']",83.0,3r2k1/pp3p1p/6pB/5q2/2p5/7P/P4PP1/3Q2K1 w - - 0 31,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'oneMove']",584.0119018554688,True
+"['clearance', 'crushing', 'middlegame', 'pin', 'veryLong']",2.0,1nk5/3q1p1p/3p1br1/1ppP4/4Pp2/P4P2/1PP3RP/3Q2RK w - - 0 23,True,False,True,,,
+"['advantage', 'fork', 'middlegame', 'short']",44.0,4r2k/1b2Rn2/1p3p1q/p7/8/P1P5/1P3PP1/2R1N1K1 w - - 0 30,True,False,False,,,
+"['advantage', 'middlegame', 'short']",79.0,r1br2k1/1pp1npbp/p5p1/2q1P3/8/2N1PN2/PPPQ2PP/2KR3R w - - 0 14,True,False,False,,,
+"['crushing', 'discoveredAttack', 'kingsideAttack', 'master', 'middlegame', 'pin', 'short']",127.0,5rk1/1b3r1p/p2pq2P/1p1P1Qp1/3P1R2/2P4P/P5P1/5RK1 w - - 0 30,True,False,True,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-49.0,rkb5/1p6/pPq1p3/P3P3/2P5/2NR4/2K2P1P/8 w - - 1 33,True,False,True,,,
+"['crushing', 'discoveredAttack', 'endgame', 'fork', 'long']",-128.0,7k/p3n2p/1p1qPr2/7P/6P1/2B2Rp1/PP6/6K1 w - - 0 35,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'short']",20.0,5k2/1p3Pqp/2r1B3/3R4/1p2p3/3RP2P/2KP2P1/8 w - - 1 32,True,False,True,,,
+"['master', 'mate', 'mateIn2', 'middlegame', 'short']",77.0,r4k1r/1p3pp1/p3p3/4n3/1P2q3/8/P1PR2Pp/R2Q3K w - - 0 23,True,False,True,,,
+"['advantage', 'long', 'middlegame']",56.0,7k/R5R1/4qr1p/1ppp4/5P2/2PPrPP1/1P4QP/3B3K b - - 0 42,True,False,False,,,
+"['crushing', 'exposedKing', 'fork', 'long', 'opening']",30.0,r2k1b2/p6r/b1p2n2/q3p3/4p3/P1N5/1PPP1PPP/RNBK3R w - - 0 13,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn4', 'sacrifice', 'veryLong']",-6.0,7k/p1b3pp/8/2P1r3/1P3r2/P2R3p/2P3P1/3R3K w - - 0 30,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'long']",-66.0,2kr4/1b3rp1/1P2p1p1/p1p1B2p/2P5/1P6/4R1PP/4K3 w - - 0 32,True,False,True,,,
+"['crushing', 'fork', 'long', 'master', 'middlegame']",26.0,4r3/2pk1p2/2b1r3/1n6/p2Pq2P/2P2NP1/PB3PB1/Q3R1K1 b - - 6 23,True,False,False,,,
+"['endgame', 'master', 'masterVsMaster', 'mate', 'mateIn2', 'sacrifice', 'short']",-71.0,3r2k1/8/p3RP1p/3r2b1/6p1/1pP3P1/1P2RP2/1K2N3 b - - 0 33,True,False,False,,,
+"['crushing', 'endgame', 'short']",-112.0,2k5/1pp5/2p3p1/2bq4/Pr2RPpP/1P4P1/6BK/8 w - - 0 33,True,False,False,,,
+"['crushing', 'endgame', 'rookEndgame', 'short']",44.0,2k5/1p6/1pp1p3/4P3/2P2p2/PP1P4/3r2K1/6R1 w - - 1 42,True,False,False,,,
+"['crushing', 'endgame', 'long', 'master', 'quietMove']",-114.0,8/1b3p2/5P1p/kP1rP3/P1Q5/1k4P1/8/6K1 b - - 0 48,False,False,,,,
+"['endgame', 'master', 'masterVsMaster', 'mate', 'mateIn2', 'short']",-27.0,b2r1k2/3r2p1/p4p2/5p2/7Q/2N5/1P4PP/3R3K b - - 0 38,True,False,False,,,
+"['crushing', 'discoveredAttack', 'endgame', 'long', 'master']",104.0,4rk2/4rpp1/p1p1n2p/1p1p4/3P4/P1P2NP1/1P2RPKP/4R3 b - - 1 24,True,True,False,"['endgame', 'advantage', 'discoveredAttack', 'short']",992.047607421875,False
+"['advantage', 'middlegame', 'sacrifice', 'short']",6.0,2k1r3/1p1b1pp1/1pr5/2pR4/1b6/1N4P1/1P3P1P/2KR4 w - - 0 34,True,False,False,,,
+"['advantage', 'middlegame', 'short']",66.0,rq4k1/1r3pp1/p3pn1p/P1P1N3/2QP4/R1B5/4BPPP/1R4K1 b - - 0 26,True,False,False,,,
+"['clearance', 'kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",-122.0,1r4rk/ppbb1p1P/1npp3q/3p3P/4P3/2P3QN/P4P1K/4n1R1 w - - 0 26,True,False,False,,,
+"['crushing', 'discoveredAttack', 'endgame', 'short']",-92.0,2q3k1/6r1/3p4/3P4/1pQ1Pbpp/8/1P6/1KR5 w - - 0 41,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",-106.0,r1b3k1/pp3ppp/1b6/4r3/8/8/PP3PPP/RN1R2K1 w - - 0 18,True,False,True,,,
+"['advantage', 'master', 'middlegame', 'sacrifice', 'veryLong']",-107.0,2k5/1b1r1pp1/2nr1n1p/1Rp5/B3R3/B4N2/P2N1PPP/6K1 b - - 0 21,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-93.0,6k1/p4qpp/1p6/8/6P1/2r1PP1b/P2R3B/6K1 w - - 0 28,True,False,False,,,
+"['deflection', 'mate', 'mateIn2', 'middlegame', 'short']",13.0,2k5/pb1r4/1pNPp2p/2q1P2b/3RBP2/P2QP3/1P1K4/7r w - - 6 31,True,False,False,,,
+"['advantage', 'middlegame', 'short']",-87.0,3r2k1/p2r4/4RBp1/2b3P1/3N4/2P5/PP1R1BP1/6K1 b - - 0 37,True,False,False,,,
+"['crushing', 'discoveredAttack', 'endgame', 'long']",-109.0,2r3k1/2r2p1p/2q1pPp1/p7/p1R1P3/2Q3P1/R1P4P/6K1 b - - 5 37,True,False,False,,,
+"['crushing', 'discoveredAttack', 'endgame', 'master', 'short']",-98.0,2r2qk1/1p1r4/5B1p/3pp3/p7/5RP1/PP3R1P/6K1 w - - 1 33,True,False,False,,,
+"['attraction', 'crushing', 'middlegame', 'sacrifice', 'short']",-12.0,6k1/1b3p2/pp3Ppp/2qr4/6P1/8/P1PNQ2K/3RR3 w - - 0 24,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",-111.0,4r1k1/3q1ppp/p1n5/1p1p1b2/3P1p2/2P2N2/P3Q1PP/R3R1K1 w - - 9 22,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'short']",616.496826171875,True
+"['fork', 'mate', 'mateIn2', 'middlegame', 'short']",42.0,rn3k1r/pp3p1p/2pp4/7Q/q2N1b2/2P5/PPP2PPP/1K2RB1R b - - 2 16,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove', 'queensideAttack']",-15.0,2k4r/ppq1n1p1/4pp1r/3p2p1/1P1P4/P3PN2/2Q2PP1/2R2RK1 w - - 0 19,True,True,False,"['middlegame', 'mateIn1', 'mate', 'queensideAttack', 'oneMove']",679.62109375,True
+"['advantage', 'long', 'middlegame']",-116.0,2k4r/pppp2r1/5pqp/6p1/3PRP2/2P5/P1P3PP/1NB1R1K1 w - - 3 20,True,False,False,,,
+"['advancedPawn', 'crushing', 'deflection', 'endgame', 'exposedKing', 'long', 'promotion', 'rookEndgame', 'sacrifice']",93.0,5Kk1/7R/6rP/1p5r/p7/8/1P6/8 w - - 0 54,False,False,,,,
+"['advantage', 'endgame', 'fork', 'short']",-85.0,1q1r2k1/5p2/p1p4p/2P2b2/1P1Rp3/2P5/P4PPP/6K1 w - - 0 30,True,False,True,,,
+"['advantage', 'hangingPiece', 'middlegame', 'short']",-35.0,r1k1Q3/3q1r2/2b3pB/2P1p3/p1Pp4/6PP/P5P1/R3R1K1 b - - 0 31,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'short']",-31.0,3r2kr/p1p2ppp/5n2/1B2b3/8/8/q4PPP/3R1RK1 w - - 0 22,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'hangingPiece', 'short']",701.7119750976562,True
+"['crushing', 'endgame', 'fork', 'short']",-104.0,6k1/4q3/3r2pp/2p5/p2R1P2/1p4P1/3B2KP/1N6 w - - 0 34,True,False,False,,,
+"['crushing', 'master', 'middlegame', 'short']",18.0,4k1r1/5p1p/p3pq2/1p1bN3/1P1P4/P1R5/1K3B2/1B6 w - - 2 35,True,False,False,,,
+"['crushing', 'long', 'opening']",-44.0,1k3b1r/ppq1pp1p/4n1p1/8/PnQ5/8/1PP3PP/R1BN1BKR b - - 7 18,True,False,False,,,
+"['crushing', 'long', 'middlegame', 'pin']",78.0,2rr2k1/ppq2ppp/8/7N/P2pPP2/1P1Q1R2/6PP/2R4K b - - 0 24,True,False,False,,,
+"['deflection', 'discoveredAttack', 'endgame', 'mate', 'mateIn2', 'short']",-18.0,b5k1/1q3p1p/8/1pp1p1P1/8/2P1BQ1P/PP6/2R4K b - - 2 27,True,False,False,,,
+"['endgame', 'master', 'mate', 'mateIn1', 'oneMove']",-34.0,3Qr2k/6pp/6n1/B7/3p1p1P/3r4/P4KP1/8 w - - 0 31,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-85.0,6kr/1p3p1p/6pB/p1nr4/3p4/P5P1/1PP2P1P/4R1K1 w - - 0 24,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",543.9552612304688,True
+"['advantage', 'middlegame', 'short']",122.0,4k2r/p1qb1ppp/4pn2/2rp4/1Q6/1N1B4/PP3PPP/R1B1K2R b KQk - 2 18,True,False,False,,,
+"['crushing', 'middlegame', 'short']",85.0,3r1nk1/p2q2p1/4pp1p/8/4QP2/4BN2/6PP/2R3K1 b - - 8 30,True,False,False,,,
+"['advantage', 'middlegame', 'short']",-101.0,4k3/b1p5/p1r5/P3p1p1/2P1b1r1/8/1P1R2PK/3R1N2 w - - 2 35,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'queensideAttack', 'short']",35.0,k1r4r/pp2b2p/1P1q4/1b1Pp3/4Pp1p/8/3N2PP/N1R4K w - - 0 28,True,False,True,,,
+"['advantage', 'endgame', 'master', 'short']",-54.0,2k1r2r/bp3R1p/2p4p/8/P7/2P2NpP/1P4P1/4R2K b - - 1 24,True,False,False,,,
+"['crushing', 'long', 'middlegame', 'pin', 'sacrifice']",18.0,2r1R3/pkq2R2/1p6/5Q2/bN1r4/3N1PP1/PP6/1K6 b - - 0 47,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",44.0,6k1/pp3ppp/5q2/5P2/8/4R3/6PP/r2rQ2K w - - 3 30,True,True,False,"['endgame', 'mateIn1', 'mate', 'backRankMate', 'oneMove']",876.9956665039062,False
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",82.0,4r1k1/p1R5/1p2q2p/3b2p1/3p1p2/P2B3P/1PQ2PPB/6K1 b - - 3 33,True,False,False,,,
+"['crushing', 'endgame', 'short', 'skewer']",-119.0,4k3/p4p2/5p1r/1r6/P7/1RPPP1Pp/8/R1K3B1 b - - 0 33,True,False,False,,,
+"['crushing', 'discoveredAttack', 'middlegame', 'short']",-2.0,3r1k2/2q2pp1/pp2r2p/n1pR4/P1P1p3/P7/2N2PPP/R2Q2K1 w - - 3 29,True,False,False,,,
+"['crushing', 'endgame', 'kingsideAttack', 'short']",-101.0,2r3k1/1pq3pp/p3pp2/3p4/1Q6/P4N2/1P2NPPP/2R3K1 b - - 0 21,True,False,False,,,
+"['crushing', 'endgame', 'queenEndgame', 'short']",-74.0,8/5k2/1p3q2/6Q1/2p2P2/4p2P/1P4P1/6K1 b - - 3 41,True,True,False,"['endgame', 'equality', 'quietMove', 'defensiveMove', 'queenEndgame', 'long']",2210.67236328125,False
+"['advantage', 'kingsideAttack', 'long', 'middlegame', 'pin']",32.0,3r2kn/2p1rqpp/1p3p2/p3bP2/6P1/1PP4P/P2Q4/3R2NK w - - 0 33,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'sacrifice', 'short']",97.0,3k3r/1pp2p2/p1Pp1b1p/3P2p1/8/7q/PP2QP1N/4R1K1 w - - 0 29,True,False,False,,,
+"['crushing', 'endgame', 'long', 'rookEndgame']",77.0,6R1/6r1/4pk2/5pp1/3P4/5P2/6P1/6K1 w - - 19 56,True,False,False,,,
+"['crushing', 'endgame', 'pawnEndgame', 'veryLong']",-45.0,6k1/5p1p/6pP/3p2P1/P2P4/2p1p3/4P3/8 w - - 0 37,False,False,,,,
+"['crushing', 'endgame', 'veryLong']",51.0,4q3/pp3pkp/4rnp1/8/3Q4/2N2P2/PPP3PP/2KR4 b - - 8 21,True,False,False,,,
+"['advantage', 'defensiveMove', 'hangingPiece', 'long', 'opening']",-16.0,rnb1k3/pp2b2B/2p1p3/4P3/5Pq1/1P3R1P/PBP5/RN1Q3K b q - 0 19,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'long']",103.0,2k2r2/1p1q2p1/1pp1n3/6B1/8/6P1/P4RKP/5R2 w - - 0 35,True,True,False,"['endgame', 'advantage', 'pin', 'long']",1161.047119140625,True
+"['endgame', 'mate', 'mateIn2', 'queenEndgame', 'short']",57.0,6k1/1p3ppp/2q1p3/1p2P3/4PP2/8/3Q2PP/3Q1K2 w - - 2 32,True,False,False,,,
+"['endgame', 'long', 'mate', 'mateIn3']",73.0,6k1/pb1r1p2/1p3Pp1/5q1p/8/8/PKR4P/2R5 w - - 4 35,True,False,True,,,
+"['attraction', 'clearance', 'crushing', 'defensiveMove', 'kingsideAttack', 'long', 'middlegame', 'sacrifice']",-103.0,1nkr1q2/2p3p1/pbP1p1p1/RP1pPr2/Qp6/3P4/1B4PP/RN4K1 w - - 3 24,True,False,False,,,
+"['advantage', 'endgame', 'long']",-79.0,4r2k/1pp3qp/3p2p1/2nP4/p1P5/P6P/4RPP1/4R1K1 w - - 0 34,True,False,False,,,
+"['crushing', 'opening', 'short']",106.0,4kb1r/3nqppp/4pn2/5b2/2Q5/5N2/PP3PPP/R1BNK2R w KQk - 1 14,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'veryLong']",-23.0,2k5/ppp2r1p/2p5/4P2N/3nr1P1/7P/P5K1/3RR3 w - - 14 29,True,False,False,,,
+"['crushing', 'deflection', 'endgame', 'long', 'rookEndgame']",-25.0,8/6r1/2p5/5p1p/5P2/2PK1kP1/2P1R3/8 b - - 0 44,True,False,False,,,
+"['crushing', 'fork', 'middlegame', 'short']",-115.0,2kr4/2q3p1/2pr4/2ppR3/P7/3P3b/PRPN3Q/6K1 b - - 0 31,True,False,False,,,
+"['advantage', 'endgame', 'long', 'pin']",89.0,r5k1/5ppp/2b1p3/Rp3P2/2pPP3/2r2P2/2P3PP/R5K1 w - - 0 26,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",664.433349609375,False
+"['crushing', 'endgame', 'short']",-108.0,r4r1k/1p4p1/p1pp3p/7q/PP1P1R2/8/1P6/R4QK1 w - - 0 26,True,True,False,"['endgame', 'advantage', 'short']",781.8369750976562,True
+"['crushing', 'endgame', 'long']",81.0,5k2/p4prp/2r2b2/4R3/2pp4/6P1/1P1P1P1P/2B1R1K1 w - - 0 26,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",657.1415405273438,False
+"['discoveredAttack', 'enPassant', 'mate', 'mateIn2', 'middlegame', 'short']",-90.0,2r2b2/p1pq2pp/1p1p1p1k/3Pp2b/4P3/P1Q2P2/6PP/2K1N2R w - - 1 30,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'long', 'promotion', 'rookEndgame']",50.0,8/8/8/8/6K1/6pR/6k1/8 b - - 7 58,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",69.0,5k2/5pp1/4r2p/1p3q2/5P2/6PP/Q4RK1/8 w - - 1 40,True,False,True,,,
+"['advantage', 'endgame', 'short']",103.0,r2r2k1/6pp/p1bR4/1p6/5Bn1/1P1R4/1P5P/6K1 w - - 0 27,True,True,False,"['middlegame', 'advantage', 'short']",1117.765625,True
+"['clearance', 'crushing', 'endgame', 'quietMove', 'rookEndgame', 'veryLong']",70.0,8/8/6rr/p3P1R1/k5R1/8/6K1/8 w - - 10 48,False,False,,,,
+"['endgame', 'master']",-125.0,3r2k1/3q1ppp/1Q2p3/8/2N5/1PR1P2P/P4PP1/6K1 b - - 0 26,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",52.0,r4rk1/4n1b1/p3p2p/1p1pP1p1/2pP4/2P2R1P/PP1qBQP1/5RK1 w - - 0 25,True,False,False,,,
+"['advancedPawn', 'bishopEndgame', 'capturingDefender', 'crushing', 'endgame', 'long']",44.0,8/K1k5/3p4/1PpPp1b1/1B6/1P5p/8/8 b - - 0 39,True,False,True,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",33.0,5rk1/1b3q2/7p/P2p4/4p1nP/1B5Q/P1P1R1P1/5RK1 b - - 0 27,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",805.58642578125,True
+"['crushing', 'fork', 'master', 'opening', 'short']",51.0,rnb1r2k/p4ppp/2p3n1/3p4/1pPP3q/1Q3P2/PPB3P1/RNB1R1K1 w - - 1 18,True,False,False,,,
+"['attraction', 'crushing', 'deflection', 'middlegame', 'queensideAttack', 'veryLong']",8.0,r1kq1r2/1b1p1p2/ppp1p3/8/6r1/3R4/PPPQ1PPP/2B3K1 w - - 4 24,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'queensideAttack', 'short']",-92.0,1k6/1p1r1p2/pPp3n1/6p1/3q3p/b4B1P/4Q1PN/4B2K w - - 0 37,True,False,False,,,
+"['advantage', 'endgame', 'short']",115.0,r1b4k/ppppR1p1/2n5/6p1/8/2P5/PPPN1PPP/6K1 w - - 0 15,True,False,False,,,
+['endgame'],95.0,8/1r4k1/p3q1p1/P2p3Q/3P1p2/6R1/5PPP/1Q4K1 b - - 0 44,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'long']",51.0,6k1/pp3qp1/4r2p/3pR2P/1P4P1/2P3B1/2P5/4R1K1 w - - 0 32,True,False,False,,,
+"['crushing', 'middlegame', 'short']",-18.0,1r3k2/5qpp/2b1p1n1/p1ppP3/R4P2/2P1B3/P1P3PP/1R4K1 w - - 0 23,True,False,False,,,
+"['kingsideAttack', 'master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-22.0,4r1k1/1b1n2p1/pp1Bq2p/8/P2Q1R1N/8/1PP3PP/4R1K1 b - - 0 27,True,False,False,,,
+"['deflection', 'mate', 'mateIn2', 'middlegame', 'short']",109.0,6k1/1br3p1/6P1/p4p2/Pp6/1P1R4/NKP1N3/1B5q w - - 2 33,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",534.5795288085938,False
+"['backRankMate', 'mate', 'mateIn2', 'middlegame', 'short', 'xRayAttack']",-39.0,1RRq2k1/3r1ppp/8/p7/Pn3PP1/N3r3/7P/6K1 w - - 4 37,True,True,False,"['middlegame', 'mateIn3', 'mate', 'backRankMate', 'long']",809.9720458984375,False
+"['crushing', 'defensiveMove', 'endgame', 'pawnEndgame', 'short', 'zugzwang']",73.0,8/8/1k1p1k2/2pPp1p1/2P1P1Pp/5K1P/8/8 b - - 2 43,False,False,,,,
+"['crushing', 'middlegame', 'short']",-13.0,2r3k1/p1r2p1p/2q2np1/3p4/NP6/1N1QPP1R/P5PP/2R3K1 b - - 0 24,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'short']",-74.0,8/p2r1kq1/1p1R2r1/8/3P1PP1/2P3K1/P3N3/8 w - - 0 41,True,True,False,"['endgame', 'advantage', 'hangingPiece', 'skewer', 'short']",1163.3353271484375,False
+"['crushing', 'endgame', 'fork', 'master', 'short']",72.0,6k1/3nnrpp/1p1p4/p2P2P1/2P2R1P/1P3R2/P6K/8 w - - 0 35,True,False,False,,,
+"['advantage', 'long', 'middlegame']",-25.0,5rk1/p2q2bp/4p1p1/1r2P1P1/3P4/2P2Q2/P4R2/5RK1 w - - 0 35,True,False,False,,,
+"['advantage', 'fork', 'middlegame', 'short']",41.0,2q1b2k/ppp3p1/1r5p/8/PP1P1n2/2P1R3/3N1PP1/4R1K1 w - - 0 21,True,False,False,,,
+"['crushing', 'middlegame', 'short']",-52.0,4r1rk/6qp/p4p2/np1p1Pp1/2pP3P/1PP1Q3/6P1/1B1RR1K1 w - - 3 30,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'long']",-45.0,5k2/p2qnPp1/1p6/2r5/4P2p/P4P2/2P3pK/3R4 w - - 0 30,True,False,False,,,
+"['crushing', 'endgame', 'knightEndgame', 'long']",-55.0,5k2/5p1p/1p1n1p2/pP1p1P1P/P2P2N1/8/K4P2/8 b - - 6 40,True,False,False,,,
+"['advancedPawn', 'advantage', 'long', 'middlegame', 'promotion', 'sacrifice']",-98.0,2k5/1pp2r1Q/pbnp1q1P/5P2/3p2P1/8/5PK1/B6R w - - 0 35,True,False,False,,,
+"['crushing', 'endgame', 'master', 'masterVsMaster', 'rookEndgame', 'short']",-54.0,1r1r4/Rp6/5k2/3P4/2P2pp1/1P4p1/P3R1P1/5K2 b - - 1 39,True,False,False,,,
+"['crushing', 'endgame', 'long', 'rookEndgame']",-88.0,6k1/r3r1p1/5p2/7P/p3Rp2/P7/1P2R1K1/8 w - - 0 40,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",94.0,r3k3/q3bpr1/p2p3p/R2Pp1p1/6n1/1P3NP1/1P2QP1P/5NRK b q - 0 23,True,False,False,,,
+"['crushing', 'middlegame', 'short']",-82.0,2r2k2/2q2p1p/np1p1pp1/p2P1N2/1p2P3/P2PPR2/4K1P1/2R3Q1 b - - 0 28,True,True,False,"['middlegame', 'advantage', 'short']",1462.775634765625,True
+"['attackingF2F7', 'mate', 'mateIn1', 'oneMove', 'opening']",-122.0,r1b1kbnr/ppp2qpp/1n1p4/3Pp3/4P3/5Q2/PPP3PP/RNB2RK1 w kq - 0 10,True,False,False,,,
+"['advantage', 'deflection', 'endgame', 'short']",-86.0,3r2k1/3r2p1/B4p1p/8/2P5/4R3/PB5P/3R2K1 b - - 0 28,True,True,False,"['endgame', 'advantage', 'hangingPiece', 'short']",875.4891967773438,True
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-84.0,4rb1k/pp2q1pp/8/8/1P1P4/1BP3Pb/P4R2/R1B1Q1K1 b - - 0 23,True,False,False,,,
+"['advantage', 'fork', 'middlegame', 'short']",-126.0,4r1k1/4r1bp/2pp2b1/P4pP1/2PP4/1P4Q1/2P4R/3N3K b - - 6 31,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'oneMove', 'opening']",-55.0,r1bn1rk1/ppp1qppp/1b1p4/2nP4/2BQP3/5N2/PB3PPP/RN3RK1 w - - 2 13,True,True,False,"['opening', 'mateIn1', 'mate', 'kingsideAttack', 'oneMove']",669.888427734375,True
+"['advantage', 'fork', 'middlegame', 'short']",24.0,r2r3k/p1p3pp/1p6/5P2/1b3n2/2N5/PPPR1PPP/2KR4 w - - 0 19,True,False,False,,,
+"['advantage', 'endgame', 'master', 'short', 'trappedPiece']",65.0,5r1k/ppp2r2/3n1R2/3P3N/3P2pP/2P5/P5P1/5K2 w - - 0 32,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'long', 'promotion', 'rookEndgame']",-62.0,6r1/8/P3P3/3R4/3R4/6p1/PP5k/5K2 b - - 1 49,True,False,False,,,
+"['crushing', 'defensiveMove', 'long', 'middlegame']",31.0,r2r2k1/pp1q2pp/8/4pp2/2PQn3/1P4P1/P4P1P/R2R1BK1 w - - 0 26,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'short']",-114.0,2k2r2/2p3p1/4q3/p1b5/5R2/7P/PP3PP1/5RK1 w - - 0 38,True,False,False,,,
+"['killBoxMate', 'long', 'mate', 'mateIn3', 'middlegame']",-26.0,k7/pp3p2/1r2bb2/4p1pp/1q2P3/1P3P2/P1Q3PP/K1R2B2 w - - 0 31,True,True,False,"['middlegame', 'mateIn2', 'mate', 'backRankMate', 'sacrifice', 'short']",738.7752685546875,False
+"['advantage', 'fork', 'middlegame', 'short']",96.0,5rk1/ppp2r2/2p1p1pp/4P3/7R/P1P5/1P5P/RNBQ3K b - - 0 18,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'master', 'short']",-1.0,3r2k1/5ppp/1bpr4/p4PPP/P7/1PPR4/K7/5Q2 b - - 4 37,True,False,False,,,
+"['crushing', 'kingsideAttack', 'long', 'middlegame', 'pin']",121.0,r1bqr1k1/5ppp/2p2b2/p1p5/P2pR3/1P3N2/2PPQ1PP/R1B3K1 w - - 0 17,True,True,False,"['middlegame', 'mateIn2', 'mate', 'fork', 'short']",749.162109375,False
+"['advantage', 'fork', 'middlegame', 'short']",57.0,6k1/1p5n/2np1rp1/r3p3/1p2P3/pPPP2QP/P2N2P1/R5K1 b - - 0 24,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-44.0,6k1/p1p2ppb/2p4p/2P5/1n4r1/1B3N2/P3RPPP/6K1 w - - 4 25,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",661.517333984375,True
+"['advantage', 'fork', 'middlegame', 'short']",-82.0,r3n1k1/6pb/p3p2p/1p6/4P3/P1P1Br2/1P1R2PP/3R3K w - - 0 28,True,False,False,,,
+"['advantage', 'endgame', 'hangingPiece', 'long', 'master']",-72.0,1kb1Q3/8/1ppBp3/4P3/p2Pq3/2P5/P6r/4R1Kr w - - 5 37,False,False,,,,
+"['crushing', 'long', 'middlegame']",-88.0,8/2rr1k1b/2p1qn2/Pp2p3/4P2p/2N2P2/1PPR1P2/3R1K2 w - - 0 32,True,False,True,,,
+"['crushing', 'middlegame', 'short']",47.0,2r2r2/1b3kpp/ppq1pp2/8/3Q1P1N/6P1/1BPK3P/2R2R2 b - - 8 30,True,False,False,,,
+"['crushing', 'endgame', 'exposedKing', 'long', 'rookEndgame']",-119.0,7k/4r1r1/p1p3pp/R7/P1Pp2P1/3p3P/2P2KP1/4R3 w - - 0 34,True,False,False,,,
+"['advantage', 'middlegame', 'short']",58.0,2r3k1/1b3pp1/p3pn1p/8/2r1P3/1PR2P2/3N2PP/1BR3K1 b - - 0 29,True,False,False,,,
+"['crushing', 'endgame', 'master', 'pawnEndgame', 'short', 'zugzwang']",99.0,8/6p1/2k1p1P1/p1P1P2P/Pp1K2p1/8/8/8 b - - 0 59,True,False,False,,,
+"['crushing', 'defensiveMove', 'fork', 'long', 'middlegame']",-81.0,b7/2Nr1rk1/p4n2/4Q3/4PP2/2P5/P2n2RP/7K b - - 0 30,True,False,True,,,
+"['endgame', 'mate', 'mateIn2', 'queenRookEndgame', 'short']",95.0,6k1/5p1p/2R2Kp1/8/1P2qPP1/7P/8/8 w - - 1 38,True,True,False,"['endgame', 'mateIn2', 'mate', 'queenRookEndgame', 'short']",579.720947265625,True
+"['advantage', 'hangingPiece', 'middlegame', 'short']",104.0,4rrk1/pp1q1ppB/2np4/3p2b1/NP1P4/2P2Q2/P4PPP/R3R1K1 b - - 0 16,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'master', 'masterVsMaster', 'short']",15.0,2kr4/1p3qp1/p5p1/P2R4/6P1/1BP1p2P/1P6/6K1 w - - 0 38,True,True,False,"['endgame', 'advantage', 'discoveredAttack', 'short']",1245.876220703125,False
+"['mate', 'mateIn2', 'middlegame', 'short']",-122.0,2r4k/1bp3rp/1p6/p3P2P/P7/1BP1n3/1P3RP1/5RK1 w - - 1 24,True,False,False,,,
+"['fork', 'long', 'mate', 'mateIn3', 'middlegame']",123.0,3r2k1/1b4p1/p1n1prPp/ppq4P/4P3/2P5/1R1Q4/2K5 w - - 0 32,True,False,True,,,
+"['crushing', 'defensiveMove', 'middlegame', 'short']",-99.0,r1qk2r1/pp1bn3/2p1p2p/5p2/PP6/7P/1BPR1P2/RN1Q3K w - - 0 21,True,False,True,,,
+"['crushing', 'hangingPiece', 'middlegame', 'short']",29.0,5nk1/1p2PQp1/p1b2p1p/2r2B2/5P2/4R1P1/PP5P/2R3K1 b - - 4 45,True,False,False,,,
+"['endgame', 'kingsideAttack', 'mate', 'mateIn1', 'oneMove']",-5.0,2r1r1k1/1p3pPp/1p1p3q/p2Pp2N/P7/2P5/1P3QKP/5R2 w - - 4 30,True,False,False,,,
+"['advantage', 'hangingPiece', 'master', 'middlegame', 'short']",59.0,3r4/pbpq1kn1/1p2pR1p/8/3QP3/B1P3N1/P1P3PP/7K b - - 0 24,True,False,False,,,
+"['bishopEndgame', 'crushing', 'endgame', 'short']",103.0,8/4b3/4k2p/2KpP1pP/1B4P1/8/8/8 w - - 1 51,True,False,False,,,
+"['advantage', 'endgame', 'quietMove', 'veryLong']",-110.0,7k/3q1pp1/3r3p/p1P5/8/Q2R1P2/1P3NPP/6K1 b - - 0 36,True,False,False,,,
+"['advantage', 'middlegame', 'short']",-69.0,8/p2r2pk/3r2np/4p3/n1P5/3RBN1P/5PPK/3R4 b - - 2 31,True,False,False,,,
+"['crushing', 'middlegame', 'short']",26.0,2r2rk1/2q2npp/p2p1P2/1p1PpP2/1P2P2P/P2p4/3B1Q2/2R2K1R b - - 0 28,True,True,False,"['middlegame', 'advantage', 'exposedKing', 'pin', 'veryLong']",1927.9212646484375,False
+"['advantage', 'long', 'master', 'middlegame']",108.0,3r2k1/1b1q1p1p/pb3npB/1p2p3/4P3/PQ3N2/1P3PPP/1B1R2K1 b - - 3 25,True,False,False,,,
+"['crushing', 'fork', 'middlegame', 'short']",-53.0,4r1k1/ppqn1ppp/2np4/2p5/8/3P1N1P/PPP1QPP1/4R1K1 w - - 2 18,True,False,False,,,
+"['crushing', 'middlegame', 'pin', 'veryLong']",42.0,1r4k1/3q1ppp/b1p1rb2/p7/P2p1P2/3P1N2/1BP1Q1PP/4R1K1 w - - 6 23,True,False,True,,,
+"['advancedPawn', 'crushing', 'long', 'middlegame', 'promotion']",-127.0,1r5k/pPqp3p/1p3RbB/2bP4/8/8/P5PP/2Q4K w - - 3 27,True,False,True,,,
+"['crushing', 'endgame', 'quietMove', 'rookEndgame', 'short']",-89.0,3r4/8/4k3/5p2/2K4P/7R/1P6/8 b - - 3 49,True,False,False,,,
+"['crushing', 'endgame', 'short', 'skewer']",-113.0,2r2k2/8/3pp1R1/p3p2p/2rPPp2/5P1P/P2B2P1/R3K3 b Q - 0 26,True,False,True,,,
+"['advantage', 'hangingPiece', 'master', 'masterVsMaster', 'middlegame', 'short']",-57.0,1rb5/ppkpnB2/6n1/4q2R/3pP3/3P4/PPP2Pr1/3RQRK1 w - - 0 19,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",-10.0,3r2k1/R4p2/1p4p1/8/1P5n/8/2P2PPP/3R3K b - - 0 26,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'oneMove']",590.8756103515625,True
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",-108.0,6k1/pp3ppp/3rp3/8/n4P2/6PP/5K2/2R5 w - - 0 30,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",536.35986328125,True
+"['advantage', 'endgame', 'master', 'pin', 'short']",-76.0,1r3Rk1/pb5p/4p1p1/2p1P3/8/1PB1P3/P5QP/6K1 b - - 0 33,True,False,False,,,
+"['advantage', 'endgame', 'long', 'pin']",54.0,1r1Q3k/pp4pp/8/4r3/4N3/1P2P3/P4p1P/5RK1 b - - 0 25,False,False,,,,
+"['crushing', 'endgame', 'fork', 'short']",56.0,8/1p6/p5kp/1b3p2/8/P2R4/1P2R1PP/5K2 b - - 0 40,True,False,False,,,
+"['backRankMate', 'mate', 'mateIn2', 'middlegame', 'short']",78.0,5r1k/p1p3pp/1p4q1/4r3/2B1b3/2P5/PP3RPP/5RK1 w - - 0 24,True,True,False,"['middlegame', 'mateIn1', 'mate', 'backRankMate', 'hangingPiece', 'oneMove']",759.650146484375,True
+"['advantage', 'endgame', 'long', 'pin']",-125.0,4q2k/5rpp/4b3/p2pp3/4P3/1P1P1R2/P1P3PP/5RK1 w - - 0 28,True,False,False,,,
+"['advantage', 'discoveredAttack', 'middlegame', 'short']",-50.0,r1r5/1pb2kp1/3pqn1p/P4p2/1PRP4/2P1P2P/1BQ3P1/6K1 w - - 0 29,True,False,False,,,
+"['backRankMate', 'mate', 'mateIn2', 'middlegame', 'short']",43.0,k4r1r/pp1q3p/2n1b3/3p4/8/1B5P/P4QP1/5RK1 w - - 0 32,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-114.0,7k/5p2/1p2r2p/p1p1p3/1nP5/1K6/1P5p/1B1R4 w - - 0 45,True,False,True,,,
+"['advantage', 'middlegame', 'short']",-62.0,r2k4/p2nr2p/1p5B/2p2R2/3p4/8/PPP3PP/RN4K1 b - - 0 18,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'queenRookEndgame', 'short']",-99.0,3r3k/6pp/1p4q1/p1p1P3/P1P5/1P6/6Pp/3R3K w - - 0 33,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'hangingPiece', 'queenRookEndgame', 'short']",662.2958984375,True
+"['crushing', 'middlegame', 'short']",36.0,3r1k2/1N3bpp/2p4n/1n2p3/1P2PP2/P1p3P1/2B4P/2KR4 w - - 1 28,True,False,True,,,
+"['crushing', 'endgame', 'pin', 'short']",-27.0,6k1/1p4q1/8/2P2p2/p2P2R1/P5Q1/1P4rP/4r1K1 w - - 0 33,True,False,False,,,
+"['advantage', 'hangingPiece', 'middlegame', 'short']",-79.0,r5n1/pp3k2/4Rp2/8/4NN2/1P4PP/P5P1/2Rr2K1 b - - 0 31,False,False,,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-63.0,rn3rk1/6pp/2p1p3/pqn1P3/4P3/3P1Q2/PP4PP/R1B2RK1 w - - 0 17,True,True,False,"['middlegame', 'mateIn1', 'mate', 'kingsideAttack', 'oneMove']",516.9022216796875,True
+"['advancedPawn', 'crushing', 'long', 'middlegame']",-109.0,2k5/pprn1pr1/1q6/4P3/2p5/2P1R3/PP3PPP/4R1K1 w - - 4 25,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'long', 'master']",123.0,5r2/p4rk1/8/1p1q2PP/1Pn5/P4RP1/5QK1/8 w - - 0 44,True,False,False,,,
+"['crushing', 'endgame', 'short']",34.0,3r3k/3n1p1r/5p2/p7/Bp6/7P/2P1R1P1/2K1R3 w - - 0 33,True,False,False,,,
+"['master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-75.0,7k/pp3ppp/1n6/8/2r1BQ2/P3PN1b/1P3P1P/2R3K1 b - - 0 22,True,True,False,"['middlegame', 'mateIn2', 'mate', 'hangingPiece', 'short']",712.0607299804688,False
+"['advantage', 'discoveredAttack', 'middlegame', 'short']",88.0,2r5/1pr1bpkp/pN1ppp2/8/3PPP2/5N1P/PP4P1/2RR2K1 b - - 0 19,True,True,False,"['middlegame', 'advantage', 'short']",870.93701171875,True
+"['crushing', 'middlegame', 'short']",7.0,2r3k1/5pp1/1p2pnbp/p1q5/5P2/PQ1PN1PP/1P2P1B1/2R3K1 b - - 1 27,True,False,False,,,
+"['advantage', 'middlegame', 'quietMove', 'veryLong']",65.0,2b1Rr1k/1ppp2pq/1p6/2b5/8/5Q2/PP3PPP/4R1K1 w - - 0 22,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-31.0,2B3k1/5r2/5r2/3pP2p/2p3pP/1p4Q1/bPP5/2K2RR1 b - - 0 39,True,False,False,,,
+"['crushing', 'middlegame', 'short']",-9.0,2r3k1/p2b1ppp/2q5/1p1Pp3/1b6/1P1QPN2/P3B1PP/2R3K1 b - - 1 23,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",-75.0,6k1/2p5/1pBpp1rp/p7/PnP5/2P5/1P2QR2/K7 b - - 0 34,True,False,False,,,
+"['advantage', 'fork', 'middlegame', 'short']",-67.0,6k1/p1p2Np1/1p2rn1p/1Qb5/3P4/2P2P2/RP3R1P/6K1 b - - 0 26,True,False,True,,,
+"['crushing', 'opening', 'short']",-59.0,r1bq2k1/ppp2ppp/5n2/2b5/2p5/5N2/PPP2PPP/RNBQ2K1 w - - 0 12,True,False,False,,,
+"['crushing', 'endgame', 'fork', 'master', 'short']",-2.0,8/5pp1/2rp2kp/3Rp3/5b2/pR4PP/P4P2/1K6 b - - 0 40,True,True,False,"['endgame', 'mateIn1', 'mate', 'oneMove']",582.0090942382812,False
+"['advantage', 'middlegame', 'short']",-60.0,1k2r3/pp1n4/2pb3p/3p2pP/3P2q1/P3QNp1/1P4K1/4R1N1 w - - 2 29,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'short']",-46.0,3qk3/4r1p1/4pp2/p1Pr4/P5Pp/2B1R2P/1PP5/2K1R3 w - - 0 32,True,False,False,,,
+"['advantage', 'clearance', 'middlegame', 'veryLong']",-30.0,7k/1p2p2p/p3Pnpb/3R4/5p2/PP6/4qPPP/2rQ1NK1 w - - 0 37,True,False,False,,,
+"['advantage', 'long', 'opening']",-107.0,2kr1b1r/1pq1ppp1/p1p2n2/5b1p/2PR4/6P1/PP1RPPBP/1NBQ2K1 w - - 0 12,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",102.0,6k1/1p5p/5R1B/p4p2/8/3K2P1/7P/2q2b2 w - - 0 40,True,False,False,,,
+"['advantage', 'defensiveMove', 'long', 'middlegame']",-40.0,r4k2/p1r3p1/b3p1pp/P1p1P3/R4P2/2N2N2/1P3qPP/3R2K1 w - - 0 28,True,False,False,,,
+"['advantage', 'endgame', 'master', 'short']",27.0,1r1k4/p1pn1p2/5P2/R3P3/5P1P/pr6/3R4/2K5 w - - 0 43,True,False,False,,,
+"['attraction', 'crushing', 'endgame', 'fork', 'long', 'sacrifice']",-49.0,1k3q2/ppp5/1p3r1r/1P6/3Q4/5P1p/1PPR4/7K w - - 0 36,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",701.59423828125,False
+"['crushing', 'endgame', 'fork', 'long']",111.0,6k1/6p1/4rp1p/1pB5/p5P1/4R2P/r1P1Q1K1/8 b - - 0 34,True,False,False,,,
+"['advantage', 'middlegame', 'short']",69.0,2rr2k1/7p/pb4p1/2p1p3/P1P2p2/BP1R4/4nPPP/3R2K1 w - - 1 24,True,False,False,,,
+"['advantage', 'endgame', 'long']",-1.0,6k1/R4ppp/1pp1p1n1/2P1P1N1/3r4/8/5PPP/6K1 w - - 0 27,True,False,True,,,
+"['advantage', 'endgame', 'short']",-51.0,3r4/5pp1/7p/Pb6/8/2R1P1kP/6P1/3Q2K1 b - - 0 39,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'oneMove']",691.541748046875,False
+"['crushing', 'endgame', 'master', 'pawnEndgame', 'quietMove', 'short']",127.0,8/8/8/6pp/1P4k1/2K5/8/8 w - - 0 48,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'queenRookEndgame', 'short']",-25.0,6k1/5p2/pp4p1/3q2Pp/7P/1PP1Rp2/2K2P2/8 w - - 1 35,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-111.0,5k1r/p4pp1/1p1p2np/1Q6/3P4/2P4P/P2nRPP1/2q1NK2 w - - 2 25,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-104.0,br2kq1r/p1pppp2/Pp6/3P3Q/2P1P3/2N2N2/1P3PP1/2K2B2 w k - 0 19,True,False,True,,,
+"['endgame', 'kingsideAttack', 'mate', 'mateIn2', 'short']",-81.0,6k1/pb3ppp/1p3n1B/2p5/4P1q1/2P3N1/PP4PP/3R2K1 w - - 3 22,True,True,False,"['endgame', 'mateIn2', 'mate', 'kingsideAttack', 'short']",534.3026123046875,True
+"['advancedPawn', 'advantage', 'middlegame', 'sacrifice', 'short']",-107.0,7k/3q1Pbp/4p1p1/p2pPb2/Bp3PP1/1Pp5/1QR4P/1K4NR b - - 1 36,True,False,False,,,
+['endgame'],-49.0,4r2k/2p3p1/p1p4p/8/1qPP4/1P1B1K2/P3Q2P/6r1 w - - 0 32,True,True,False,"['endgame', 'mateIn2', 'mate', 'hangingPiece', 'short']",784.011962890625,True
+"['advantage', 'fork', 'opening', 'short']",-37.0,2k1rb1r/pbppq1pp/5n2/8/8/1P3P2/P1PP1NPP/RNBQR1K1 b - - 6 14,True,True,False,"['opening', 'mateIn2', 'mate', 'backRankMate', 'short']",785.3030395507812,False
+"['advantage', 'defensiveMove', 'middlegame', 'short']",57.0,3r1n2/p1b1k1p1/1p2Bp1p/4p3/1P6/P3PN2/1B3PPP/3R2K1 b - - 0 26,True,False,False,,,
+"['advantage', 'kingsideAttack', 'opening', 'short']",80.0,r1b1r1k1/pp3ppp/1qpb1n2/8/2B5/5N1P/PP2QPP1/R1B1R1K1 w - - 2 14,True,True,False,"['opening', 'advantage', 'kingsideAttack', 'short']",970.89111328125,True
+"['advancedPawn', 'crushing', 'endgame', 'sacrifice', 'short']",10.0,8/8/8/8/8/4bkp1/4R3/5K2 b - - 14 70,True,False,False,,,
+"['advantage', 'discoveredAttack', 'long', 'middlegame']",-3.0,2r3k1/ppr1B2p/2qpR3/5p2/2n2P2/1N3Q2/P5PP/2R3K1 b - - 0 30,True,False,False,,,
+"['crushing', 'master', 'middlegame', 'short']",-71.0,2rr2k1/p1n2p2/1p3Rp1/1Rp2p2/2Q4N/P3PPP1/6BP/6K1 b - - 0 28,True,False,False,,,
+"['crushing', 'endgame', 'long', 'pin']",10.0,5Qk1/p4ppn/3p3p/3P4/7P/8/P1p3P1/1r1RR1K1 b - - 3 24,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",73.0,4r1k1/p4p2/1pb4p/2p3N1/8/3P2P1/PP1R1P1P/4R1K1 b - - 0 23,True,True,False,"['endgame', 'mateIn1', 'mate', 'hangingPiece', 'oneMove']",642.0726318359375,True
+"['crushing', 'endgame', 'hangingPiece', 'short']",125.0,3r4/Nk1q1p1p/2p5/4p3/4Pp2/2P2Q2/1P4PP/3R3K b - - 0 27,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",495.6034240722656,False
+"['crushing', 'endgame', 'fork', 'rookEndgame', 'short']",-68.0,6k1/ppp2r2/3p1r1p/3P2p1/PP6/2P2pPK/5R1P/5R2 b - - 0 27,True,False,False,,,
+"['advantage', 'middlegame', 'short']",-58.0,6k1/p2br1pp/1pr5/2b3N1/8/1PK2P2/4R1PP/4R3 w - - 10 32,True,False,False,,,
+"['advantage', 'long', 'middlegame']",54.0,1r4k1/3n2p1/2b1p3/3p1pPp/PRnP3P/1RP2PK1/1p2P3/7B w - - 0 40,True,True,False,"['middlegame', 'advantage', 'short']",1328.136474609375,True
+"['crushing', 'endgame', 'short']",56.0,8/2q3k1/3pp1n1/1p4Q1/1P1P4/8/6BP/2R4K b - - 0 45,True,False,False,,,
+"['backRankMate', 'endgame', 'long', 'mate', 'mateIn3']",54.0,7k/p2r2pp/2Rb4/5p1P/3r4/8/PP3PK1/8 w - - 0 34,True,False,False,,,
+"['advantage', 'endgame', 'fork', 'long']",96.0,4rqk1/1p4pp/p7/2b5/2ppRPp1/P2P4/1PPBR1PP/6K1 w - - 0 24,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'long', 'master', 'masterVsMaster', 'pin', 'sacrifice', 'superGM']",123.0,8/8/1p4pp/8/1P1BR3/2P1K1q1/5Rk1/8 w - - 12 54,False,False,,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",-52.0,2R5/5pkp/p2rpnp1/Qp6/8/4PP2/5PPP/1B4K1 b - - 0 33,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'fork', 'short']",675.9041748046875,True
+"['mate', 'mateIn2', 'middlegame', 'short']",17.0,r1b3k1/ppp1n1rp/4P3/4N3/P7/1B4PP/2PR4/6K1 w - - 3 27,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",715.755615234375,False
+"['crushing', 'kingsideAttack', 'long', 'middlegame']",-8.0,2r3k1/1b3ppp/3r1nn1/pB2p3/P2pP3/4QP2/1P1NN1PP/2R4K b - - 2 22,True,False,True,,,
+"['endgame', 'hookMate', 'mate', 'mateIn1', 'oneMove']",-56.0,5rk1/pp3r1p/3p4/2p1p2Q/P3P3/1P1PKnP1/5R1P/7K b - - 4 30,False,False,,,,
+"['advantage', 'opening', 'short', 'trappedPiece']",64.0,r1b1r1k1/pp1n3p/2p2q1B/3p4/3b2Pn/4R2P/PPP2P2/2RBQ1K1 w - - 0 27,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'master', 'short']",-101.0,5k2/8/P4r2/7p/1Pp2R2/2P3pp/8/7K w - - 0 38,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'master', 'pawnEndgame', 'quietMove', 'veryLong']",51.0,8/8/1p6/7K/8/7P/k7/8 b - - 0 70,True,True,False,"['endgame', 'advantage', 'advancedPawn', 'quietMove', 'pawnEndgame', 'veryLong']",745.3346557617188,True
+"['advantage', 'deflection', 'endgame', 'rookEndgame', 'short']",86.0,6r1/3k2r1/4R3/1p3R2/3p1P2/1P6/P5PP/6K1 b - - 4 42,True,False,False,,,
+"['crushing', 'endgame', 'intermezzo', 'pawnEndgame', 'quietMove', 'short']",-116.0,8/8/8/8/1p4k1/1P2Rp2/P7/7K b - - 0 56,True,False,True,,,
+"['advantage', 'endgame', 'fork', 'short']",51.0,7k/p3r2p/1p4r1/7N/5R2/P3B2P/1q3P2/7K w - - 0 43,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-101.0,2rr1k2/2pqnppp/8/8/1Q6/1N3PP1/PPP4P/R1K2BR1 b - - 0 24,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",806.0890502929688,True
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-48.0,5rk1/7p/1q2r1p1/p3b1P1/P2p3P/1P1P4/2P2Q2/2R2RK1 w - - 0 37,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",628.4261474609375,True
+"['crushing', 'kingsideAttack', 'middlegame', 'short']",-46.0,r5k1/p3Rppp/2pq1rn1/3p4/3P4/1P3N1P/P3QPP1/R5K1 w - - 0 23,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",-64.0,3r4/1k2bQpp/5n2/2p3B1/8/5N2/PP3PPP/6K1 b - - 0 22,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",660.4962158203125,True
+"['discoveredAttack', 'exposedKing', 'long', 'mate', 'mateIn3', 'middlegame']",40.0,1r5k/1p2b1rP/8/p1p1p1P1/BnPp4/6R1/5P2/1K5R w - - 0 37,True,False,True,,,
+"['crushing', 'endgame', 'pin', 'short']",63.0,2Rq1kr1/4bp2/4p3/8/P2BP1Pp/1p1P3K/8/2R5 w - - 8 40,True,False,False,,,
+"['crushing', 'endgame', 'queenRookEndgame', 'short']",-89.0,3r2k1/1p3p1p/p7/3r4/3P1Pp1/2Q5/PP4PP/6K1 b - - 6 40,True,False,False,,,
+"['long', 'mate', 'mateIn3', 'middlegame']",5.0,3r2k1/pq2nr1p/4pbpB/4n3/8/1P5P/P1P3P1/1K1R3R w - - 0 25,True,True,False,"['middlegame', 'mateIn2', 'mate', 'hangingPiece', 'kingsideAttack', 'short']",695.918212890625,False
+"['advancedPawn', 'advantage', 'endgame', 'short']",-95.0,7k/5r1p/b3pP2/p3P3/6P1/r7/6PK/8 w - - 0 39,True,False,True,,,
+"['crushing', 'middlegame', 'short']",-6.0,4r1k1/5pp1/p1pr1q2/3p1P2/8/2PpR2P/BP2Q1P1/4R1K1 w - - 0 25,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",-85.0,rn5k/3p2pp/p1nP1q2/1p6/5p2/1B3P2/PPP1QP1P/3R3K w - - 0 22,True,False,False,,,
+"['crushing', 'endgame', 'master', 'pawnEndgame', 'short']",68.0,8/8/1k2p3/p3p1p1/P1K1P1P1/8/8/8 w - - 3 41,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-18.0,7r/1b2kp2/1nqp2pp/4r2N/p3P1P1/P1P4P/5QB1/R4R1K w - - 5 31,True,False,False,,,
+"['crushing', 'endgame', 'quietMove', 'short']",109.0,7q/7p/8/8/KP3R2/3B2k1/1P6/8 w - - 0 47,True,False,False,,,
+"['attackingF2F7', 'mate', 'mateIn1', 'oneMove', 'opening']",38.0,r2qkbnr/3bpp2/3p2pp/8/p2PP3/1p6/PPn1BQPP/RNB1NRK1 w kq - 0 15,True,False,False,,,
+"['crushing', 'defensiveMove', 'middlegame', 'pin', 'veryLong']",-68.0,3r2k1/pb3rpp/4p3/5pq1/8/3R1B2/PPP2PPP/R2Q2K1 w - - 1 22,True,False,False,,,
+"['advantage', 'endgame', 'long']",110.0,r7/8/4p2p/4N1k1/5p2/1pPB4/1P2RP2/5K1b b - - 5 41,True,False,False,,,
+"['crushing', 'middlegame', 'short']",12.0,1rq3k1/5ppp/1Q2p3/p7/3P3N/6P1/PP2RPP1/2R3K1 b - - 0 32,True,True,False,"['endgame', 'advantage', 'hangingPiece', 'short']",1115.66748046875,False
+"['advantage', 'middlegame', 'veryLong']",-95.0,2q2r2/1Q2nkp1/R3pb1p/7b/2r1P3/4P1P1/1P2N2P/2R3K1 b - - 0 20,True,False,True,,,
+"['advantage', 'deflection', 'fork', 'middlegame', 'short']",117.0,3k4/p2b2pr/1p1r4/3p2N1/4p2P/q1P5/P2R1PP1/3KR3 w - - 0 27,True,False,False,,,
+"['crushing', 'long', 'middlegame', 'trappedPiece']",-94.0,2r3k1/p2b1p1p/1p2p1p1/3pP1Pp/P6n/3Q1N1R/4BP1P/2R4K b - - 0 33,True,False,False,,,
+"['advantage', 'deflection', 'fork', 'long', 'middlegame']",45.0,4r3/p4kp1/1pn1rn1p/8/1P1p1P2/B5P1/P1P1R1P1/2QB3K b - - 6 28,True,False,False,,,
+"['attraction', 'crushing', 'kingsideAttack', 'middlegame', 'sacrifice', 'veryLong']",-117.0,5bk1/1b1r1ppp/p3p3/Pp6/1P2qP2/2Q1PN1P/1B4P1/2R3K1 w - - 9 35,True,False,False,,,
+"['advantage', 'fork', 'master', 'middlegame', 'short']",64.0,3r4/p1br2kp/1p4p1/1P3p2/5P2/5BP1/P2RR2P/Q5K1 b - - 0 26,True,False,True,,,
+"['advancedPawn', 'crushing', 'endgame', 'promotion', 'short']",-24.0,8/2K3k1/2P5/p6p/P7/1P5R/7p/8 b - - 0 61,True,False,False,,,
+"['backRankMate', 'endgame', 'long', 'mate', 'mateIn3', 'sacrifice']",-88.0,3rk3/pR4R1/2prp2p/6p1/2B1Rp2/8/1B3PPP/6K1 b - - 2 28,True,False,True,,,
+"['advantage', 'endgame', 'short']",15.0,n5k1/pp3p1p/b5p1/3R4/1P2r1B1/P6P/6P1/2rR2K1 w - - 0 31,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",19.0,3r1rk1/1Q2Rppp/p4n2/8/8/P7/R4PPP/6K1 b - - 0 28,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",617.4413452148438,True
+"['crushing', 'endgame', 'rookEndgame', 'short', 'skewer']",-13.0,1k4r1/1P3p2/4p3/P2pP2p/1p1P4/5p1P/5P2/1R2K3 b - - 0 34,True,True,False,"['endgame', 'crushing', 'skewer', 'rookEndgame', 'short']",634.4774169921875,True
+"['advantage', 'opening', 'short']",82.0,2kr1b1r/pppq1ppp/5n2/4p3/8/1PN1P1P1/P3NPBP/R1BQ1RK1 b - - 0 11,True,False,True,,,
+"['advantage', 'endgame', 'long', 'queenRookEndgame']",-116.0,7k/2p3rp/2q2r2/pp1p4/3P4/2P3P1/PP2Q1PP/4R2K w - - 0 25,True,False,True,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",-120.0,4rk2/1ppn1ppp/1b1p2n1/pP3q2/P2P4/1NN5/2P1QPPP/4R1K1 w - - 0 19,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",618.7694091796875,True
+"['attraction', 'crushing', 'long', 'middlegame', 'skewer']",108.0,2k4r/pp3kp1/2p1p3/4Pr2/1P3PP1/P2R1KBq/Q7/3R4 b - - 0 31,False,False,,,,
+"['cornerMate', 'mate', 'mateIn2', 'middlegame', 'short']",-97.0,2k3r1/2p3rp/2p1pp2/3p4/3P2n1/1P2PN2/7P/RNR3K1 b - - 7 24,True,False,False,,,
+"['crushing', 'master', 'middlegame', 'short']",-124.0,3r2k1/4bp1p/p1Bq2p1/4p3/P5Q1/6P1/1PR2P1P/3R2K1 b - - 0 26,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove', 'vukovicMate']",-85.0,5b2/1kpr3r/1p1p3p/1P1P1bp1/R5N1/4P3/2PB2PP/4K1n1 w - - 2 24,True,False,True,,,
+"['endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",66.0,2r3k1/5p2/8/4P2P/4P3/3R3p/5P2/6K1 b - - 0 35,True,False,False,,,
+"['advancedPawn', 'crushing', 'defensiveMove', 'endgame', 'rookEndgame', 'veryLong']",-17.0,8/8/8/r7/1K5k/R6p/8/8 b - - 0 50,True,False,False,,,
+"['master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-10.0,3b1k1r/1bp2pp1/p1pp2rq/8/2PPQpP1/1P3NN1/P4P2/R3R1K1 w - - 0 25,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",787.3179931640625,True
+"['doubleCheck', 'endgame', 'mate', 'mateIn1', 'oneMove']",-106.0,3rk3/pp3pp1/2p5/2n1P1q1/2P4r/1P2R3/P7/2KQR3 w - - 2 28,True,False,False,,,
+"['advantage', 'endgame', 'short']",-86.0,3k3r/pr1n3p/3Rp1p1/5p2/4p2P/1P2P3/P1P2PP1/2KR3R w - - 1 22,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",115.0,r1b1kr2/ppppq2p/6pQ/2b5/3p4/1P1P4/P1P2PPP/RNB2BK1 b q - 0 13,True,False,False,,,
+"['advantage', 'clearance', 'endgame', 'exposedKing', 'veryLong']",-59.0,7k/pp3r1r/5bp1/8/P3n3/8/1PPR1PP1/2BR1K2 w - - 3 25,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'sacrifice', 'short']",40.0,4r2k/1p2q1p1/p6p/3p3N/2pP1b2/2P4P/PPQ2BP1/RB4K1 b - - 7 24,True,False,True,,,
+"['backRankMate', 'long', 'mate', 'mateIn3', 'middlegame', 'sacrifice']",96.0,1r3b2/p2b1k1p/1q2ppp1/3p4/3P4/P1NR4/Q3NPPP/6K1 b - - 0 25,True,False,False,,,
+"['crushing', 'long', 'middlegame']",-101.0,2r3k1/2rq1p1p/6p1/pp1p4/P2P2b1/1PR2NP1/6PP/2R2QK1 w - - 3 28,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",119.0,r4r1k/pp4pp/2pppqn1/4p3/4P1Q1/2PPP3/PP4PP/RN3RKK b - - 8 15,False,False,,,,
+"['backRankMate', 'endgame', 'hangingPiece', 'mate', 'mateIn1', 'oneMove']",106.0,5k2/7p/2B3p1/5p2/8/8/5PPP/1r1R2K1 b - - 2 34,True,True,False,"['endgame', 'mateIn1', 'mate', 'backRankMate', 'hangingPiece', 'oneMove']",487.1521911621094,True
+"['advantage', 'defensiveMove', 'deflection', 'exposedKing', 'long', 'middlegame']",-112.0,8/1k5p/p3b3/2BpP1b1/2pP1q2/P6P/1P4QN/5R1K b - - 9 35,True,False,False,,,
+"['advantage', 'endgame', 'queenRookEndgame', 'short']",-54.0,6k1/p2R2Pp/4p3/1r6/qp5P/2PR1P2/P1K3P1/8 w - - 0 35,True,False,False,,,
+"['advantage', 'endgame', 'master', 'short']",-16.0,3r2k1/p5p1/3q1pNp/3Rp2P/2R3P1/4QP2/PP6/6K1 b - - 0 30,True,False,False,,,
+"['crushing', 'discoveredAttack', 'middlegame', 'short']",29.0,5rk1/pp1r1ppp/2n1pb2/8/6Q1/8/PP2RPPP/3R2K1 b - - 1 20,True,False,False,,,
+"['crushing', 'discoveredAttack', 'middlegame', 'short']",-72.0,r1r3k1/pp4pp/4p3/2qpPp2/1Q1p1P2/3P4/R3B1PP/2R2K2 b - - 1 23,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'long', 'pawnEndgame', 'zugzwang']",42.0,8/8/1p6/pP1pP1p1/P2P2p1/6pk/5K2/8 w - - 4 49,True,False,False,,,
+"['crushing', 'middlegame', 'short', 'trappedPiece']",-4.0,3r1k2/p2r2pp/b1p1p3/2p1P3/7b/2P1BN1P/P1P3P1/R2R2K1 b - - 0 22,True,False,False,,,
+"['endgame', 'mate', 'mateIn1', 'oneMove']",8.0,3k1r2/1Ppp4/1p5p/4P3/7q/r4R1P/2P3P1/5B1K w - - 0 29,True,False,False,,,
+"['kingsideAttack', 'master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",61.0,2b2r2/1p3qbk/2pQp3/2Pp4/pP1P2p1/P3P1Pp/1B5P/3N1RK1 b - - 2 33,True,True,False,"['middlegame', 'mateIn1', 'mate', 'kingsideAttack', 'oneMove']",599.6731567382812,True
+"['backRankMate', 'endgame', 'long', 'mate', 'mateIn3', 'sacrifice']",24.0,7k/6pp/2R3n1/pp6/1r6/KP6/P1P4r/8 w - - 0 35,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",583.7664794921875,False
+"['crushing', 'exposedKing', 'fork', 'long', 'middlegame', 'sacrifice']",-9.0,6k1/pb2rqP1/5b2/1ppp1p1R/8/1P3P2/PBP5/2KN3Q w - - 1 29,True,False,False,,,
+"['attraction', 'exposedKing', 'mate', 'mateIn4', 'middlegame', 'veryLong']",-49.0,2r3k1/p1p3pp/P1rp4/8/1R2p3/1B2RnP1/5PQP/7K b - - 0 31,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'sacrifice', 'short']",-62.0,3r2k1/pp1r1pb1/2p2p2/8/7Q/2B1P1R1/PP3PPP/6K1 b - - 7 23,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",629.8425903320312,True
+"['advantage', 'endgame', 'fork', 'master', 'short']",-95.0,2q4k/4r1pp/pp2p3/6p1/P7/2PR4/1P3PPP/3R2K1 w - - 0 28,True,True,False,"['endgame', 'advantage', 'fork', 'queenRookEndgame', 'short']",690.734130859375,True
+"['mate', 'mateIn2', 'middlegame', 'queensideAttack', 'short']",91.0,2k1r3/pppr4/2bp2q1/5nNp/3P3P/2P1Q3/PR4P1/4R1K1 w - - 8 31,True,True,False,"['middlegame', 'advantage', 'queensideAttack', 'short']",1086.99365234375,True
+"['crushing', 'middlegame', 'pin', 'sacrifice', 'short']",86.0,3rb1k1/pp4p1/2p2pN1/5P2/P1pPPR2/2r4q/5R1Q/5K2 w - - 0 34,True,False,False,,,
+"['advantage', 'master', 'middlegame', 'short']",35.0,2r3k1/4rp2/p4bp1/1p1p4/3P1P2/P1R1P1q1/1P4P1/1B2NK2 w - - 0 37,True,False,False,,,
+"['advantage', 'fork', 'long', 'middlegame']",86.0,2r2bk1/pp1q1r1p/6p1/3p1p2/3P4/2P5/P1PBR1PP/4R1K1 w - - 0 22,True,False,False,,,
+"['endgame', 'fork', 'master', 'mate', 'mateIn2', 'short']",-42.0,6k1/2q3pp/p1p1pp2/2r5/2pR1P2/P6P/1P4P1/3Q2K1 w - - 0 34,True,True,False,"['endgame', 'advantage', 'fork', 'long']",1388.38427734375,False
+"['advantage', 'opening', 'short']",-103.0,2r1kbnr/Pb1p1ppp/8/2q5/Qp6/4P3/1P1PNPPP/RNB1K2R b KQk - 1 14,True,False,False,,,
+"['kingsideAttack', 'master', 'mate', 'mateIn1', 'middlegame', 'oneMove']",45.0,r4qk1/pp1n3p/2pbN1p1/8/3P4/2P5/PP4PP/R1B2Q1K b - - 0 19,True,True,False,"['middlegame', 'mateIn1', 'mate', 'hangingPiece', 'kingsideAttack', 'oneMove']",600.4569091796875,True
+"['advantage', 'middlegame', 'short']",45.0,2kr4/1ppr1pp1/2p3pp/p3P3/4PP2/5B2/PP4PP/RNBR1K2 b - - 2 16,True,False,False,,,
+"['advantage', 'clearance', 'doubleCheck', 'kingsideAttack', 'middlegame', 'pin', 'veryLong']",21.0,5rk1/ppq2rpp/2pp4/3Pp2b/2P1P3/4KR2/P1P1N1QP/6R1 w - - 3 25,True,False,False,,,
+"['attackingF2F7', 'mate', 'mateIn1', 'oneMove', 'opening']",39.0,r2qkb1r/pp1bppp1/6np/3PP3/2p5/2N5/PP3QPP/R1B2RK1 w kq - 0 15,True,True,False,"['opening', 'mateIn1', 'mate', 'attackingF2F7', 'oneMove']",716.8156127929688,True
+"['attraction', 'long', 'mate', 'mateIn3', 'middlegame', 'queensideAttack']",84.0,3r4/p1p5/Bp1rp3/5pQp/3q3P/2N2P2/PPP3P1/2KR4 b - - 5 26,False,False,,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'short']",121.0,7k/p1p1r1pp/4p3/2n5/2P5/8/PP3PPP/3R2K1 w - - 0 23,True,True,False,"['endgame', 'mateIn2', 'mate', 'backRankMate', 'short']",509.91912841796875,True
+"['crushing', 'endgame', 'hangingPiece', 'long']",118.0,1kq5/1p6/1P2R3/4ppb1/8/4P1pP/1P4Q1/6K1 b - - 3 35,True,False,False,,,
+"['backRankMate', 'endgame', 'mate', 'mateIn2', 'rookEndgame', 'short']",-5.0,3r3k/6pp/1p6/8/p7/P4P2/1PP1R1PP/1K6 b - - 1 26,True,False,False,,,
+"['crushing', 'endgame', 'veryLong']",-58.0,4r2k/1p4np/p4pp1/2q5/8/2P3P1/P3RP1P/4R1K1 w - - 0 30,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'opening', 'sacrifice', 'short', 'smotheredMate']",108.0,r1b3k1/pp2b1rp/2p2nq1/3p4/3PpPn1/2P1P3/PP3NN1/R1BQ1NKR b - - 5 24,True,False,False,,,
+"['advantage', 'intermezzo', 'middlegame', 'short']",-83.0,3r2k1/2q3pp/1p6/pPp5/P1P1br2/5N1P/3Q1PP1/3R2K1 w - - 0 28,True,False,False,,,
+"['advantage', 'endgame', 'short']",-1.0,3r2k1/5p1p/p5p1/1p6/1PpQ1P2/P7/B1P2P1P/5K2 b - - 0 31,True,False,False,,,
+"['advancedPawn', 'crushing', 'endgame', 'master', 'promotion', 'short']",10.0,6k1/5qP1/3P4/pp2p1n1/4P3/5P2/1P6/5KRR w - - 0 32,True,False,True,,,
+"['endgame', 'master', 'masterVsMaster', 'mate', 'mateIn1', 'oneMove']",125.0,2k5/p4p2/2K4p/8/2PR4/1Nr5/P2R3r/5b2 w - - 2 32,True,False,False,,,
+"['advancedPawn', 'advantage', 'defensiveMove', 'endgame', 'master', 'rookEndgame', 'short']",112.0,5k2/8/4P2P/2r2KP1/5P2/8/8/8 w - - 1 64,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'knightEndgame', 'long', 'quietMove']",110.0,8/8/1p6/p2k2NK/P5P1/8/8/8 b - - 0 56,True,False,False,,,
+"['kingsideAttack', 'mate', 'mateIn2', 'middlegame', 'short']",54.0,4r1kr/p1p2ppp/1b3q2/3p4/8/P1P3BP/1P2QPKP/2R1R3 w - - 0 23,True,True,False,"['middlegame', 'mateIn1', 'mate', 'hangingPiece', 'kingsideAttack', 'oneMove']",625.1826171875,True
+"['crushing', 'enPassant', 'long', 'middlegame']",109.0,5b1r/7p/3p3k/1q2ppp1/1Q1pP3/1R1P1N2/1P3PPP/2R2K2 b - - 0 25,True,False,False,,,
+"['crushing', 'endgame', 'long', 'rookEndgame']",79.0,6k1/5ppp/4r3/RPp5/2Pp4/3r2PP/5P1K/1R6 w - - 0 32,True,False,False,,,
+"['crushing', 'endgame', 'long', 'master']",60.0,7k/2R2r2/p6p/1b1Pq1pP/1p4P1/1P6/P5B1/2R4K w - - 0 45,True,False,False,,,
+"['advantage', 'fork', 'middlegame', 'short']",118.0,5rk1/3q2pp/4p2b/3p4/1n1P2pP/N3PR2/1PP2R2/1K6 w - - 0 26,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",542.1831665039062,False
+"['advantage', 'attraction', 'discoveredAttack', 'kingsideAttack', 'long', 'middlegame', 'sacrifice']",119.0,r1n5/p2bkp1p/2pr2p1/1P6/P2RPP2/2BB4/2P3PP/R1K5 b - - 0 25,True,False,True,,,
+"['endgame', 'mate', 'mateIn2', 'short']",47.0,4r1k1/p4rpp/6p1/3q4/8/B7/1P3PP1/4Q1K1 w - - 0 30,True,True,False,"['endgame', 'mateIn2', 'mate', 'hangingPiece', 'short']",660.8427734375,True
+"['advantage', 'middlegame', 'pin', 'short']",-58.0,5bk1/5p1p/1rb1p1p1/4q3/1p1R1P2/8/1R4PP/3R1NK1 w - - 0 33,True,False,False,,,
+"['advantage', 'middlegame', 'short', 'trappedPiece']",38.0,4r1k1/4qpbp/p4rp1/8/2p1R1P1/2P1Q2P/1P3P2/4R1K1 w - - 0 31,True,False,False,,,
+"['long', 'mate', 'mateIn3', 'middlegame', 'sacrifice']",-71.0,7k/1p2p2p/1p2prpP/p1q5/2n5/3R1P1N/PbP1NP2/1K1R4 w - - 0 29,True,True,False,"['middlegame', 'mateIn2', 'mate', 'kingsideAttack', 'short']",401.07696533203125,False
+"['crushing', 'defensiveMove', 'endgame', 'long', 'rookEndgame']",-37.0,8/3r4/3R1p2/3P4/1R6/1P4k1/8/6K1 b - - 0 48,True,False,False,,,
+"['mate', 'mateIn1', 'middlegame', 'oneMove']",86.0,3r1rk1/p1pq1p1p/4p1p1/5b2/1Q6/2P5/PP2PPPP/RN2KB1R b KQ - 0 15,True,True,False,"['middlegame', 'mateIn1', 'mate', 'oneMove']",740.845458984375,True
+"['crushing', 'fork', 'middlegame', 'short']",0.0,r1nq3k/p4pb1/8/1p6/4rP1P/2P2N1P/PP1R4/2KR4 w - - 0 24,True,False,False,,,
+"['advantage', 'middlegame', 'short']",35.0,3r3k/2nq2bp/6p1/2p1Pp2/p1Q5/P4NP1/1P2RP1B/6K1 b - - 2 35,True,False,False,,,
+"['crushing', 'endgame', 'kingsideAttack', 'short']",-90.0,4r3/1pk3p1/p1p1qp2/P2p4/1P3Pp1/2P3N1/3Q2PP/4R1K1 b - - 4 25,True,True,False,"['endgame', 'advantage', 'kingsideAttack', 'short']",507.51153564453125,True
+"['advantage', 'defensiveMove', 'long', 'middlegame', 'pin']",-86.0,r1k5/6pp/1pb5/2QP1P2/1R2P3/6PP/1qP3K1/3NR3 b - - 0 35,True,False,False,,,
+"['advantage', 'endgame', 'short', 'trappedPiece']",88.0,7r/Q1bkR1p1/p4p2/2Pp1p2/P2P4/2N2P1p/6P1/R5K1 b - - 0 25,True,False,False,,,
+"['crushing', 'endgame', 'veryLong']",-13.0,5k1r/4bp2/p3pPpp/1p1rP3/5BP1/7P/P7/2R2K2 w - - 0 41,True,False,True,,,
+"['hangingPiece', 'kingsideAttack', 'mate', 'mateIn1', 'middlegame', 'oneMove']",-34.0,5r1k/ppb3pp/2p5/4p2P/1Q2bpP1/7P/P6K/R1B2q2 w - - 0 33,True,True,False,"['middlegame', 'mateIn1', 'mate', 'hangingPiece', 'kingsideAttack', 'oneMove']",596.6278076171875,True
+"['advantage', 'defensiveMove', 'long', 'middlegame']",24.0,4k3/p1pRrpr1/1pN1pq2/4Q3/8/8/PP3PPP/3R2K1 b - - 6 28,True,False,False,,,
+"['advantage', 'middlegame', 'short']",-76.0,2k5/2q2p2/p1b2n1p/2p2P2/P7/2N3Pr/1PPQ3r/2KR1R2 w - - 0 29,True,False,True,,,
+"['advantage', 'attraction', 'endgame', 'sacrifice', 'short']",-99.0,r1b4k/pp6/4q2p/8/2n2Q1P/8/NPP2P2/1K4N1 b - - 1 35,True,False,False,,,
+"['mate', 'mateIn2', 'middlegame', 'queensideAttack', 'short']",-128.0,k1q5/pp3p1p/1p3bb1/6p1/PP6/3r1N2/2R2PPP/2R3K1 w - - 0 27,True,True,False,"['middlegame', 'mateIn1', 'mate', 'backRankMate', 'hangingPiece', 'oneMove']",583.9456176757812,False
+['endgame'],18.0,1n3rk1/p1pp2pp/1p2p3/8/8/2P5/P1QP2PP/RN3R1K b - - 0 18,True,True,False,"['endgame', 'mateIn1', 'mate', 'backRankMate', 'hangingPiece', 'oneMove']",571.7651977539062,True
+"['mate', 'mateIn1', 'oneMove', 'opening']",-28.0,2kr1b1r/ppp5/2Bq1p2/4p2p/4Qn2/1PP2P2/P2P1P1P/RNBK3R b - - 0 12,True,False,False,,,
+"['endgame', 'mate', 'mateIn2', 'short']",33.0,N7/6pp/8/1R2p3/2r3P1/3Rpk2/7P/4K3 b - - 3 40,True,False,False,,,
+"['crushing', 'defensiveMove', 'endgame', 'quietMove', 'rookEndgame', 'veryLong']",69.0,R7/6p1/8/2K3rk/8/8/P7/8 w - - 12 49,True,False,False,,,
+"['crushing', 'fork', 'middlegame', 'short']",-84.0,4q2k/6pn/b1p1pr1p/P2p4/6P1/2P2PK1/3N3P/1R2R3 w - - 0 29,True,False,False,,,

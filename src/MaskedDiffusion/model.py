@@ -99,11 +99,5 @@ class MaskedDiffusion(nn.Module):
             flattened_probs = probs.view(-1, self.config.n_fen_tokens + 1)
             new_samples = torch.multinomial(flattened_probs, num_samples=1).view(batch_size, fen_length)
             fen = torch.where(is_masked, new_samples, fen)
-            # if is_masked.any():
-            #     flattened_probs = probs.view(-1, self.config.n_fen_tokens + 1)
-            #     new_samples = torch.multinomial(flattened_probs, num_samples=1).view(batch_size, fen_length)
-            #     fen = torch.where(is_masked, new_samples, fen)
-            # else:
-            #     break
         
         return fen
