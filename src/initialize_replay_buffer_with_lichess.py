@@ -9,6 +9,7 @@ from metrics.themes import get_unique_puzzle_from_fen, counter_intuitive
 from metrics.cook import cook
 from metrics.diversity_filtering import ReplayBuffer
 
+
 base_path = Path("./src")
 dataset_path = base_path / "dataset" / "dataset.csv"
 stockfish_path = base_path / ".." / "Stockfish" / "src" / "stockfish"
@@ -36,7 +37,7 @@ def process_batch(chunk):
 
         themes = cook(puzzle, engine)
         if len(set(themes).intersection(row.Themes.split(" "))) > len(themes) / 2:
-            results.append((row.Puzzle_FEN, row.Moves))
+            results.append((row.Puzzle_FEN, row.Moves, row.Themes.split(" "), float(row.Rating)))
     
     engine.quit()
     return results
@@ -47,9 +48,9 @@ for chunk in dataset:
     chunks = [chunk[i::num_cores].itertuples(index=False) for i in range(num_cores)]
     parallel_results = Parallel(n_jobs=num_cores)(delayed(process_batch)(parallel_chunk) for parallel_chunk in chunks)
     for batch in parallel_results:
-        for fen, moves in batch:
+        for fen, moves, themes, ratings in batch:
             n_positions_added += 1
-            buffer.add(fen, moves)
+            buffer.add(fen, moves, themes, ratings)
     print(n_positions_added, flush=True)
     
     if n_positions_added >= capacity // 2:
