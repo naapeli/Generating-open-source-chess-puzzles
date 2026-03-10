@@ -22,8 +22,8 @@ import numpy as np
 
 from MaskedDiffusion.model import MaskedDiffusion
 from RatingModel.model import RatingModel
-from rl.espo import espo_loss, generate_grouped_positions, generate_random_themes, compute_elbo, theme_reward
-from tokenization.tokenization import theme_preprocessor, scale_ratings, unscale_ratings, tokens_to_fen
+from rl.espo import espo_loss, generate_grouped_positions, generate_random_themes, compute_elbo, compute_elbo_basic, theme_reward, critic_free_ppo_loss
+from tokenization.tokenization import theme_preprocessor, scale_ratings, unscale_ratings, tokens_to_fen, tokenize_fen
 from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
 from metrics.cook import cook
 from metrics.diversity_filtering import ReplayBuffer
@@ -99,13 +99,16 @@ capacity = 200_000
 buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
-total_steps = 80_000  # 20_000 generation steps, but 80_000 gradient updates
-batch_size = 8
+total_steps = 20_000 * n_gradient_updates_per_generation
+batch_size = 64  # 8
 local_batch_size = batch_size // world_size
-group_size = 8
+group_size = 1  # 4
 eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
-beta = 1e-3  # 0.03  # from https://arxiv.org/pdf/2510.23881 page 34
-config.lr = 3e-5  # 3e-4 3e-5
+beta = 1e-4  # 1e-3
+config.lr = 3e-5
+config.weight_decay = 0
+n_positions_added = 16
+local_n_positions_added = n_positions_added // world_size
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
 params_muon = [p for p in model.parameters() if p.ndim == 2]
@@ -146,7 +149,7 @@ def save_board(fen, themes, rating, tag):
     except Exception:
         pass
 
-def get_rewards(fen_tokens, theme_tokens, ratings):
+def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
     legal_position = torch.zeros(len(fen_tokens), dtype=bool)
     unique_solution = torch.zeros(len(fen_tokens), dtype=bool)
     counter_intuitive_solution = torch.zeros(len(fen_tokens), dtype=bool)
@@ -158,9 +161,11 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
     themes_match = torch.zeros(len(fen_tokens), dtype=bool)
     rating_penalty = torch.zeros(len(fen_tokens), dtype=torch.float32)
 
+    is_generated = is_generated.cpu()
+
     group_size = len(fen_tokens) // len(ratings)
     themes = theme_preprocessor.inverse_transform(theme_tokens.cpu().numpy())
-    true_ratings = unscale_ratings(ratings).repeat_interleave(group_size, dim=0)
+    true_ratings = ratings.repeat_interleave(group_size, dim=0)
 
     device = fen_tokens.device
     fen_tokens_cpu = fen_tokens.cpu()
@@ -173,7 +178,11 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
         except:
             fens.append(None)
 
-    puzzles = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle)(fen) for fen in fens))
+    try:
+        puzzles = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle)(fen) for fen in fens))
+    except TimeoutError:
+        print("Stockfish timed out")
+        return torch.zeros(len(fen_tokens), dtype=torch.float32)
 
     valid_indices = []
     valid_gen_themes = []
@@ -191,7 +200,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
         counter_intuitive_solution[i] = counter_intuitive(fen, engine)
         piece_counts[i] = good_piece_counts(puzzle)
 
-        sampled_fens, sampled_pvs = buffer.sample(32)
+        sampled_fens, sampled_pvs, _, _ = buffer.sample(1000)
         pv = " ".join([move.uci() for move in puzzle.mainline])
         intra_batch_fen_dist[i], intra_batch_pv_dist[i] = good_intra_batch_distances(fen, pv, puzzles, i)
         inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
@@ -219,39 +228,47 @@ def get_rewards(fen_tokens, theme_tokens, ratings):
 
     intra_distances = intra_batch_fen_dist * intra_batch_pv_dist
     inter_distances = inter_batch_fen_dist * inter_batch_pv_dist
+    all_distances = intra_distances * inter_distances
     
-    rewards = 1 + 0.1 * piece_counts + 0.5 * themes_match + 0.1 * rating_penalty  #  + 2 * counter_intuitive_solution
-    # TODO: Change to one where statement and conditions connected with an and.
-    rewards = torch.where(counter_intuitive_solution, rewards, 0)
-    rewards = torch.where(unique_solution, rewards, 0)
-    rewards = torch.where(intra_distances, rewards, 0)
+    rewards = torch.ones(len(fen_tokens), dtype=torch.float32) + 0.1 * rating_penalty
+    rewards = torch.where(themes_match & piece_counts & all_distances & unique_solution & counter_intuitive_solution, rewards, 0)
+    # rewards = torch.where(all_distances, rewards, 0)
     rewards = torch.where(legal_position, rewards, -2)
 
-    index = torch.argmax(rewards)
+    log_rewards = rewards.clone()
+    log_rewards[~is_generated] = -float("inf")
+    index = torch.argmax(log_rewards).item()
     save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Generations")
-    index = torch.median(rewards, dim=0).indices
+
+    for index, reward in enumerate(log_rewards):
+        if reward <= 0:
+            continue
+        
+        save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Puzzles")
+    
+    gen_indices = torch.nonzero(is_generated).squeeze(1)
+    index = gen_indices[torch.median(rewards[gen_indices], dim=0).indices].item()
     save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Median")
 
     log_data = {
-        "legal_rate": legal_position.float().mean().item(),
-        "uniqueness_rate": unique_solution.float().mean().item(),
-        "counter_intuitive_rate": counter_intuitive_solution.float().mean().item(),
-        "piece_counts": piece_counts.float().mean().item(),
-        "themes_match_rate": themes_match.float().mean().item(),
-        "dist_inter_fen": inter_batch_fen_dist.float().mean().item(),
-        "dist_intra_fen": intra_batch_fen_dist.float().mean().item(),
-        "dist_inter_pv": inter_batch_pv_dist.float().mean().item(),
-        "dist_intra_pv": intra_batch_pv_dist.float().mean().item(),
-        "intra_dist": intra_distances.float().mean().item(),
-        "inter_dist": inter_distances.float().mean().item(),
-        "all_dist": (intra_distances * inter_distances).float().mean().item(),
-        # "rating_abs_diff": -rating_penalty.float().mean().item(),
-        "rating_abs_diff": -torch.abs(predicted_ratings - valid_true_ratings).float().mean().item(),
+        "legal_rate": legal_position[is_generated].float().mean().item(),
+        "uniqueness_rate": unique_solution[is_generated].float().mean().item(),
+        "counter_intuitive_rate": counter_intuitive_solution[is_generated].float().mean().item(),
+        "piece_counts": piece_counts[is_generated].float().mean().item(),
+        "themes_match_rate": themes_match[is_generated].float().mean().item(),
+        "dist_inter_fen": inter_batch_fen_dist[is_generated].float().mean().item(),
+        "dist_intra_fen": intra_batch_fen_dist[is_generated].float().mean().item(),
+        "dist_inter_pv": inter_batch_pv_dist[is_generated].float().mean().item(),
+        "dist_intra_pv": intra_batch_pv_dist[is_generated].float().mean().item(),
+        "intra_dist": intra_distances[is_generated].float().mean().item(),
+        "inter_dist": inter_distances[is_generated].float().mean().item(),
+        "all_dist": all_distances[is_generated].float().mean().item(),
+        "rating_abs_diff": (-1000 * rating_penalty[is_generated]).float().mean().item(),
     }
     
     for key, value in log_data.items():
         writer.add_scalar(f"Components/{key}", value, step)
-    writer.add_scalar("Reward", rewards.float().mean().item(), step)
+    writer.add_scalar("Reward", rewards[is_generated].float().mean().item(), step)
 
     return rewards
 
@@ -279,45 +296,74 @@ while not end:
     # generate the fens from the old_model
     with torch.autocast(device_type=device_type, dtype=torch.bfloat16):  # make the sampling a little faster with less precision
         step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=128)
+    
+    is_generated = torch.ones(len(step_fens), dtype=torch.bool, device=device)
+    
+    # if we use critic-free PPO, add positions from the replay buffer into the generated positions
+    if group_size == 1:
+        sampled_fens, _, sampled_themes, sampled_ratings = buffer.sample(local_n_positions_added)
+
+        sampled_fens = torch.tensor([tokenize_fen(sampled_fen) for sampled_fen in sampled_fens]).to(device=device)
+        sampled_themes = torch.from_numpy(theme_preprocessor.transform(sampled_themes)).to(device=device, dtype=torch.float32)
+        themes_one_hot = torch.cat([themes_one_hot, sampled_themes], dim=0)
+        ratings = torch.cat([ratings, sampled_ratings.to(device=device)], dim=0)
+        sampled_ratings = scale_ratings(sampled_ratings).to(device=device, dtype=torch.float32)
+        
+        is_generated = torch.cat([is_generated, torch.zeros(local_n_positions_added, dtype=torch.bool, device=device)])
+        step_fens = torch.cat([step_fens, sampled_fens], dim=0)
+        step_themes = torch.cat([step_themes, sampled_themes], dim=0)
+        step_ratings = torch.cat([step_ratings, sampled_ratings], dim=0)
 
     # compute the rewards (on the master process)
     if distributed:
+        gather_is_generated = [torch.zeros_like(is_generated) for _ in range(world_size)] if master_process else None
         gather_fens = [torch.zeros_like(step_fens) for _ in range(world_size)] if master_process else None
         gather_themes = [torch.zeros_like(themes_one_hot) for _ in range(world_size)] if master_process else None
         gather_ratings = [torch.zeros_like(ratings) for _ in range(world_size)] if master_process else None
+        gather(is_generated, gather_list=gather_is_generated, dst=0)
         gather(step_fens, gather_list=gather_fens, dst=0)
         gather(themes_one_hot, gather_list=gather_themes, dst=0)
         gather(ratings, gather_list=gather_ratings, dst=0)
         if master_process:
+            global_is_generated = torch.cat(gather_is_generated)
             global_fens = torch.cat(gather_fens)
             global_themes = torch.cat(gather_themes)
             global_ratings = torch.cat(gather_ratings)
-            global_rewards = get_rewards(global_fens, global_themes, global_ratings).to(device=device, dtype=torch.float32)
+            global_rewards = get_rewards(global_fens, global_themes, global_ratings, global_is_generated).to(device=device, dtype=torch.float32)
             reward_chunks = list(global_rewards.chunk(world_size, dim=0))
         rewards = torch.zeros(len(step_fens), device=device, dtype=torch.float32)
         scatter(rewards, scatter_list=reward_chunks if master_process else None, src=0)
     else:
-        rewards = get_rewards(step_fens, themes, ratings)
+        rewards = get_rewards(step_fens, themes_one_hot, ratings, is_generated)
+        # rewards = -(step_fens != 0).sum(dim=1).float()
+        # writer.add_scalar("Reward", rewards[is_generated].mean().item(), step)
     
     # precompute the elbos of the old model
     with torch.no_grad():
-        reference_elbo, mask = compute_elbo(reference_model, step_fens, step_themes, step_ratings, return_mask=True)
+        reference_elbo, mask, t = compute_elbo(reference_model, step_fens, step_themes, step_ratings, return_mask=True)
         old_elbo = compute_elbo(model, step_fens, step_themes, step_ratings, mask=mask)
+        # reference_elbo, mask, t = compute_elbo_basic(reference_model, step_fens, step_themes, step_ratings, return_mask=True)
+        # old_elbo = compute_elbo_basic(model, step_fens, step_themes, step_ratings, mask=mask, t=t)
 
     # update the model many times for one generation (as generations and reward calculations are expensive)
     total_loss = 0
     total_norm = 0
     total_kl = 0
+    total_clips = 0
     for substep in range(n_gradient_updates_per_generation):
         step += 1
 
         adam.zero_grad()
         muon.zero_grad()
 
-        loss, kl = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask, eps=eps, beta=beta)
+        if group_size == 1:
+            loss, kl, is_clipped = critic_free_ppo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
+        else:
+            loss, kl, is_clipped = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
         loss, kl = loss.mean(), kl.mean()
         total_loss += loss
         total_kl += kl
+        total_clips += is_clipped.sum()
 
         loss.backward()
 
@@ -341,8 +387,9 @@ while not end:
         writer.add_scalar("Grad norm", total_norm.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("KL divergence", total_kl.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("learning_rate", adam.param_groups[0]['lr'], step)
+        writer.add_scalar("Clips", total_clips.item() / n_gradient_updates_per_generation, step)
 
-    if step // n_gradient_updates_per_generation % 100 == 0:
+    if step // n_gradient_updates_per_generation % 200 == 0:
         save_state()
 
 if master_process:

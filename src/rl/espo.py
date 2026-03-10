@@ -12,7 +12,7 @@ t_points, quadrature_weights = (1 - 0) / 2 * t_points + (1 + 0) / 2, (1 - 0) / 2
 
 def kl_estimate(model_elbo, reference_elbo):
     # k2 from http://joschu.net/blog/kl-approx.html and https://arxiv.org/pdf/2512.03759 (biased, but low variance estimator)
-    return 0.5 * torch.mean((model_elbo - reference_elbo) ** 2, dim=1)
+    return 0.5 * (model_elbo - reference_elbo) ** 2
 
 def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     device = ratings.device
@@ -38,17 +38,17 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
     assert (elbo <= 0).all(), f"elbo should be a lower bound of a probability, {elbo}"
     if return_mask:
-        return elbo, random_mask
+        return elbo, random_mask, t
     return elbo
 
-def compute_elbo_basic(model, fens, themes, ratings, mask=None, return_mask=False):
+def compute_elbo_basic(model, fens, themes, ratings, mask=None, t=None, return_mask=False):
     device = ratings.device
     n_samples = len(ratings)
 
     config = model.module.config if hasattr(model, "module") else model.config
     module = model.module if hasattr(model, "module") else model
 
-    t = ((torch.rand(1) + torch.arange(n_samples) / n_samples) % 1).to(device)
+    t = ((torch.rand(1) + torch.arange(n_samples) / n_samples) % 1).to(device)[torch.randperm(n_samples, device=device)] if t is None else t
     alpha_t = config.masking_schedule(t)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
@@ -59,17 +59,17 @@ def compute_elbo_basic(model, fens, themes, ratings, mask=None, return_mask=Fals
     elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
     assert (elbo <= 0).all(), f"elbo should be a lower bound of a probability, {elbo}"
     if return_mask:
-        return elbo, random_mask
+        return elbo, random_mask, t
     return elbo
 
-def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards, group_size, mask=None, eps=0.2, beta=0.1):
+def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards, group_size, mask=None, t=None, eps=0.2, beta=0.1):
     n_samples, sequence_length = fens.shape  # fens.shape == (batch_size * group_size, sequence_length)  batch_size groups of size group_size
     assert n_samples % group_size == 0
     batch_size = n_samples // group_size
 
     device = ratings.device
     elbo = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
-    # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, return_mask=False)
+    # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, t=t, return_mask=False)
 
     rewards = rewards.reshape(batch_size, group_size)
     elbo = elbo.reshape(batch_size, group_size)
@@ -80,10 +80,35 @@ def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards,
 
     # (batch_size,)
     advantages = (rewards - rewards.mean(dim=1, keepdim=True)).to(device)  # Dr GRPO (do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
-    loss = torch.minimum(rho * advantages, torch.clamp(rho, 1 - eps, 1 + eps) * advantages).mean(dim=1)
+    coef_1 = rho * advantages
+    coef_2 = torch.clamp(rho, 1 - eps, 1 + eps) * advantages
+    loss = torch.minimum(coef_1, coef_2).mean(dim=1)
+    is_clipped = (coef_2 < coef_1).flatten()
+    kl = kl_estimate(elbo, reference_elbos).mean(dim=1)
+    loss = loss - beta * kl
+    return -loss, kl, is_clipped  # maximize the loss above
+
+def critic_free_ppo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards, group_size, mask=None, t=None, eps=0.2, beta=0.1):
+    _, sequence_length = fens.shape
+    # we still use the ELBO instead of the log probability
+    assert group_size == 1, "group_size must be 1 for critic-free PPO."
+
+    device = ratings.device
+    elbo = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
+    # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, t=t, return_mask=False)
+
+    # this assumes that elbo and old_elbos are negative (lower bounds of the log probability)
+    rho = torch.exp((elbo - old_elbos) / sequence_length)  # importance sampling (generate from old model, update current model)
+
+    advantages = (rewards - rewards.mean(dim=0, keepdim=True)).to(device)
+    coef_1 = rho * advantages
+    coef_2 = torch.clamp(rho, 1 - eps, 1 + eps) * advantages
+    loss = torch.minimum(coef_1, coef_2)
+    is_clipped = coef_2 < coef_1
     kl = kl_estimate(elbo, reference_elbos)
     loss = loss - beta * kl
-    return -loss, kl  # maximize the loss above
+    return -loss, kl, is_clipped  # maximize the loss above
+
 
 def generate_grouped_positions(model, themes, ratings, group_size, steps=256):
     themes = themes.repeat_interleave(group_size, dim=0)
@@ -131,20 +156,33 @@ def generate_random_themes(batch_size):
     return themes, ratings
 
 def theme_reward(base_themes, puzzle_themes):
-    if base_themes[1] not in puzzle_themes:  # the state of the game must match
+    base_set = set(base_themes)
+    puzzle_set = set(puzzle_themes)
+
+    base_state = base_set.intersection(state_of_game_tokens)
+    if not base_state.issubset(puzzle_set):
         return False
-    if base_themes[1] == "endgame" and base_themes[2] not in puzzle_themes:
-        return False
+
+    if "endgame" in base_set:
+        base_endgame = base_set.intersection(endgames)
+        if not base_endgame.issubset(puzzle_set):
+            return False
     
-    # checkmate
-    is_mate = "mate" in base_themes
-    if is_mate and "mate" not in puzzle_themes:
-        return False
-    if is_mate and base_themes[base_themes.index("mate") + 1] not in puzzle_themes:  # they must be the same type of checkmate
-        return False
-    
-    # just a winning position
-    if not is_mate and base_themes[-1] not in puzzle_themes:  # the other component in a not mating position must match
-        return False
+    if "mate" in base_set:
+        if "mate" not in puzzle_set:
+            return False
+            
+        base_mate_length = base_set.intersection(mate_lengths)
+        if not base_mate_length.issubset(puzzle_set):
+            return False
+            
+        base_mate_type = base_set.intersection(types_of_mate)
+        if not base_mate_type.issubset(puzzle_set):
+            return False
+            
+    else:
+        base_other = base_set.intersection(other)
+        if not base_other.issubset(puzzle_set):
+            return False
 
     return True
