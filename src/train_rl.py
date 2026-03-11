@@ -100,14 +100,14 @@ buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
 total_steps = 20_000 * n_gradient_updates_per_generation
-batch_size = 64  # 8
+batch_size = 28  # 8
 local_batch_size = batch_size // world_size
 group_size = 1  # 4
 eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
-beta = 1e-4  # 1e-3
+beta = 5e-4  # 1e-3
 config.lr = 3e-5
 config.weight_decay = 0
-n_positions_added = 16
+n_positions_added = 4
 local_n_positions_added = n_positions_added // world_size
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
