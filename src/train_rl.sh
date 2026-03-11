@@ -9,7 +9,7 @@
 # #SBATCH --gpus=h200:4
 #SBATCH --ntasks=1
 #SBATCH --gpus=1
-# #SBATCH --gres=min-vram:32g
+#SBATCH --gres=min-vram:32g
 # #SBATCH --gres=min-cuda-cc:80  # forces a100 or better
 #SBATCH --cpus-per-task=16
 # #SBATCH --partition=gpu-debug
