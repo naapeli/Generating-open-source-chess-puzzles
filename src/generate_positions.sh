@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --time=01:00:00
+#SBATCH --time=03:00:00
 #SBATCH --output=generations.out
 #SBATCH --mem=64G
 #SBATCH --nodes=1

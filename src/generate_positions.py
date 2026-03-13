@@ -32,8 +32,8 @@ rating_model.to(device=device)
 
 results_list = []
 
-n = 10000
-batch_size = 1024
+n = 100_000
+batch_size = 8192
 
 
 n_jobs = 16
@@ -138,5 +138,5 @@ while not engine_pool.empty():
     engine.quit()
 
 df = pd.DataFrame(results_list)
-output_path = base_path / "Generate_positions" / "generated_puzzles_lichess_dataset_theme_distribution_counter_intuitive_metric_change.csv"
+output_path = base_path / "Generate_positions" / "generated_puzzles_lichess_dataset_theme_distribution_counter_intuitive_metric_relative_large.csv"
 df.to_csv(output_path, index=False)
