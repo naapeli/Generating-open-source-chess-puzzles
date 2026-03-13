@@ -32,11 +32,11 @@ from metrics.rewards import good_piece_counts, good_inter_batch_distances, good_
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--distributed", action="store_true")
-# parser.add_argument("--continue_from_checkpoint", action="store_true")
+parser.add_argument("--continue_from_checkpoint", action="store_true")
 
 args = parser.parse_args()
 distributed = args.distributed
-# continue_from_checkpoint = args.continue_from_checkpoint
+continue_from_checkpoint = args.continue_from_checkpoint
 
 base_path = Path("./src")
 
@@ -71,12 +71,18 @@ torch.set_float32_matmul_precision("high")
 
 # ====================== LOGGING ======================
 if master_process:
-    current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-    logging_path = base_path / "runs"/ "rl" / current_time
+    if continue_from_checkpoint:
+        logging_path = base_path / "runs"/ "rl" / "20260312-105458"
+    else:
+        current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+        logging_path = base_path / "runs"/ "rl" / current_time
     writer = SummaryWriter(logging_path)
 
 base_path = Path("./src")
-checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
+if continue_from_checkpoint:
+    checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0005760.pt", map_location="cpu", weights_only=False)
+else:
+    checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
 
 config = checkpoint["config"]
 model = MaskedDiffusion(config)
@@ -100,14 +106,14 @@ buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
 n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
 total_steps = 20_000 * n_gradient_updates_per_generation
-batch_size = 28  # 8
+batch_size = 16  # 32
 local_batch_size = batch_size // world_size
-group_size = 1  # 4
+group_size = 8  # 1
 eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
-beta = 5e-4  # 1e-3
+beta = 1e-4  # 1e-3  5e-4
 config.lr = 3e-5
-config.weight_decay = 0
-n_positions_added = 4
+config.weight_decay = 1e-5
+n_positions_added = 16  # 32
 local_n_positions_added = n_positions_added // world_size
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
@@ -115,8 +121,12 @@ params_muon = [p for p in model.parameters() if p.ndim == 2]
 adam = AdamW(params_adam, lr=config.lr, weight_decay=config.weight_decay)
 muon = Muon(params_muon, lr=config.lr, weight_decay=config.weight_decay)
 
-adam_scheduler = LinearLR(adam, start_factor=0.01, end_factor=1, total_iters=100)
-muon_scheduler = LinearLR(muon, start_factor=0.01, end_factor=1, total_iters=100)
+if continue_from_checkpoint:
+    adam.load_state_dict(checkpoint["adam"])
+    muon.load_state_dict(checkpoint["muon"])
+
+adam_scheduler = LinearLR(adam, start_factor=0.01, end_factor=1, total_iters=100, last_epoch=checkpoint["step"] if continue_from_checkpoint else -1)
+muon_scheduler = LinearLR(muon, start_factor=0.01, end_factor=1, total_iters=100, last_epoch=checkpoint["step"] if continue_from_checkpoint else -1)
 
 cpu_count = int(os.environ.get("SLURM_CPUS_PER_TASK")) * int(os.environ.get("SLURM_NTASKS"))
 
@@ -200,7 +210,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
         counter_intuitive_solution[i] = counter_intuitive(fen, engine)
         piece_counts[i] = good_piece_counts(puzzle)
 
-        sampled_fens, sampled_pvs, _, _ = buffer.sample(1000)
+        sampled_fens, sampled_pvs, _, _ = buffer.sample(2000)
         pv = " ".join([move.uci() for move in puzzle.mainline])
         intra_batch_fen_dist[i], intra_batch_pv_dist[i] = good_intra_batch_distances(fen, pv, puzzles, i)
         inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
@@ -209,8 +219,9 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
         themes_match[i] = theme_reward(theme, generation_themes)
 
         # if the position returns a high reward, add it to the buffer
-        # if counter_intuitive_solution[i] and piece_counts[i] and intra_batch_fen_dist[i] and intra_batch_pv_dist[i] and inter_batch_fen_dist[i] and inter_batch_pv_dist[i]:
-        #     buffer.add(fen, pv)
+        # good_distances = intra_batch_fen_dist[i] and intra_batch_pv_dist[i] and inter_batch_fen_dist[i] and inter_batch_pv_dist[i]
+        # if counter_intuitive_solution[i] and piece_counts[i] and good_distances and themes_match[i]:
+        #     buffer.add(fen, pv, generation_themes, true_ratings[i].cpu().item())
 
         valid_indices.append(i)
         valid_gen_themes.append(generation_themes)
@@ -230,9 +241,9 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
     inter_distances = inter_batch_fen_dist * inter_batch_pv_dist
     all_distances = intra_distances * inter_distances
     
-    rewards = torch.ones(len(fen_tokens), dtype=torch.float32) + 0.1 * rating_penalty
-    rewards = torch.where(themes_match & piece_counts & all_distances & unique_solution & counter_intuitive_solution, rewards, 0)
-    # rewards = torch.where(all_distances, rewards, 0)
+    rewards = torch.ones(len(fen_tokens), dtype=torch.float32)# + 0.1 * rating_penalty
+    # rewards = torch.where(themes_match & piece_counts & all_distances & unique_solution & counter_intuitive_solution, rewards, 0)
+    rewards = torch.where(unique_solution & counter_intuitive_solution, rewards, 0)
     rewards = torch.where(legal_position, rewards, -2)
 
     log_rewards = rewards.clone()
@@ -250,10 +261,15 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
     index = gen_indices[torch.median(rewards[gen_indices], dim=0).indices].item()
     save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Median")
 
+    is_valid = torch.zeros(len(fen_tokens), dtype=torch.bool)
+    is_valid[valid_indices] = True
+    valid_mask = is_valid & is_generated
+
     log_data = {
         "legal_rate": legal_position[is_generated].float().mean().item(),
         "uniqueness_rate": unique_solution[is_generated].float().mean().item(),
         "counter_intuitive_rate": counter_intuitive_solution[is_generated].float().mean().item(),
+        "counter_intuitive_rate_given_unique": counter_intuitive_solution[valid_mask].float().mean().item() if valid_mask.any() else 0,
         "piece_counts": piece_counts[is_generated].float().mean().item(),
         "themes_match_rate": themes_match[is_generated].float().mean().item(),
         "dist_inter_fen": inter_batch_fen_dist[is_generated].float().mean().item(),
@@ -263,7 +279,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
         "intra_dist": intra_distances[is_generated].float().mean().item(),
         "inter_dist": inter_distances[is_generated].float().mean().item(),
         "all_dist": all_distances[is_generated].float().mean().item(),
-        "rating_abs_diff": (-1000 * rating_penalty[is_generated]).float().mean().item(),
+        "rating_abs_diff": (-1000 * rating_penalty[valid_mask]).float().mean().item() if valid_mask.any() else 1000,
     }
     
     for key, value in log_data.items():
@@ -285,7 +301,7 @@ def save_state():
 
 # ====================== TRAINING LOOP ======================
 
-step = 0
+step = checkpoint["step"] if continue_from_checkpoint else 0
 end = False
 while not end:
     themes, ratings = generate_random_themes(local_batch_size)
@@ -386,10 +402,10 @@ while not end:
         writer.add_scalar("Loss", total_loss.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("Grad norm", total_norm.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("KL divergence", total_kl.item() / n_gradient_updates_per_generation, step)
-        writer.add_scalar("learning_rate", adam.param_groups[0]['lr'], step)
+        writer.add_scalar("learning_rate", adam.param_groups[0]["lr"], step)
         writer.add_scalar("Clips", total_clips.item() / n_gradient_updates_per_generation, step)
 
-    if step // n_gradient_updates_per_generation % 200 == 0:
+    if step // n_gradient_updates_per_generation % 60 == 0:
         save_state()
 
 if master_process:
