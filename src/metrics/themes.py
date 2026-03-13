@@ -84,8 +84,8 @@ def counter_intuitive(fen, engine: SimpleEngine):
             break
 
     # v_critical_point = critical_point - 1
-    # v_critical_point = (critical_point - 1) / max_depth  # proportion from the full search. If this is over 0.125, the puzzle is counter intuitive
-    v_critical_point = (critical_point - 1) / 50  # if critical point is at depth 7 or later, the puzzle is counter intuitive
+    v_critical_point = (critical_point - 1) / max_depth  # proportion from the full search. If this is over 0.125, the puzzle is counter intuitive
+    # v_critical_point = (critical_point - 1) / 50  # if critical point is at depth 7 or later, the puzzle is counter intuitive
 
     v_capture_material = 0
     if board.is_capture(final_best_move):
