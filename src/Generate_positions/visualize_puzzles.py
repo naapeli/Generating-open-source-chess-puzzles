@@ -6,9 +6,9 @@ import ast
 import base64
 
 
-CSV_FILE = "./generated_puzzles_lichess_dataset_theme_distribution_correct_ratings.csv"
-OUTPUT_HTML = "puzzles_output.html"
-STOCKFISH_PATH = "./../../Stockfish/src/stockfish"
+CSV_FILE = "./src/Generate_positions/generated_puzzles_lichess_dataset_theme_distribution_counter_intuitive_metric_relative_large.csv"
+OUTPUT_HTML = "puzzles_outputv2.html"
+STOCKFISH_PATH = "./Stockfish/src/stockfish"
 ANALYSIS_TIME_LIMIT = 0.5
 
 def get_mainline(board, engine_path, time_limit):

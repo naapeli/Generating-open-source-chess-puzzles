@@ -72,7 +72,7 @@ torch.set_float32_matmul_precision("high")
 # ====================== LOGGING ======================
 if master_process:
     if continue_from_checkpoint:
-        logging_path = base_path / "runs"/ "rl" / "20260312-105458"
+        logging_path = base_path / "runs"/ "rl" / "20260313-083605"
     else:
         current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
         logging_path = base_path / "runs"/ "rl" / current_time
@@ -80,7 +80,8 @@ if master_process:
 
 base_path = Path("./src")
 if continue_from_checkpoint:
-    checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0005760.pt", map_location="cpu", weights_only=False)
+    # checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0005760.pt", map_location="cpu", weights_only=False)
+    checkpoint = torch.load(base_path / "rl_checkpoints" / "985legal.pt", map_location="cpu", weights_only=False)
 else:
     checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
 
@@ -110,7 +111,7 @@ batch_size = 16  # 32
 local_batch_size = batch_size // world_size
 group_size = 8  # 1
 eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
-beta = 1e-4  # 1e-3  5e-4
+beta = 5e-4  # 1e-3
 config.lr = 3e-5
 config.weight_decay = 1e-5
 n_positions_added = 16  # 32
@@ -241,10 +242,14 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
     inter_distances = inter_batch_fen_dist * inter_batch_pv_dist
     all_distances = intra_distances * inter_distances
     
-    rewards = torch.ones(len(fen_tokens), dtype=torch.float32)# + 0.1 * rating_penalty
-    # rewards = torch.where(themes_match & piece_counts & all_distances & unique_solution & counter_intuitive_solution, rewards, 0)
-    rewards = torch.where(unique_solution & counter_intuitive_solution, rewards, 0)
-    rewards = torch.where(legal_position, rewards, -2)
+    # rewards = torch.ones(len(fen_tokens), dtype=torch.float32)# + 0.1 * rating_penalty
+    # # rewards = torch.where(themes_match & piece_counts & all_distances & unique_solution & counter_intuitive_solution, rewards, 0)
+    # rewards = torch.where(unique_solution & counter_intuitive_solution, rewards, 0)
+    # rewards = torch.where(legal_position, rewards, -2)
+    rewards = torch.zeros(len(fen_tokens), dtype=torch.float32)
+    rewards = torch.where(unique_solution, 0.5, rewards)
+    rewards = torch.where(unique_solution & counter_intuitive_solution, 2.0, rewards)
+    rewards = torch.where(legal_position, rewards, -2.0)
 
     log_rewards = rewards.clone()
     log_rewards[~is_generated] = -float("inf")
