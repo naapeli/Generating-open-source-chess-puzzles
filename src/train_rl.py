@@ -96,7 +96,12 @@ if master_process:
     rating_model.load_state_dict(rating_model_checkpoint["model"])
     rating_model.to(device=device)
 
-reference_model = deepcopy(model)
+if continue_from_checkpoint:
+    reference_checkpoint = torch.load(base_path / "rl_checkpoints" / "985legal.pt", map_location="cpu", weights_only=False)
+    reference_model = MaskedDiffusion(reference_checkpoint["config"])
+    reference_model.load_state_dict(reference_checkpoint["model"])
+else:
+    reference_model = deepcopy(model)
 reference_model.to(device=device)
 
 if distributed:
