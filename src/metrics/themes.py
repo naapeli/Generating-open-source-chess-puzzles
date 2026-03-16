@@ -18,8 +18,11 @@ mate_soon = Mate(15)
 # pair_limit = Limit(depth=50, time=30, nodes=25_000_000)
 # mate_defense_limit = Limit(depth=15, time=10, nodes=8_000_000)
 
-pair_limit = Limit(depth=15, time=10, nodes=8_000_000)
-mate_defense_limit = Limit(depth=8, time=5, nodes=4_000_000)
+# pair_limit = Limit(depth=15, time=10, nodes=8_000_000)
+# mate_defense_limit = Limit(depth=8, time=5, nodes=4_000_000)
+
+pair_limit = Limit(depth=50, time=1, nodes=50_000_000)
+mate_defense_limit = Limit(depth=15, time=1, nodes=8_000_000)
 
 TAU_UNI = 0.5
 TAU_CNT = 0.1

@@ -18,7 +18,8 @@ torch.set_float32_matmul_precision("high")
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 base_path = Path("./src")
-checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
+# checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
+checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0017280.pt", map_location="cpu", weights_only=False)
 
 config = checkpoint["config"]
 model = MaskedDiffusion(config)
@@ -32,8 +33,8 @@ rating_model.to(device=device)
 
 results_list = []
 
-n = 100_000
-batch_size = 8192
+n = 10_000
+batch_size = 1024  # 8192
 
 
 n_jobs = 16
@@ -43,24 +44,14 @@ engine_pool = queue.Queue()
 for _ in range(n_jobs):
     engine_pool.put(SimpleEngine.popen_uci(stockfish_path))
 
-random_themes_and_ratings = False
+random_themes_and_ratings = True
 if not random_themes_and_ratings:
     dataset = pd.read_csv(base_path / "dataset" / "dataset.csv", nrows=1000 * n)
     dataset_themes = dataset["Themes"].str.split().tolist()
     dataset_ratings = torch.from_numpy(dataset["Rating"].to_numpy())
 
 def process_puzzle(tokens, base_theme, base_rating, random_themes, device, rating_model):
-    entry = {
-        "target_themes": base_theme,
-        "target_rating": base_rating.item(),
-        "fen": None,
-        "is_legal": False,
-        "is_puzzle": False,
-        "counter_intuitive": None,
-        "actual_themes": None,
-        "predicted_rating": None,
-        "themes_match": None
-    }
+    entry = {"target_themes": base_theme, "target_rating": base_rating.item(), "fen": None, "is_legal": False, "is_puzzle": False, "counter_intuitive": None, "actual_themes": None, "predicted_rating": None, "themes_match": None}
 
     engine = engine_pool.get()
 
@@ -121,14 +112,7 @@ for iteration in range(n // batch_size):
     fen_tokens = module.sample(themes_one_hot, scaled_ratings, steps=128)
 
     batch_results = Parallel(n_jobs=n_jobs, backend="threading")(
-        delayed(process_puzzle)(
-            tokens, 
-            base_themes[i], 
-            base_ratings[i], 
-            random_themes_and_ratings, 
-            device, 
-            rating_model
-        ) for i, tokens in enumerate(fen_tokens)
+        delayed(process_puzzle)(tokens, base_themes[i], base_ratings[i], random_themes_and_ratings, device, rating_model) for i, tokens in enumerate(fen_tokens)
     )
     
     results_list.extend(batch_results)
@@ -138,5 +122,5 @@ while not engine_pool.empty():
     engine.quit()
 
 df = pd.DataFrame(results_list)
-output_path = base_path / "Generate_positions" / "generated_puzzles_lichess_dataset_theme_distribution_counter_intuitive_metric_relative_large.csv"
+output_path = base_path / "Generate_positions" / "GoodRLRunGenerations2.csv"
 df.to_csv(output_path, index=False)

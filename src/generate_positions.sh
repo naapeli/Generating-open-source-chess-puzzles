@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #SBATCH --time=03:00:00
-#SBATCH --output=generations.out
+#SBATCH --output=generations2.out
 #SBATCH --mem=64G
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
