@@ -72,18 +72,18 @@ torch.set_float32_matmul_precision("high")
 # ====================== LOGGING ======================
 if master_process:
     if continue_from_checkpoint:
-        logging_path = base_path / "runs"/ "rl" / "20260313-083605"
+        logging_path = base_path / "runs"/ "rl" / "20260316-112002"
     else:
         current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
         logging_path = base_path / "runs"/ "rl" / current_time
     writer = SummaryWriter(logging_path)
 
 base_path = Path("./src")
+reference_checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
 if continue_from_checkpoint:
-    # checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0005760.pt", map_location="cpu", weights_only=False)
-    checkpoint = torch.load(base_path / "rl_checkpoints" / "985legal.pt", map_location="cpu", weights_only=False)
+    checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0016320.pt", map_location="cpu", weights_only=False)
 else:
-    checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
+    checkpoint = reference_checkpoint
 
 config = checkpoint["config"]
 model = MaskedDiffusion(config)
@@ -96,12 +96,8 @@ if master_process:
     rating_model.load_state_dict(rating_model_checkpoint["model"])
     rating_model.to(device=device)
 
-if continue_from_checkpoint:
-    reference_checkpoint = torch.load(base_path / "rl_checkpoints" / "985legal.pt", map_location="cpu", weights_only=False)
-    reference_model = MaskedDiffusion(reference_checkpoint["config"])
-    reference_model.load_state_dict(reference_checkpoint["model"])
-else:
-    reference_model = deepcopy(model)
+reference_model = MaskedDiffusion(reference_checkpoint["config"])
+reference_model.load_state_dict(reference_checkpoint["model"])
 reference_model.to(device=device)
 
 if distributed:
@@ -252,8 +248,8 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
     # rewards = torch.where(unique_solution & counter_intuitive_solution, rewards, 0)
     # rewards = torch.where(legal_position, rewards, -2)
     rewards = torch.zeros(len(fen_tokens), dtype=torch.float32)
-    rewards = torch.where(unique_solution, 0.5, rewards)
-    rewards = torch.where(unique_solution & counter_intuitive_solution, 2.0, rewards)
+    rewards = torch.where(unique_solution & intra_batch_pv_dist, 0.5, rewards)
+    rewards = torch.where(unique_solution & counter_intuitive_solution & intra_batch_pv_dist, 2.0, rewards)
     rewards = torch.where(legal_position, rewards, -2.0)
 
     log_rewards = rewards.clone()
