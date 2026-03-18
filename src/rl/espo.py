@@ -1,10 +1,11 @@
 import torch
 import numpy as np
+import pandas as pd
 
 import random
 
 
-n_quadrature = 3
+n_quadrature = 7
 t_points, quadrature_weights = np.polynomial.legendre.leggauss(n_quadrature)  # estimate the integral with a gaussian quadrature (https://arxiv.org/pdf/2510.08554)
 t_points, quadrature_weights = torch.from_numpy(t_points), torch.from_numpy(quadrature_weights)
 t_points, quadrature_weights = (1 - 0) / 2 * t_points + (1 + 0) / 2, (1 - 0) / 2 * quadrature_weights  # https://en.wikipedia.org/wiki/Gaussian_quadrature#Change_of_interval
@@ -131,27 +132,36 @@ lengths = ("oneMove", "short", "long", "veryLong")
 winnings = ("crushing", "advantage")
 other = ("hangingPiece", "fork", "interference", "kingsideAttack", "zugzwang", "exposedKing", "skewer", "pin", "quietMove", "discoveredAttack", "sacrifice", "deflection", "advancedPawn", "attraction", "promotion", "queensideAttack", "defensiveMove", "attackingF2F7", "clearance", "intermezzo", "equality", "trappedPiece", "xRayAttack", "capturingDefender", "doubleCheck", "enPassant", "castling", "underPromotion")
 
-def generate_random_themes(batch_size):
-    themes = []
-    for _ in range(batch_size):
-        position_themes = [random.choice(lengths)]
-        state_of_game = random.choice(state_of_game_tokens)
-        position_themes.append(state_of_game)
+dataset = pd.read_csv("./src/dataset/dataset.csv", nrows=100_000)
+# dataset = dataset[dataset["Themes"].str.split(" ").apply(lambda themes: "sacrifice" in themes)]  # TODO: remove this when not interested in sacrifices anymore
+# dataset = dataset[dataset["Themes"].str.split(" ").apply(lambda themes: "doubleCheck" in themes)]  # TODO: remove this when not interested in double checks anymore
 
-        if state_of_game == "endgame":
-            position_themes.append(random.choice(endgames))
+def generate_random_themes(batch_size, lichess_distribution=False):
+    if lichess_distribution:
+        rows = dataset.sample(n=batch_size)
+        themes = rows["Themes"].str.split(" ").to_list()
+        ratings = torch.from_numpy(rows["Rating"].to_numpy())
+    else:
+        themes = []
+        for _ in range(batch_size):
+            position_themes = [random.choice(lengths)]
+            state_of_game = random.choice(state_of_game_tokens)
+            position_themes.append(state_of_game)
+
+            if state_of_game == "endgame":
+                position_themes.append(random.choice(endgames))
+            
+            if torch.rand(1) < 0.1:
+                position_themes.append(is_mate)
+                position_themes.append(random.choice(mate_lengths))
+                position_themes.append(random.choice(types_of_mate))
+            else:
+                position_themes.append(random.choice(winnings))
+                position_themes.append(random.choice(other))
+
+            themes.append(position_themes)
         
-        if torch.rand(1) < 0.1:  # about 20% of positions should be mates
-            position_themes.append(is_mate)
-            position_themes.append(random.choice(mate_lengths))
-            position_themes.append(random.choice(types_of_mate))
-        else:
-            position_themes.append(random.choice(winnings))
-            position_themes.append(random.choice(other))
-
-        themes.append(position_themes)
-    
-    ratings = 3000 * torch.rand((batch_size,)) + 300
+        ratings = 3000 * torch.rand((batch_size,)) + 300
 
     return themes, ratings
 

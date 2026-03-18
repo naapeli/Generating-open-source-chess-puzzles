@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --output=outputrl.out
 #SBATCH --mem=64G
 #SBATCH --nodes=1

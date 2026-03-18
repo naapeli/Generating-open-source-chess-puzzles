@@ -69,19 +69,35 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed(rank)
 torch.set_float32_matmul_precision("high")
 
+# ====================== CONFIG ======================
+n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
+total_steps = 20_000 * n_gradient_updates_per_generation
+batch_size = 16
+local_batch_size = batch_size // world_size
+group_size = 4
+eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
+beta = 5e-4  # 1e-3
+n_positions_added = 16  # matters only when batch_size == 1
+local_n_positions_added = n_positions_added // world_size
+lichess_distribution = False
+save_period = 240 * n_gradient_updates_per_generation
+
+save_path = base_path / "rl_checkpoints"
+reference_checkpoint_path = base_path / "supervised_checkpoints" / "model_0940000.pt"
+
+
 # ====================== LOGGING ======================
 if master_process:
     if continue_from_checkpoint:
-        logging_path = base_path / "runs"/ "rl" / "20260316-112002"
+        logging_path = base_path / "runs"/ "rl" / "espo" / "GoodResultsCounterIntuitivenessDoesNotImprove"
     else:
         current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
         logging_path = base_path / "runs"/ "rl" / current_time
     writer = SummaryWriter(logging_path)
 
-base_path = Path("./src")
-reference_checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
+reference_checkpoint = torch.load(reference_checkpoint_path, map_location="cpu", weights_only=False)
 if continue_from_checkpoint:
-    checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0016320.pt", map_location="cpu", weights_only=False)
+    checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0039360.pt", map_location="cpu", weights_only=False)
 else:
     checkpoint = reference_checkpoint
 
@@ -89,6 +105,9 @@ config = checkpoint["config"]
 model = MaskedDiffusion(config)
 model.load_state_dict(checkpoint["model"])
 model.to(device=device)
+
+config.lr = 1e-4  # 3e-5
+config.weight_decay = 1e-5
 
 if master_process:
     rating_model_checkpoint = torch.load(base_path / "rating_model_checkpoints" / "model_0063000.pt", map_location="cpu", weights_only=False)
@@ -105,18 +124,6 @@ if distributed:
 
 capacity = 200_000
 buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
-
-n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
-total_steps = 20_000 * n_gradient_updates_per_generation
-batch_size = 16  # 32
-local_batch_size = batch_size // world_size
-group_size = 8  # 1
-eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
-beta = 5e-4  # 1e-3
-config.lr = 3e-5
-config.weight_decay = 1e-5
-n_positions_added = 16  # 32
-local_n_positions_added = n_positions_added // world_size
 
 params_adam = [p for p in model.parameters() if p.ndim != 2]
 params_muon = [p for p in model.parameters() if p.ndim == 2]
@@ -258,7 +265,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
     save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Generations")
 
     for index, reward in enumerate(log_rewards):
-        if reward <= 0:
+        if not (unique_solution[i] & counter_intuitive_solution[i] & themes_match[i]):
             continue
         
         save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Puzzles")
@@ -295,7 +302,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
     return rewards
 
 def save_state():
-    checkpoint_path = base_path / "rl_checkpoints" / f"model_{step:07d}.pt"
+    checkpoint_path = save_path / f"model_{step:07d}.pt"
     checkpoint = {
         "model": model.module.state_dict() if distributed else model.state_dict(),
         "config": config,
@@ -310,7 +317,7 @@ def save_state():
 step = checkpoint["step"] if continue_from_checkpoint else 0
 end = False
 while not end:
-    themes, ratings = generate_random_themes(local_batch_size)
+    themes, ratings = generate_random_themes(local_batch_size, lichess_distribution=lichess_distribution)
     ratings = ratings.to(device=device, dtype=torch.float32)
     themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
     scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
@@ -411,7 +418,7 @@ while not end:
         writer.add_scalar("learning_rate", adam.param_groups[0]["lr"], step)
         writer.add_scalar("Clips", total_clips.item() / n_gradient_updates_per_generation, step)
 
-    if step // n_gradient_updates_per_generation % 60 == 0:
+    if step % save_period == 0:
         save_state()
 
 if master_process:
