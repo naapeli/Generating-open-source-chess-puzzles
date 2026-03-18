@@ -1,0 +1,225 @@
+\documentclass[English, 12pt, a4paper, sci, utf8, a-1b, online]{aaltothesis}
+%\documentclass[finnish, 12pt, a4paper, sci, utf8, a-1b]{aaltothesis}
+
+\usepackage{physics}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{subcaption}
+\usepackage{wrapfig}
+
+
+\usepackage{graphicx}
+\usepackage{ifthen}
+
+\usepackage{amsfonts, amssymb, amsbsy, amsmath, mathrsfs, amsthm}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section] 
+\newtheorem{maaritelma}[definition]{Määritelmä}
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{lause}[definition]{Lause}
+\newtheorem{sats}[definition]{Sats}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{seuraus}[definition]{Seurauslause}
+\newtheorem{foljdsats}[definition]{Följdsats}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{propositio}[definition]{Propositio}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+\newtheorem{huomautus}[definition]{Huomautus}
+\newtheorem{anmarkning}[definition]{Anmärkning}
+
+
+
+\usepackage[\MainLang]{babel}
+\usepackage{natbib}
+
+
+\ifthenelse{\equal{\MainLang}{finnish}}{
+\bibliographystyle{fiplainnat, unsrt}
+}{\ifthenelse{\equal{\MainLang}{english}}{
+\bibliographystyle{plainnat}
+% \bibliographystyle{unsrtnat}
+}{\ifthenelse{\equal{\MainLang}{swedish}}{
+\bibliographystyle{seplainnat, unsrt}
+}}{}}
+
+\setcitestyle{numbers,open={[},close={]},comma}
+
+
+\degreeprogram{Masters's Programme in Mathematics and Operations Research}
+
+
+
+
+\major{Applied Mathematics}
+
+% Pääainekoodi (Sisusta)
+\code{SCI3053}
+
+\univdegree{MSc}
+
+\thesisauthor{Aatu Selkee}
+
+
+\thesistitle{Teaching discrete diffusion models to generate chess puzzles with reinforcement learning}
+
+\place{Espoo}
+
+
+\date{\today}  % esityspäivä
+
+\supervisor{Prof.\ Nuutti Hyvönen}
+%%
+
+
+\advisor{Adjunct Prof.\ Eric Malmi}
+
+
+
+\keywords{Discrete diffusion, reinforcement learning, PPO, ESPO}
+
+\thesisabstract{
+    In this thesis, we generate chess puzzles with generative AI.
+}  % this is for the metadata and should be similar to the one below.
+
+\copyrighttext{Copyright \noexpand\copyright\ \number\year\ \ThesisAuthor}
+{Copyright \copyright{} \number\year{} \ThesisAuthor 
+\\\\The document can be stored and made available to the public on the open internet pages of Aalto University.\\
+All other rights are reserved.
+}
+
+
+
+\begin{document}
+    \definecolor{aaltoBlack}{RGB}{0,0,0}
+    \definecolor{aaltoGray}{RGB}{140,133,123}
+    \definecolor{aaltoRed}{RGB}{239,51,64}
+    \definecolor{aaltoBlue}{RGB}{0,94,184}
+    \definecolor{aaltoYellow}{RGB}{255,205,0}
+    \definecolor{aaltoPurple}{RGB}{117,59,189}
+    \definecolor{aaltoGreen}{RGB}{0,150,94}
+    \definecolor{aaltoLightGreen}{RGB}{120,190,32}
+    \definecolor{aaltoOrange}{RGB}{255,103,31}
+    \definecolor{aaltoLightOrange}{RGB}{255,165,0}
+    \definecolor{aaltoFuchsia}{RGB}{187,22,163}
+%pagecolor{aaltoOrange} %Voit poistaa tämän, jollet halua värillistä kansilehteä
+{%\color{white}
+\uselogo{black}{''}
+
+\makecoverpage{}
+}
+\nopagecolor
+\uselogo{black}{''}
+
+
+\makecopyrightpage{}
+
+
+\begin{abstractpage}
+    In this thesis, we generate chess puzzles with generative models
+\end{abstractpage}
+
+%\begin{abstractpage}
+%	\abstracttext{}
+%\end{abstractpage}
+
+
+
+
+\newpage
+
+\thesistitle{Teaching discrete diffusion models to generate chess puzzles with reinforcement learning}
+\supervisor{Prof.\ Nuutti Hyvönen}
+\advisor{Adjunct Prof.\ Eric Malmi}
+\degreeprogram{Master's Programme in Mathematics and Operations Research}
+\major{Applied Mathematics}
+\keywords{Diskreetti diffuusio, vahvistusoppiminen, PPO, ESPO}
+\begin{abstractpage}[finnish]
+    Tässä tutkielmassa luodaan shakki pulmia generatiivisen tekoälyn avulla. 
+\end{abstractpage}
+
+
+
+% \mysection{Esipuhe}
+
+% Haluan kiittää Professori Pirjo Professoria ja ohjaajaani Olli Ohjaajaa hyvästä
+% ja huonosta ohjauksesta.\\
+
+% \vspace{5cm}
+% Otaniemi, 31.8.2018
+
+% \vspace{5mm}
+% {\hfill Teemu T.\ A.\ Teekkari \hspace{1cm}}
+
+% \newpage
+
+
+\thesistableofcontents
+
+
+%\mysection{Symbolit ja lyhenteet}
+%
+%\subsection*{Symbolit}
+%
+%\begin{tabular}{ll}
+%$\mathbf{B}$  & magneettivuon tiheys  \\
+%$c$              & valon nopeus tyhjössä $\approx 3\times10^8$ [m/s]\\
+%$\omega_{\mathrm{D}}$    & Debye-taajuus \\
+%$\omega_{\mathrm{latt}}$ & hilan keskimääräinen fononitaajuus \\
+%$\uparrow$       & elektronin spinin suunta ylöspäin\\
+%$\downarrow$     & elektronin spinin suunta alaspäin
+%\end{tabular}
+%
+%\subsection*{Operaattorit}
+%
+%\begin{tabular}{ll}
+%$\nabla \times \mathbf{A}$              & vektorin $\mathbf{A}$ roottori\\
+%$\displaystyle\frac{\mbox{d}}{\mbox{d} t}$ & derivaatta muuttujan $t$ 
+%suhteen\\[3mm]
+%$\displaystyle\frac{\partial}{\partial t}$  & osittaisderivaatta muuttujan $t$ 
+%suhteen \\[3mm]
+%$\sum_i $                       & summa indeksin $i$ yli\\
+%$\mathbf{A} \cdot \mathbf{B}$    & vektorien $\mathbf{A}$ ja $\mathbf{B}$ 
+%pistetulo
+%\end{tabular}
+%
+%\subsection*{Lyhenteet}
+%
+%\begin{tabular}{ll}
+%AC         & vaihtovirta \\
+%APLAC      & an object-oriented analog circuit simulator and design tool \\
+%           & (originally Analysis Program for Linear Active Circuits) \\
+%BCS        & Bardeen-Cooper-Schrieffer \\ %% tavuviiva - nimien välissä 
+%DC         & tasavirta \\
+%TEM        & transverse eletromagnetic
+%\end{tabular}
+
+ 
+\cleardoublepage
+
+
+\input{sections/1-Introduction}
+\input{sections/2-Literature review}
+\input{sections/3-Discrete diffusion}
+\input{sections/4-Chessboard representation}
+\input{sections/5-Supervised training}
+\input{sections/6-Reinforcement learning}
+\input{sections/7-Results}
+\input{sections/8-Human study}
+\input{sections/9-Discussion and limitations}
+\input{sections/10-Conclusions}
+
+
+\bibliography{references}
+
+
+
+%\clearpage
+%\thesisappendix
+
+%\input{sections/A-Appendix}
+
+\end{document}
