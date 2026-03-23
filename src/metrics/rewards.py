@@ -7,10 +7,11 @@ piece_counts = {chess.PAWN: 8, chess.KNIGHT: 2, chess.BISHOP: 2, chess.ROOK: 2, 
 pieces = [chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN, chess.KING]
 colors = [chess.WHITE, chess.BLACK]
 
-def good_piece_counts(puzzle):
+def good_piece_counts(fen):
+    board = chess.Board(fen)
     for color in colors:
         for piece in pieces:
-            if len(puzzle.game.board().pieces(piece, color)) > piece_counts[piece]:
+            if len(board.pieces(piece, color)) > piece_counts[piece]:
                 return False
     return True
 

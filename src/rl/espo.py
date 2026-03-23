@@ -11,9 +11,13 @@ t_points, quadrature_weights = torch.from_numpy(t_points), torch.from_numpy(quad
 t_points, quadrature_weights = (1 - 0) / 2 * t_points + (1 + 0) / 2, (1 - 0) / 2 * quadrature_weights  # https://en.wikipedia.org/wiki/Gaussian_quadrature#Change_of_interval
 
 
-def kl_estimate(model_elbo, reference_elbo):
+def kl_estimate(model_elbo, reference_elbo, kind="k2"):
     # k2 from http://joschu.net/blog/kl-approx.html and https://arxiv.org/pdf/2512.03759 (biased, but low variance estimator)
-    return 0.5 * (model_elbo - reference_elbo) ** 2
+    if kind == "k2":
+        return 0.5 * (model_elbo - reference_elbo) ** 2
+    elif kind == "k3":
+        return torch.exp(reference_elbo - model_elbo) - 1 - (reference_elbo - model_elbo)
+    return model_elbo - reference_elbo  # unbiased basic MC estimate
 
 def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     device = ratings.device
@@ -71,23 +75,24 @@ def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards,
     device = ratings.device
     elbo = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
     # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, t=t, return_mask=False)
+    entropy = torch.mean(-elbo.detach())
 
     rewards = rewards.reshape(batch_size, group_size)
     elbo = elbo.reshape(batch_size, group_size)
     reference_elbos = reference_elbos.reshape(batch_size, group_size)
     old_elbos = old_elbos.reshape(batch_size, group_size)
     # this assumes that elbo and old_elbos are negative (lower bounds of the log probability)
-    rho = torch.exp((elbo - old_elbos) / sequence_length)  # importance sampling (generate from old model, update current model)
+    rho = torch.exp(elbo - old_elbos)  # importance sampling (generate from old model, update current model)
 
     # (batch_size,)
-    advantages = (rewards - rewards.mean(dim=1, keepdim=True)).to(device)  # Dr GRPO (do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
+    advantages = ((rewards - rewards.mean(dim=1, keepdim=True)) / (rewards.std(dim=1, keepdim=True) + 1e-8)).to(device)  # Dr GRPO (maybe do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
     coef_1 = rho * advantages
     coef_2 = torch.clamp(rho, 1 - eps, 1 + eps) * advantages
     loss = torch.minimum(coef_1, coef_2).mean(dim=1)
     is_clipped = (coef_2 < coef_1).flatten()
     kl = kl_estimate(elbo, reference_elbos).mean(dim=1)
     loss = loss - beta * kl
-    return -loss, kl, is_clipped  # maximize the loss above
+    return -loss, kl, is_clipped, entropy  # maximize the loss above
 
 def critic_free_ppo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards, group_size, mask=None, t=None, eps=0.2, beta=0.1):
     _, sequence_length = fens.shape
@@ -97,9 +102,10 @@ def critic_free_ppo_loss(model, reference_elbos, old_elbos, fens, themes, rating
     device = ratings.device
     elbo = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
     # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, t=t, return_mask=False)
+    entropy = torch.mean(-elbo).item()
 
     # this assumes that elbo and old_elbos are negative (lower bounds of the log probability)
-    rho = torch.exp((elbo - old_elbos) / sequence_length)  # importance sampling (generate from old model, update current model)
+    rho = torch.exp(elbo - old_elbos)  # importance sampling (generate from old model, update current model)
 
     advantages = (rewards - rewards.mean(dim=0, keepdim=True)).to(device)
     coef_1 = rho * advantages
@@ -108,7 +114,7 @@ def critic_free_ppo_loss(model, reference_elbos, old_elbos, fens, themes, rating
     is_clipped = coef_2 < coef_1
     kl = kl_estimate(elbo, reference_elbos)
     loss = loss - beta * kl
-    return -loss, kl, is_clipped  # maximize the loss above
+    return -loss, kl, is_clipped, entropy  # maximize the loss above
 
 
 def generate_grouped_positions(model, themes, ratings, group_size, steps=256):
@@ -132,7 +138,7 @@ lengths = ("oneMove", "short", "long", "veryLong")
 winnings = ("crushing", "advantage")
 other = ("hangingPiece", "fork", "interference", "kingsideAttack", "zugzwang", "exposedKing", "skewer", "pin", "quietMove", "discoveredAttack", "sacrifice", "deflection", "advancedPawn", "attraction", "promotion", "queensideAttack", "defensiveMove", "attackingF2F7", "clearance", "intermezzo", "equality", "trappedPiece", "xRayAttack", "capturingDefender", "doubleCheck", "enPassant", "castling", "underPromotion")
 
-dataset = pd.read_csv("./src/dataset/dataset.csv", nrows=100_000)
+dataset = pd.read_csv("./src/dataset/dataset.csv")  # , nrows=100_000
 # dataset = dataset[dataset["Themes"].str.split(" ").apply(lambda themes: "sacrifice" in themes)]  # TODO: remove this when not interested in sacrifices anymore
 # dataset = dataset[dataset["Themes"].str.split(" ").apply(lambda themes: "doubleCheck" in themes)]  # TODO: remove this when not interested in double checks anymore
 
@@ -151,6 +157,9 @@ def generate_random_themes(batch_size, lichess_distribution=False):
             if state_of_game == "endgame":
                 position_themes.append(random.choice(endgames))
             
+            # position_themes.append("sacrifice")  # TODO: remove when not interested in only sacrifices
+            # position_themes.append("doubleCheck")  # TODO: remove when not interested in only double checks
+            
             if torch.rand(1) < 0.1:
                 position_themes.append(is_mate)
                 position_themes.append(random.choice(mate_lengths))
@@ -160,6 +169,7 @@ def generate_random_themes(batch_size, lichess_distribution=False):
                 position_themes.append(random.choice(other))
 
             themes.append(position_themes)
+        # themes = [["middlegame", "sacrifice", "mate"] for _ in range(batch_size)]  # TODO: remove when not interested in only this spesific theme
         
         ratings = 3000 * torch.rand((batch_size,)) + 300
 
