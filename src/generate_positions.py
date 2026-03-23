@@ -19,7 +19,7 @@ torch.set_float32_matmul_precision("high")
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 base_path = Path("./src")
 # checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
-checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0017280.pt", map_location="cpu", weights_only=False)
+checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0007000.pt", map_location="cpu", weights_only=False)
 
 config = checkpoint["config"]
 model = MaskedDiffusion(config)
@@ -122,5 +122,5 @@ while not engine_pool.empty():
     engine.quit()
 
 df = pd.DataFrame(results_list)
-output_path = base_path / "Generate_positions" / "GoodRLRunGenerations2.csv"
+output_path = base_path / "Generate_positions" / "v1.csv"
 df.to_csv(output_path, index=False)

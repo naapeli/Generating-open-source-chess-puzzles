@@ -70,19 +70,20 @@ if torch.cuda.is_available():
 torch.set_float32_matmul_precision("high")
 
 # ====================== CONFIG ======================
-n_gradient_updates_per_generation = 8  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable)
+n_gradient_updates_per_generation = 1  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable) https://arxiv.org/pdf/2510.23881 uses 1
 total_steps = 20_000 * n_gradient_updates_per_generation
 batch_size = 16
 local_batch_size = batch_size // world_size
 group_size = 4
 eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
-beta = 5e-4  # 1e-3
-n_positions_added = 16  # matters only when batch_size == 1
+beta = 1e-3  # 0  # 3e-2  # 1e-3  # 5e-4  # 1e-4
+n_positions_added = 16  # matters only when group_size == 1
 local_n_positions_added = n_positions_added // world_size
-lichess_distribution = False
-save_period = 240 * n_gradient_updates_per_generation
+lichess_distribution = True
+save_period = 500 * n_gradient_updates_per_generation
 
-save_path = base_path / "rl_checkpoints"
+save_checkpoints = True
+save_path = base_path / "rl_checkpoints" / "lichessDist"
 reference_checkpoint_path = base_path / "supervised_checkpoints" / "model_0940000.pt"
 
 
@@ -92,7 +93,8 @@ if master_process:
         logging_path = base_path / "runs"/ "rl" / "espo" / "GoodResultsCounterIntuitivenessDoesNotImprove"
     else:
         current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-        logging_path = base_path / "runs"/ "rl" / current_time
+        logging_path = base_path / "runs"/ "rl" / "espo" / current_time
+        # logging_path = base_path / "runs"/ "rl" / "espo" / "betaSearch" / f"{beta:.1e}"
     writer = SummaryWriter(logging_path)
 
 reference_checkpoint = torch.load(reference_checkpoint_path, map_location="cpu", weights_only=False)
@@ -106,8 +108,8 @@ model = MaskedDiffusion(config)
 model.load_state_dict(checkpoint["model"])
 model.to(device=device)
 
-config.lr = 1e-4  # 3e-5
-config.weight_decay = 1e-5
+config.lr = 3e-4  # 3e-5  # 1e-4
+config.weight_decay = 1e-4  # 1e-5
 
 if master_process:
     rating_model_checkpoint = torch.load(base_path / "rating_model_checkpoints" / "model_0063000.pt", map_location="cpu", weights_only=False)
@@ -134,8 +136,8 @@ if continue_from_checkpoint:
     adam.load_state_dict(checkpoint["adam"])
     muon.load_state_dict(checkpoint["muon"])
 
-adam_scheduler = LinearLR(adam, start_factor=0.01, end_factor=1, total_iters=100, last_epoch=checkpoint["step"] if continue_from_checkpoint else -1)
-muon_scheduler = LinearLR(muon, start_factor=0.01, end_factor=1, total_iters=100, last_epoch=checkpoint["step"] if continue_from_checkpoint else -1)
+adam_scheduler = LinearLR(adam, start_factor=0.01, end_factor=1, total_iters=20, last_epoch=checkpoint["step"] if continue_from_checkpoint else -1)
+muon_scheduler = LinearLR(muon, start_factor=0.01, end_factor=1, total_iters=20, last_epoch=checkpoint["step"] if continue_from_checkpoint else -1)
 
 cpu_count = int(os.environ.get("SLURM_CPUS_PER_TASK")) * int(os.environ.get("SLURM_NTASKS"))
 
@@ -168,7 +170,7 @@ def save_board(fen, themes, rating, tag):
     except Exception:
         pass
 
-def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
+def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
     legal_position = torch.zeros(len(fen_tokens), dtype=bool)
     unique_solution = torch.zeros(len(fen_tokens), dtype=bool)
     counter_intuitive_solution = torch.zeros(len(fen_tokens), dtype=bool)
@@ -179,6 +181,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
     intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     themes_match = torch.zeros(len(fen_tokens), dtype=bool)
     rating_penalty = torch.zeros(len(fen_tokens), dtype=torch.float32)
+    # entropy_reward = torch.zeros(len(fen_tokens), dtype=bool)  # TODO: use elbo to compute an estimate of the entropy
 
     is_generated = is_generated.cpu()
 
@@ -211,13 +214,14 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
         if fen is None or not legal(fen):
             continue
         legal_position[i] = 1
+
+        piece_counts[i] = good_piece_counts(fen)
         
         puzzle = puzzles[i]
         if puzzle is None:
             continue
         unique_solution[i] = 1
         counter_intuitive_solution[i] = counter_intuitive(fen, engine)
-        piece_counts[i] = good_piece_counts(puzzle)
 
         sampled_fens, sampled_pvs, _, _ = buffer.sample(2000)
         pv = " ".join([move.uci() for move in puzzle.mainline])
@@ -255,21 +259,19 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
     # rewards = torch.where(unique_solution & counter_intuitive_solution, rewards, 0)
     # rewards = torch.where(legal_position, rewards, -2)
     rewards = torch.zeros(len(fen_tokens), dtype=torch.float32)
-    rewards = torch.where(unique_solution & intra_batch_pv_dist, 0.5, rewards)
-    rewards = torch.where(unique_solution & counter_intuitive_solution & intra_batch_pv_dist, 2.0, rewards)
-    rewards = torch.where(legal_position, rewards, -2.0)
+    rewards = torch.where(unique_solution & intra_distances & inter_batch_fen_dist & piece_counts, 0.0, rewards)  # 1.0  # 0.0  # 0.5
+    rewards = torch.where(unique_solution & counter_intuitive_solution & intra_distances & inter_batch_fen_dist & piece_counts, 1.0, rewards)  # 3.0  # 1.0
+    rewards = torch.where(legal_position, rewards, -2.0)  # -1.0
 
+    # save the images of some positions
     log_rewards = rewards.clone()
     log_rewards[~is_generated] = -float("inf")
     index = torch.argmax(log_rewards).item()
     save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Generations")
-
     for index, reward in enumerate(log_rewards):
         if not (unique_solution[i] & counter_intuitive_solution[i] & themes_match[i]):
             continue
-        
         save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Puzzles")
-    
     gen_indices = torch.nonzero(is_generated).squeeze(1)
     index = gen_indices[torch.median(rewards[gen_indices], dim=0).indices].item()
     save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Median")
@@ -283,15 +285,15 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated):
         "uniqueness_rate": unique_solution[is_generated].float().mean().item(),
         "counter_intuitive_rate": counter_intuitive_solution[is_generated].float().mean().item(),
         "counter_intuitive_rate_given_unique": counter_intuitive_solution[valid_mask].float().mean().item() if valid_mask.any() else 0,
-        "piece_counts": piece_counts[is_generated].float().mean().item(),
-        "themes_match_rate": themes_match[is_generated].float().mean().item(),
-        "dist_inter_fen": inter_batch_fen_dist[is_generated].float().mean().item(),
-        "dist_intra_fen": intra_batch_fen_dist[is_generated].float().mean().item(),
-        "dist_inter_pv": inter_batch_pv_dist[is_generated].float().mean().item(),
-        "dist_intra_pv": intra_batch_pv_dist[is_generated].float().mean().item(),
-        "intra_dist": intra_distances[is_generated].float().mean().item(),
-        "inter_dist": inter_distances[is_generated].float().mean().item(),
-        "all_dist": all_distances[is_generated].float().mean().item(),
+        "piece_counts": piece_counts[is_generated & legal_position].float().mean().item(),
+        "themes_match_rate": themes_match[valid_mask].float().mean().item() if valid_mask.any() else 0,
+        "dist_inter_fen": inter_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
+        "dist_intra_fen": intra_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
+        "dist_inter_pv": inter_batch_pv_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
+        "dist_intra_pv": intra_batch_pv_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
+        "intra_dist": intra_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
+        "inter_dist": inter_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
+        "all_dist": all_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
         "rating_abs_diff": (-1000 * rating_penalty[valid_mask]).float().mean().item() if valid_mask.any() else 1000,
     }
     
@@ -343,30 +345,6 @@ while not end:
         step_themes = torch.cat([step_themes, sampled_themes], dim=0)
         step_ratings = torch.cat([step_ratings, sampled_ratings], dim=0)
 
-    # compute the rewards (on the master process)
-    if distributed:
-        gather_is_generated = [torch.zeros_like(is_generated) for _ in range(world_size)] if master_process else None
-        gather_fens = [torch.zeros_like(step_fens) for _ in range(world_size)] if master_process else None
-        gather_themes = [torch.zeros_like(themes_one_hot) for _ in range(world_size)] if master_process else None
-        gather_ratings = [torch.zeros_like(ratings) for _ in range(world_size)] if master_process else None
-        gather(is_generated, gather_list=gather_is_generated, dst=0)
-        gather(step_fens, gather_list=gather_fens, dst=0)
-        gather(themes_one_hot, gather_list=gather_themes, dst=0)
-        gather(ratings, gather_list=gather_ratings, dst=0)
-        if master_process:
-            global_is_generated = torch.cat(gather_is_generated)
-            global_fens = torch.cat(gather_fens)
-            global_themes = torch.cat(gather_themes)
-            global_ratings = torch.cat(gather_ratings)
-            global_rewards = get_rewards(global_fens, global_themes, global_ratings, global_is_generated).to(device=device, dtype=torch.float32)
-            reward_chunks = list(global_rewards.chunk(world_size, dim=0))
-        rewards = torch.zeros(len(step_fens), device=device, dtype=torch.float32)
-        scatter(rewards, scatter_list=reward_chunks if master_process else None, src=0)
-    else:
-        rewards = get_rewards(step_fens, themes_one_hot, ratings, is_generated)
-        # rewards = -(step_fens != 0).sum(dim=1).float()
-        # writer.add_scalar("Reward", rewards[is_generated].mean().item(), step)
-    
     # precompute the elbos of the old model
     with torch.no_grad():
         reference_elbo, mask, t = compute_elbo(reference_model, step_fens, step_themes, step_ratings, return_mask=True)
@@ -374,11 +352,37 @@ while not end:
         # reference_elbo, mask, t = compute_elbo_basic(reference_model, step_fens, step_themes, step_ratings, return_mask=True)
         # old_elbo = compute_elbo_basic(model, step_fens, step_themes, step_ratings, mask=mask, t=t)
 
+    # compute the rewards (on the master process)
+    if distributed:
+        gather_is_generated = [torch.zeros_like(is_generated) for _ in range(world_size)] if master_process else None
+        gather_fens = [torch.zeros_like(step_fens) for _ in range(world_size)] if master_process else None
+        gather_themes = [torch.zeros_like(themes_one_hot) for _ in range(world_size)] if master_process else None
+        gather_ratings = [torch.zeros_like(ratings) for _ in range(world_size)] if master_process else None
+        gather_elbos = [torch.zeros_like(old_elbo) for _ in range(world_size)] if master_process else None
+        gather(is_generated, gather_list=gather_is_generated, dst=0)
+        gather(step_fens, gather_list=gather_fens, dst=0)
+        gather(themes_one_hot, gather_list=gather_themes, dst=0)
+        gather(ratings, gather_list=gather_ratings, dst=0)
+        gather(old_elbo, gather_list=gather_elbos, dst=0)
+        if master_process:
+            global_is_generated = torch.cat(gather_is_generated)
+            global_fens = torch.cat(gather_fens)
+            global_themes = torch.cat(gather_themes)
+            global_ratings = torch.cat(gather_ratings)
+            global_elbos = torch.cat(gather_elbos)
+            global_rewards = get_rewards(global_fens, global_themes, global_ratings, global_is_generated, global_elbos).to(device=device, dtype=torch.float32)
+            reward_chunks = list(global_rewards.chunk(world_size, dim=0))
+        rewards = torch.zeros(len(step_fens), device=device, dtype=torch.float32)
+        scatter(rewards, scatter_list=reward_chunks if master_process else None, src=0)
+    else:
+        rewards = get_rewards(step_fens, themes_one_hot, ratings, is_generated, old_elbo)
+
     # update the model many times for one generation (as generations and reward calculations are expensive)
     total_loss = 0
     total_norm = 0
     total_kl = 0
     total_clips = 0
+    total_entropy = 0
     for substep in range(n_gradient_updates_per_generation):
         step += 1
 
@@ -386,13 +390,14 @@ while not end:
         muon.zero_grad()
 
         if group_size == 1:
-            loss, kl, is_clipped = critic_free_ppo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
+            loss, kl, is_clipped, entropy = critic_free_ppo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
         else:
-            loss, kl, is_clipped = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
-        loss, kl = loss.mean(), kl.mean()
+            loss, kl, is_clipped, entropy = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
+        loss = loss.mean()
         total_loss += loss
-        total_kl += kl
-        total_clips += is_clipped.sum()
+        total_kl += kl.mean()
+        total_clips += is_clipped.float().mean()
+        total_entropy += entropy
 
         loss.backward()
 
@@ -411,14 +416,17 @@ while not end:
         all_reduce(total_loss, op=ReduceOp.AVG)
         all_reduce(total_norm, op=ReduceOp.AVG)
         all_reduce(total_kl, op=ReduceOp.AVG)
+        all_reduce(total_clips, op=ReduceOp.AVG)
+        all_reduce(total_entropy, op=ReduceOp.AVG)
     if master_process:
         writer.add_scalar("Loss", total_loss.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("Grad norm", total_norm.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("KL divergence", total_kl.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("learning_rate", adam.param_groups[0]["lr"], step)
         writer.add_scalar("Clips", total_clips.item() / n_gradient_updates_per_generation, step)
+        writer.add_scalar("entropy", total_entropy.item() / n_gradient_updates_per_generation, step)
 
-    if step % save_period == 0:
+    if step % save_period == 0 and save_checkpoints:
         save_state()
 
 if master_process:
