@@ -19,6 +19,10 @@ def kl_estimate(model_elbo, reference_elbo, kind="k2"):
         return torch.exp(reference_elbo - model_elbo) - 1 - (reference_elbo - model_elbo)
     return model_elbo - reference_elbo  # unbiased basic MC estimate
 
+def entropy(elbo, sequence_length):
+    entropy_vals = -elbo / sequence_length
+    return entropy_vals
+
 def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     device = ratings.device
     n_samples = len(ratings)
@@ -75,24 +79,24 @@ def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards,
     device = ratings.device
     elbo = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
     # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, t=t, return_mask=False)
-    entropy = torch.mean(-elbo.detach())
 
     rewards = rewards.reshape(batch_size, group_size)
-    elbo = elbo.reshape(batch_size, group_size)
-    reference_elbos = reference_elbos.reshape(batch_size, group_size)
-    old_elbos = old_elbos.reshape(batch_size, group_size)
+    elbo = elbo.reshape(batch_size, group_size) / sequence_length
+    reference_elbos = reference_elbos.reshape(batch_size, group_size) / sequence_length
+    old_elbos = old_elbos.reshape(batch_size, group_size) / sequence_length
     # this assumes that elbo and old_elbos are negative (lower bounds of the log probability)
     rho = torch.exp(elbo - old_elbos)  # importance sampling (generate from old model, update current model)
 
     # (batch_size,)
-    advantages = ((rewards - rewards.mean(dim=1, keepdim=True)) / (rewards.std(dim=1, keepdim=True) + 1e-8)).to(device)  # Dr GRPO (maybe do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
+    advantages = ((rewards - rewards.mean(dim=1, keepdim=True))).to(device)  # Dr GRPO (maybe do not normalize by the standard deviation) https://arxiv.org/pdf/2503.20783
+    #  / (rewards.std(dim=1, keepdim=True) + 1e-8)
     coef_1 = rho * advantages
     coef_2 = torch.clamp(rho, 1 - eps, 1 + eps) * advantages
     loss = torch.minimum(coef_1, coef_2).mean(dim=1)
     is_clipped = (coef_2 < coef_1).flatten()
     kl = kl_estimate(elbo, reference_elbos).mean(dim=1)
     loss = loss - beta * kl
-    return -loss, kl, is_clipped, entropy  # maximize the loss above
+    return -loss, kl, is_clipped  # maximize the loss above
 
 def critic_free_ppo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards, group_size, mask=None, t=None, eps=0.2, beta=0.1):
     _, sequence_length = fens.shape
@@ -102,19 +106,18 @@ def critic_free_ppo_loss(model, reference_elbos, old_elbos, fens, themes, rating
     device = ratings.device
     elbo = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
     # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, t=t, return_mask=False)
-    entropy = torch.mean(-elbo).item()
 
     # this assumes that elbo and old_elbos are negative (lower bounds of the log probability)
-    rho = torch.exp(elbo - old_elbos)  # importance sampling (generate from old model, update current model)
+    rho = torch.exp((elbo - old_elbos) / sequence_length)  # importance sampling (generate from old model, update current model)
 
     advantages = (rewards - rewards.mean(dim=0, keepdim=True)).to(device)
     coef_1 = rho * advantages
     coef_2 = torch.clamp(rho, 1 - eps, 1 + eps) * advantages
     loss = torch.minimum(coef_1, coef_2)
     is_clipped = coef_2 < coef_1
-    kl = kl_estimate(elbo, reference_elbos)
+    kl = kl_estimate(elbo / sequence_length, reference_elbos / sequence_length)
     loss = loss - beta * kl
-    return -loss, kl, is_clipped, entropy  # maximize the loss above
+    return -loss, kl, is_clipped  # maximize the loss above
 
 
 def generate_grouped_positions(model, themes, ratings, group_size, steps=256):

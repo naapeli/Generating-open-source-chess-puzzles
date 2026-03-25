@@ -1,10 +1,10 @@
 #!/bin/bash -l
-#SBATCH --time=2-00:00:00
+#SBATCH --time=0-04:00:00
 #SBATCH --output=outputrl.out
 #SBATCH --mem=64G
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --gpus=a100:1
+#SBATCH --gpus=h200:1
 # #SBATCH --partition=gpu-b300-288g-short
 # #SBATCH --gpus=1
 # #SBATCH --partition=gpu-debug
