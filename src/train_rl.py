@@ -70,13 +70,13 @@ if torch.cuda.is_available():
 torch.set_float32_matmul_precision("high")
 
 # ====================== CONFIG ======================
-n_gradient_updates_per_generation = 1  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable) https://arxiv.org/pdf/2510.23881 uses 1
-total_steps = 2_000 * n_gradient_updates_per_generation  # 20_000
+n_gradient_updates_per_generation = 4  # https://arxiv.org/pdf/2512.03759 figure 5 (8 - 24 seems reasonable) https://arxiv.org/pdf/2510.23881 uses 1
+total_steps = 20_000 * n_gradient_updates_per_generation  # 20_000
 batch_size = 16
 local_batch_size = batch_size // world_size
 group_size = 4
 eps = 0.3  # from https://arxiv.org/pdf/1707.06347 page 6
-beta = 3e-6  # 0  # 3e-2  # 1e-3  # 5e-4  # 1e-4
+beta = 3e-2  # 76 * 3e-2  # 0 3e-2 1e-3 5e-4 1e-4
 n_positions_added = 16  # matters only when group_size == 1
 local_n_positions_added = n_positions_added // world_size
 lichess_distribution = True
@@ -94,7 +94,7 @@ if master_process:
     else:
         # current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
         # logging_path = base_path / "runs"/ "rl" / "espo" / current_time
-        logging_path = base_path / "runs"/ "rl" / "espo" / "betaSearchV6" / f"{beta:.1e}"
+        logging_path = base_path / "runs"/ "rl" / "espo" / "additive_reward" / f"beta{beta:2e}"
     writer = SummaryWriter(logging_path)
 
 reference_checkpoint = torch.load(reference_checkpoint_path, map_location="cpu", weights_only=False)
@@ -108,8 +108,8 @@ model = MaskedDiffusion(config)
 model.load_state_dict(checkpoint["model"])
 model.to(device=device)
 
-config.lr = 3e-4  # 3e-5  # 1e-4
-config.weight_decay = 1e-5  # 1e-5
+config.lr = 3e-4  # 3e-5 1e-4 3e-4
+config.weight_decay = 1e-5  # 1e-5 1e-4
 
 if master_process:
     rating_model_checkpoint = torch.load(base_path / "rating_model_checkpoints" / "model_0063000.pt", map_location="cpu", weights_only=False)
@@ -183,7 +183,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
     rating_penalty = torch.zeros(len(fen_tokens), dtype=torch.float32)
 
     _, sequence_length = fen_tokens.shape
-    entropies = entropy(elbo, sequence_length)
+    entropies = entropy(elbo.cpu(), sequence_length)
     entropy_reward = entropies > 0.6
 
     is_generated = is_generated.cpu()
@@ -257,15 +257,13 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
     inter_distances = inter_batch_fen_dist * inter_batch_pv_dist
     all_distances = intra_distances * inter_distances
     
-    # rewards = torch.ones(len(fen_tokens), dtype=torch.float32)# + 0.1 * rating_penalty
-    # # rewards = torch.where(themes_match & piece_counts & all_distances & unique_solution & counter_intuitive_solution, rewards, 0)
-    # rewards = torch.where(unique_solution & counter_intuitive_solution, rewards, 0)
-    # rewards = torch.where(legal_position, rewards, -2)
-    pass_diversity_filtering = entropy_reward & intra_distances & inter_batch_fen_dist & piece_counts
+    pass_diversity_filtering = intra_distances & inter_batch_fen_dist & piece_counts# & entropy_reward
+    # pass_diversity_filtering = all_distances & piece_counts
     rewards = torch.zeros(len(fen_tokens), dtype=torch.float32)
-    rewards = torch.where(unique_solution & pass_diversity_filtering, 0.01, rewards)  # 1.0  # 0.0  # 0.5
-    rewards = torch.where(unique_solution & counter_intuitive_solution & pass_diversity_filtering, 1.0, rewards)  # 3.0  # 1.0
-    rewards = torch.where(legal_position, rewards, -2.0)  # -1.0
+    # rewards = torch.where(unique_solution & pass_diversity_filtering, 0.0, rewards)  # 1.0  # 0.0  # 0.5
+    # rewards = torch.where(unique_solution & counter_intuitive_solution & pass_diversity_filtering, 1.0, rewards)  # 3.0  # 1.0
+    # rewards = torch.where(legal_position, rewards, -2.0)  # -1.0
+    rewards = legal_position * (10 * pass_diversity_filtering + unique_solution + 0.5 * counter_intuitive_solution)
 
     # save the images of some positions
     log_rewards = rewards.clone()
@@ -300,7 +298,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
         "inter_dist": inter_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
         "all_dist": all_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
         "rating_abs_diff": (-1000 * rating_penalty[valid_mask]).float().mean().item() if valid_mask.any() else 1000,
-        "pass_diversity_filtering": pass_diversity_filtering[is_generated].float().mean().item()
+        "pass_diversity_filtering": pass_diversity_filtering[valid_mask].float().mean().item() if valid_mask.any() else 0,
     }
     
     for key, value in log_data.items():
@@ -332,7 +330,7 @@ while not end:
 
     # generate the fens from the old_model
     with torch.autocast(device_type=device_type, dtype=torch.bfloat16):  # make the sampling a little faster with less precision
-        step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=128)
+        step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=512)  # , steps=128
     
     is_generated = torch.ones(len(step_fens), dtype=torch.bool, device=device)
     

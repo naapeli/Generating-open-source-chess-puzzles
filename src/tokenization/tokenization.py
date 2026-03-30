@@ -110,7 +110,6 @@ counter_tokens = [
 counter_str_2_token = dict(counter_tokens)
 counter_token_2_str = dict([(token, string) for string, token in counter_tokens])
 
-# def make_first_move()
 
 def tokenize_fen(fen):
     board, side, castling, enpassant, halfmove, fullmove = fen.split(" ")
@@ -189,25 +188,3 @@ def tokens_to_fen(tokens: torch.Tensor) -> str:
         return " ".join([board, side, castling, en_passant, halfmove_counter, fullmove_counter])
     except KeyError:
         raise NotLegalPositionError("The tokens do not yield a legal position")
-
-
-class NotLegalPositionError(Exception):
-    pass
-
-
-# def pad_fen(fen: str) -> str:
-#     board, side, castling, enpassant, halfmove, fullmove = fen.split(" ")
-#     board = re.sub(r"\d", lambda digit: "." * int(digit.group()), board)
-#     board = re.sub("/", lambda _: "", board)  # remove the slashes
-
-#     castling_characters = "KQkq"
-#     castling = "".join([char if char in castling else "." for char in castling_characters])
-    
-#     enpassant = enpassant if enpassant != "-" else "-."
-
-#     halfmove = "." + halfmove if len(halfmove) == 1 else halfmove
-#     assert len(halfmove) == 2, "halfmove counter is encoded as a number with 2 digits"
-#     fullmove = ".." + fullmove if len(fullmove) == 1 else "." + fullmove if len(fullmove) == 2 else fullmove
-#     assert len(fullmove) == 3, "fullmove counter is encoded as a number with 3 digits"
-
-#     return "".join([board, side, castling, enpassant, halfmove, fullmove])
