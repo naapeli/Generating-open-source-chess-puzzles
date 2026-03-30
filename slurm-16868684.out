@@ -1,3 +1,0 @@
-JOBID              PARTITION NAME                  TIME       START_TIME    STATE NODELIST(REASON)
-16868684           batch-hsw slurm                 0:01 2026-03-27T12:52  RUNNING pe79
-16866111           gpu-a100- train_rl.sh        3:58:00 2026-03-27T08:54  RUNNING gpu14

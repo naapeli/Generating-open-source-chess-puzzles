@@ -1,23 +1,122 @@
 \section{Discrete diffusion}
 \label{sec:discrete diffusion}
 
-\subsection{Discrete-time forward process}
+Diffusion models are generative models that iteratively denoise inputs to generate items. Often, they are used in image \textcolor{red}{add references where this is done}, video or audio generation, where the samples are continuous and the model removes Gaussian noise on each step. In recent years, many advances have been taken with diffusion models in discrete domains for instance with applying diffusion on continuous embeddings of the discrete data \textcolor{red}{add references where this was done}. However, such models in the language modelling domain for instance, mostly do not perform as well as other models. Therefore, diffusion models that truly work on discrete data by iteratively unmasking masked tokens, were developed \cite{austin2021structureddenoisingdiffusionmodels}. Although, in the field of language models, these models can perform comparatively to LLMs, they require much more compute during training to achieve the same performance \cite{nie2025scalingmaskeddiffusionmodels}. Nevertheless, masked diffusion language models might offer benefits during inference especially in efficiency \cite{nie2025scalingmaskeddiffusionmodels}.
+
+In this work, we train a masked diffusion model to generate chess puzzles. We express each chess board as a sequence of tokens, in the same way one would express natural language. We describe the exact tokenization procedure in section \ref{sec:chessboard representation}. For the model itself, we follow the work of \cite{shi2025simplifiedgeneralizedmaskeddiffusion}.
 
 
-\subsection{Continuous forward process}
+\subsection{Forward process}
+
+During the forward process, the tokens of a complete chess board are iteratively converted into mask tokens $[\mathtt{MASK}]$. Similarly to \cite{shi2025simplifiedgeneralizedmaskeddiffusion}, we denote the possible tokens by one-hot vectors $e_0, \dots, e_{m - 1}$. Additionally, we denote the basis vector of the mask token by $e_m$. With this notation, we begin by examining the forward processs in discrete time. Then, we follow \cite{shi2025simplifiedgeneralizedmaskeddiffusion} to generalize and take the limit as the amount of discrete time steps approaches infinity.
+
+\paragraph{Discrete-time forward process.}
+
+To begin with, we divide the time interval $[0, 1]$ into $T$ time steps. For each time $t\in[0, 1]$ and individual token $x_t$ indexed by time, the transition from step $s(i) = (i - 1) / T$ to $t(i) = i / T$ is given by the following transition matrix:
+
+\begin{equation}
+    Q_i = (1 - \beta_i) I + \beta_i\bold{1}e_m^\top\in\mathbb{R}^{(m + 1)\cross(m + 1)},
+    \label{eq:forward process}
+\end{equation}
+where $\bold{1}\in\mathbb{R}^{m + 1}$ is the vector of ones and $\beta_i$ determines the probability that the state $x_{t(i)}$ is the mask state. Each element $(Q_i)_{jk}$ tells the probability of moving from token $j$ to token $k$ with most of the transition probabilities being zero. From \eqref{eq:forward process}, we get the distribution for the state $x_{t(i)}$ in terms of the one-hot encoded state $x_0$:
+
+\begin{equation*}
+    q(x_{t(i)} | x_0) = \text{Cat}(x_{t(i)}; \bar{Q}_i^\top x_0), \quad\bar{Q}_i = \alpha_i I + (1 - \alpha_i)\bold{1}e_m^\top \text{ and } \alpha_i = \prod_{j=1}^{i}(1 - \beta_j).
+\end{equation*}
+
+To generalize this result to the entire token sequence, we use the factorization $\mathbb{P}[x_t^\text{seq} | x_s^\text{seq}] = \prod_{n=1}^{N}\mathbb{P}[x_t^{\text{seq},(n)} | x_s^{\text{seq},(n)}]$. Using this factorization, all transitions can be treated independently for each token \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. Additionally, we choose the probabilities $\beta_i$ such that $\alpha_T\approx 0$ and $\alpha_0 = 1$. By these choices, we force the process to start from a fully unmasked state and converge to a sequence of only mask tokens.
+
+
+\paragraph{Continuous forward process.}
+
+Next, we generalize the previous notation to continuous time by taking the limit $T\rightarrow\infty$ of \eqref{eq:forward process}. We obtain the following equation \cite{austin2021structureddenoisingdiffusionmodels, shi2025simplifiedgeneralizedmaskeddiffusion}:
+
+\begin{equation*}
+    \bar{Q}(t) = \alpha_tI + (1 - \alpha_t)\bold{1}e_m^\top, \quad\text{where }\alpha_t = \exp\left( -\int_{0}^{t}\beta(s)\text{d}s \right).
+\end{equation*}
+
+The function $\beta(s)$ is a continuous functions such that $\beta_i = \frac{\beta(t(i))}{T}$, and must be chosen. Equivalently, one can choose the function $\alpha_t$, which we call the masking schedule. A few common choices for the masking schedule include the linear schedule, the polynomial schedule, the geometric schedule and a cosine schedule. Although, the authors of \cite{shi2025simplifiedgeneralizedmaskeddiffusion} suggest using the linear schedule for training with a cosine grid for $t$ during inference, we opt to use the cosine schedule with a linear grid for $t$ for both training and inference, as it seemed to perform almost equivalently in their experiments. It is additionally simpler to implement as one can always sample random values of $t$ form the uniform distribution during both training and inference. The cosine schedule is is given by the equation:
+
+\begin{equation*}
+    \alpha_t = 1 - \cos(\frac{\pi}{2}(1 - t)).
+\end{equation*}
+
+One can look at equations of the mentioned masking schedules and some experiments with the masking schedules in \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. Finally, the authors of \cite{shi2025simplifiedgeneralizedmaskeddiffusion} derive an expression for the distribution of $x_t$ conditioned on a one-hot encoded state $x_s$, $s < t$. This is notably important, as it allows one to obtain analytical expressions for the reverse process. The distribution of $x_t$ is as follows:
+
+\begin{equation}
+    q(x_t | x_s) = \text{Cat}(x_t; \bar{Q}(s, t)^\top x_s), \quad\bar{Q}(s, t) = \frac{\alpha_t}{\alpha_s}I + \left(1 - \frac{\alpha_t}{\alpha_s}\right)\bold{1}e_m^\top.  % \bar{Q}(s)^{-1}\bar{Q}(t) = 
+    \label{eq:x_t dist cond x_s}
+\end{equation}
+
 
 
 \subsection{Reverse process}
 
+During the reverse process, we reverse the masking process and attempt to convert each masked token into the true token. Using \eqref{eq:x_t dist cond x_s}, one can derive the following expression \cite{shi2025simplifiedgeneralizedmaskeddiffusion}:
+
+\begin{align}
+    q(x_s | x_t, x_0) &= \text{Cat}(x_s; \bar{R}^{x_0}(t, s)^\top x_t), \label{eq:reverse process x_0 known}\\
+    \bar{R}^{x_0}(t, s) &= I + \frac{\alpha_s - \alpha_t}{1 - \alpha_t}e_m(x_0 - e_m)^\top \text{ and } s < t.\nonumber
+\end{align}
+
+Hence, if we know the original token sequence $x_0$ that has no masking, we can compute the distribution of a step closer to the unmasked state. However, if we want to sample new datapoints using this process, $x_0$ is unknown. To solve this problem, we introduce the denoising network $\mu_\theta(x_t)\in\Delta(V)^m$, which given a noisy state $x_t$ outputs a probability distribution over the vocabulary $V$ for each masked state. Unmasked tokens remain the same with probability $1$. Using this network and \eqref{eq:reverse process x_0 known}, we define the distribution for $x_s$ as
+
+\begin{equation*}
+    p_\theta(x_s | x_t) = q(x_s | x_t, \mu_\theta(x_t)) = \text{Cat}(x_s; \bar{R}^{\mu_\theta(x_t)}(t, s)^\top x_t).
+\end{equation*}
+
+This formulation is called mean-parametrization, as the denoising network is attempting to predict the mean of $x_0$ given the noisy input $x_t$. This allows us to sample new sequences from the network by iteratively converting mask tokens into other tokens via sampling from the probability distribution outputted by the network $\mu_\theta$. We describe the sampling procedure in more detail in section \ref{sec:sampling}.
+
+
+% \subsection{Masking schedules}
+% \label{sec:masking schedules}
+
 
 \subsection{Evidence lower bound}
 
+To optimize the outputs of the denoising network, an optimization objective is needed. While traditional LLMs are optimized by maximizing the likelihood, for masked diffusion models, the computation of the likelihood is intractable in an efficient way. Hence, with diffusion models one usually optimizes for the lower bound of the log marginal likelihood called the evidence \cite{shi2025simplifiedgeneralizedmaskeddiffusion, austin2021structureddenoisingdiffusionmodels, kingma2021variationaldiffusionmodels}. If one optimizes the evidence lower bound (ELBO), one automatically increases the likelihood of the datapoints. Hence, this can be considered maximum likelihood optimization, although, one never explicitly optimizes the likelihood. In \cite{shi2025simplifiedgeneralizedmaskeddiffusion}, the authors prove that for masked diffusion models, the evidence lower bound can be expressed in the following bold:
+
+\begin{equation}
+    \mathcal{L}_\theta(x, x_0) = \int_{0}^{1}\frac{\alpha_t'}{1 - \alpha_t}\mathbb{E}_{q(x_t | x_0)}\left[\sum_{i=1}^{L}\bold{1}[x_t^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t)^{(i)}\right],
+    \label{eq:ELBO}
+\end{equation}
+where $L$ is the sequence length. One may note that the ELBO is just the sum of the cross-entropy losses over the masked tokens integrated over time. This makes it easy to implement in practice.
+
 \subsubsection{Monte-Carlo integration}
+\label{sec:MC integration}
+
+To estimate the value of the ELBO, we employ Monte-Carlo (MC) sampling to estimate the inner expectation. The expectation can be estimated by sampling $K$ different random masks, corrupting $x_0$ with the them, computing the sum of the appropriate cross-entropies and finally averaging over the $K$ losses. The estimate of the expected value looks as follows:
+
+\begin{align*}
+    &\mathbb{E}_{q(x_t | x_0)}\left[\sum_{i=1}^{L}\bold{1}[(x_t^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t^{(k)})^{(i)}\right]\\
+    \approx&\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_t^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t^{(k)})^{(i)}.
+\end{align*}
+
+In practice, we employ a 1-point MC estimate for the expectation, as the variance of estimate does not effect the variance of the total estimate much \cite{rojas2025improvingreasoningdiffusionlanguage}.
+
+In addition to the estimation of the expectation, during supervised training, we employ a 1-point MC estimate for the outer integral over $t$ as well. Supervised training is a lot more stable than reinforcement learning and hence the variance of the ELBO estimate does not effect the training as much. We deem it more important to use all available vram to increase the batch size instead of using more MC or quadrature samples. The final ELBO for supervised training has the form:
+
+\begin{equation*}
+    \mathcal{L}_\theta(x, x_0) = \frac{1}{N}\sum_{j=1}^{N}\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_{t_j}^{(k)})^{(i)},
+    \label{eq:supervised ELBO}
+\end{equation*}
+where $t_j\sim\mathcal{U}(0, 1)$ and $N = K = 1$.
 
 \subsubsection{Gauss-Legendre quadrature}
+\label{sec:gauss-legendre quadrature}
+
+As mentioned in section \ref{sec:MC integration}, reinforcement learning is a lot less stable than supervised training. Therefore, it is essential to minimize the variance of the ELBO estimate. To minimize variance, we take inspiration from \cite{rojas2025improvingreasoningdiffusionlanguage} and estimate the outer integral in \eqref{eq:ELBO} with a Gauss-Legendre quadrature. The authors of \cite{rojas2025improvingreasoningdiffusionlanguage} show that most of the variance in the ELBO MC estimate is coming from randomly sampling the value of $t$. With a quadrature, the values of $t$ are no longer random, but deterministic and evenly spaced. Therefore, the variance of the ELBO estimate is a lot lower with a quadrature. The ELBO estimate used during RL has the form:
+
+\begin{equation*}
+    \mathcal{L}_\theta(x, x_0) = \sum_{j=1}^{N}w_j\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_{t_j}^{(k)})^{(i)},
+    \label{eq:RL ELBO}
+\end{equation*}
+where $w_j$ and $t_j$ are chosen based on the 
+\textcolor{red}{Reference Methods of Numerical Integration Philip J. Davis, Philip Rabinowitz}
 
 
-\subsection{Masking schedules}
+Even with a few sample points, the variance of the ELBO estimate drops significantly compared to the equivalent MC estimate \cite{rojas2025improvingreasoningdiffusionlanguage}.
 
 
 \subsection{Sampling}
+\label{sec:sampling}

@@ -1,4 +1,5 @@
-\documentclass[English, 12pt, a4paper, sci, utf8, a-1b, online]{aaltothesis}
+% !TEX root = Thesis.tex
+\documentclass[english, 12pt, a4paper, sci, utf8, a-1b, online]{aaltothesis}
 %\documentclass[finnish, 12pt, a4paper, sci, utf8, a-1b]{aaltothesis}
 
 \usepackage{physics}
@@ -6,6 +7,7 @@
 \usepackage{algpseudocode}
 \usepackage{subcaption}
 \usepackage{wrapfig}
+\usepackage{xcolor}
 
 
 \usepackage{graphicx}
@@ -14,7 +16,7 @@
 \usepackage{amsfonts, amssymb, amsbsy, amsmath, mathrsfs, amsthm}
 
 \theoremstyle{definition}
-\newtheorem{definition}{Definition}[section] 
+\newtheorem{definition}{Definition}[section]  % TODO: could try to remove the [section], if a global numbering system for theorems is better.
 \newtheorem{maaritelma}[definition]{Määritelmä}
 \theoremstyle{plain}
 \newtheorem{theorem}[definition]{Theorem}
@@ -72,7 +74,6 @@
 \date{\today}  % esityspäivä
 
 \supervisor{Prof.\ Nuutti Hyvönen}
-%%
 
 
 \advisor{Adjunct Prof.\ Eric Malmi}
@@ -160,18 +161,13 @@ All other rights are reserved.
 \thesistableofcontents
 
 
-%\mysection{Symbolit ja lyhenteet}
-%
-%\subsection*{Symbolit}
-%
-%\begin{tabular}{ll}
-%$\mathbf{B}$  & magneettivuon tiheys  \\
-%$c$              & valon nopeus tyhjössä $\approx 3\times10^8$ [m/s]\\
-%$\omega_{\mathrm{D}}$    & Debye-taajuus \\
-%$\omega_{\mathrm{latt}}$ & hilan keskimääräinen fononitaajuus \\
-%$\uparrow$       & elektronin spinin suunta ylöspäin\\
-%$\downarrow$     & elektronin spinin suunta alaspäin
-%\end{tabular}
+\mysection{Symbols and abbreviations}
+
+\subsection*{Symbols}
+
+\begin{tabular}{ll}
+    $\Delta(S)$  & A set of probability distributions over a set $S$  \\
+\end{tabular}
 %
 %\subsection*{Operaattorit}
 %
@@ -217,9 +213,9 @@ All other rights are reserved.
 
 
 
-%\clearpage
-%\thesisappendix
+\clearpage
+\thesisappendix
 
-%\input{sections/A-Appendix}
+\input{sections/A-Implementation Details}
 
 \end{document}

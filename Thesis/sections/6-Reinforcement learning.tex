@@ -1,25 +1,159 @@
 \section{Reinforcement learning}
 \label{sec:reinforcement learning}
 
+We apply reinforcement learning (RL) to enhance the capabilities of the model after supervised training. We describe our RL procedure in detail at the end of the section.
 
-\subsection{Policy gradient}
+In this section, we work with Markov Decision Processes, which are defined as follows \cite{SuttonAndBarto2018,lehmann2024definitiveguidepolicygradients}:
 
-
-% jompi kumpi riippuen mitä käytetään
-\subsection{PPO}
-
-\subsubsection{Critic-free PPO}
-
-
-\subsection{GRPO}
-
-\subsubsection{ESPO}
+\begin{definition}[Markov Decision Process]
+    A Markov decision process (MDP) is a tuple $\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, \gamma, p_0)$, where $\mathcal{S}, \mathcal{A}$ are the state and action spaces and $P:\mathcal{S}\cross\mathcal{A}\rightarrow\Delta(\mathcal{S}\cross\mathbb{R})$ is the transition function of the environment characterized by transition probabilities $P(s', r | s, a) = \mathbb{P}[S_{t + 1} = s', R_{t + 1} = r | S_t = s, A_t = a]$ for states $s', s\in\mathcal{S}$,  action $a\in\mathcal{A}$ and reward $r\in\mathbb{R}\setminus\{-\infty, \infty\}$. Moreover, $\gamma\in[0, 1]$ is a discount factor for the future rewards and $p_0\in\Delta(S)$ is the distribution over the starting states.
+\end{definition}
 
 
-\subsection{Kullback–Leibler divergence estimation}
-\subsubsection{Naive k1 estimate}
-\subsubsection{Variance-reduced k3 estimate}
-\subsubsection{Biased k2 estimate}
+Given an MDP $\mathcal{M}$, we consider an agent that explores $\mathcal{M}$. The agent takes actions according to a function $\pi:\mathcal{S}\rightarrow\Delta(\mathcal{A})$, $\pi(s, a) = \mathbb{P}[A_t = a | S_t = s]$, which is called the policy, which might be parametrized by a parameter vector $\theta$. Informally we denote this function as $\pi(a | s)$. The agent attempts to modify this policy to maximize the cumulative reward $G_t = \sum_{k=t}^{\infty} \gamma^{k - t} r_k$ over a trajectory $(s_t, a_t, r_{t+1}, s_{t+1}, a_{t+1}, r_{t+2}, \dots)$. In our setting, the trajectory always ends at a terminal state $s_T$ with a reward $r_T$. A policy can be either explicitly defined or induced by a state-value function $V(s) = \mathbb{E}[G_t | S_t = s]$ or an action-value function $Q(s, a) = \mathbb{E}[G_t | S_t = s, A_t = a]$ \cite{SuttonAndBarto2018} via taking greedy actions.
+
+
+% \begin{definition}[Trajectory]
+%     Given an MDP $\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, \gamma, p_0)$, we define a trajectory to be the sequence $(s_t, a_t, r_{t+1}, s_{t+1}, a_{t+1}, r_{t+2}, \dots)$. The last state in the trajectory is called the terminal state.
+% \end{definition}
+
+% \begin{definition}[Policy]
+%     Given an MDP $\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, \gamma, p_0)$ and an agent exploring the MDP, we define a policy to be the function $\pi:\mathcal{S}\rightarrow\Delta(\mathcal{A})$, $\pi(s, a) = \mathbb{P}[A_t = a | S_t = s]$, which defines the probability that an agent following the policy picks an action $a$ in a state $s$.
+% \end{definition}
+
+
+
+
+% The environment is characterized by transition probabilities $P(s', r | s, a) = \mathbb{P}[S_{t + 1} = s', R_{t + 1} = r\ |\ S_t = s, A_t = a]$. The agent in this environment takes actions according to a policy $\pi(s, a) = \mathbb{P}[A_t = a | S_t = s]$, which might be parametrized by a parameter vector $\theta$. A policy can be either explicitly defined or induced by a state-value function $V(s)$ or an action-value function $Q(s, a)$ \cite{SuttonAndBarto2018} via taking greedy actions. In each state $S_t = s$, the goal of the agent is to maximize the cumulative reward $G_t = \sum_{k=t}^{\infty} \gamma^{k - t} r_k$ in the environment.
+
+\subsection{Policy gradient theorem}
+
+In reinforcement learning, one often models the value function by function approximation, e.g. using a neural network, and uses an implicit greedy policy. In natural language processing, however, it is often more convenient to model a policy directly with function approximation, as the pretrained language model can serve as the policy\protect\footnote{In this work, we will use the terms model and policy interchangeably.}. This way, the trained policy will remain stochastic allowing sampling of answers. One can also avoid explicitly learning the value-function, which may affect the stability of the learning algorithm. We call methods, which learn the policy directly policy gradient methods. These methods rely on the policy gradient theorem, which yields gradients for the expected episodic reward \cite{lehmann2024definitiveguidepolicygradients}.
+
+\begin{definition}[Expected episodic reward]
+    For a given policy $\pi_\theta$ and a distribution of starting states $p_0$, the function $J(\theta)$ is called the expected episodic reward and is given by the following equation:
+    \begin{align*}
+        J(\theta) &= \mathbb{E}_{s_0\sim p_0,\pi_\theta}[G_0]\\
+        &= \mathbb{E}_{s_0\sim p_0}[\mathbb{E}_{\pi_\theta}[G_t | S_t = s_0]]\\
+        &= \mathbb{E}_{s_0\sim p_0}[V_{\pi_\theta}(s_0)].
+    \end{align*}
+\end{definition}
+
+This definition allows us to formulate the policy gradient theorem, as follows\cite{SuttonPolicyGradientTheorem, SuttonAndBarto2018, lehmann2024definitiveguidepolicygradients}:
+
+
+\begin{theorem}[Policy gradient theorem]
+    Let $J(\theta)$ be the expected episodic reward for a policy $\pi_\theta$ and let $Q_{\pi_\theta}$ be the action-value function for the same policy. Also let $\pi_\theta$ and $Q_{\pi_\theta}$ be differentiable with respect to $\theta$ and the gradients be bounded. Then we have
+
+    \begin{equation}
+        \nabla J(\theta)\propto\sum_s\mu(s)\sum_a Q_{\pi_\theta}(a | s)\nabla\pi_\theta(a | s) = \mathbb{E}_{s\sim\mu,a\sim\pi_\theta}[Q_{\pi_\theta}(a | s)\nabla\ln\pi_\theta(a | s)],
+    \end{equation}
+
+    where $\mu$ is the on-policy distribution under $\pi_\theta$.
+
+    \label{th:PGT}
+\end{theorem}
+
+Originally proposed by Williams in \cite{Williams1992}, the policy gradient method allows one to optimize the policy parameters directly using gradient based optimization algorithms, which can be efficiently implemented using modern automatic differentiation engines. One of the original methods is the so-called REINFORCE with baseline \cite{Williams1992}, which serves as inspiration for more modern RL methods. In REINFORCE with baseline, one uses the following update formula \cite{SuttonAndBarto2018}:
+
+\begin{equation*}
+    \theta_{t+1} = \theta_t + \alpha(G_t - b(S_t))\nabla\ln\pi_{\theta_t}(A_t | S_t),
+\end{equation*}
+where $b(S_t)$ is the baseline function, which is free as long as it does not depend on the action $A_t$. This update has the same expected value as in theorem \ref{th:PGT}, as $\mathbb{E}[G_t | S_t, A_t] = Q_{\pi_\theta}(S_t, A_t)$ and $\mathbb{E}[\nabla b(S_t)] = 0$ \cite{SuttonAndBarto2018}. If one chooses the baseline as $b(S_t) = V_{\pi_\theta}(S_t)$, one obtains the actor-critic algorithm \cite{Actor-criticAlgorithms}, which serves as a basis for almost all modern RL algorithms used for LLMs. We describe the most common algorithms in the next section.
+
+
+
+\subsection{Proximal policy optimization}
+
+% TODO: connect to the last chapter and talk about what MDP we have. 
+
+Proximal policy optimization (PPO) is a variant of the actor-critic method that prioritizes stability \cite{schulman2017proximalpolicyoptimizationalgorithms}. It introduces a clipping mechanism that allows one to do many model updates for each generation while controlling for stability. In addition, PPO uses importance sampling and often a KL-divergence penalty inspired by \cite{schulman2017trustregionpolicyoptimization}. The PPO objective is defined using the importance ratio $\rho_t = \frac{\pi_\theta(A_t | S_t)}{\pi_{\theta_\text{old}}(A_t | S_t)}$ and the advantage function $\hat{A}_t = Q(S_t, A_t) - V(S_t)$, which may be estimated in many different ways. The objective is given by the following equation:
+
+\begin{equation*}
+    L(\theta) = \mathbb{E}_t[\min(\rho_t\hat{A}_t, \text{clip}(\rho_t, 1 - \epsilon, 1 + \epsilon)\hat{A}_t) - \beta\mathbb{KL}(\pi_\theta, \pi_{\theta_\text{old}})].
+\end{equation*}
+
+This objective is designed to prevent model collapse. Since the samples generated by the old policy $\theta_\text{old}$ are only accurate close to the original policy, the gradients become unreliable if the old and new policies are too different. Therefore, if the probability ratio improves the objective, the update is clipped to ensure stability. This makes the PPO objective a pessimistic bound of the previously used $\rho_t\hat{A}_t$ objective and hence more stable \cite{schulman2017proximalpolicyoptimizationalgorithms}.
+
+
+% \paragraph{GRPO}
+
+% GRPO is a variant of PPO
+
+% \paragraph{ESPO}
+\subsection{ELBO-based Sequence-level Policy Optimization}
+
+% TODO: Say that now we only talk about LLMs
+Thus far, we have consentrated on RL algorithms that are directly applicable to general problems. These algorithms rely on ones ability to compute the log-probability of individual samples from the model. This, however, is difficult to do efficiently with diffusion models, as the log-probability requires $T$ forward passes of the network. For diffusion models in the image domain, people have experimented with this approach with promising results \cite{black2024trainingdiffusionmodelsreinforcement}, however, in language modelling, the increased memory and computation requirements make such approach intractable especially if we want to reuse the generated samples many times. Therefore, people have experimented with many different variants of the traditional algorithms, which allow one to compute the RL loss in one forward pass of the denoising model \cite{rojas2025improvingreasoningdiffusionlanguage, ou2025principledrldiffusionllms, tang2026wd1weightedpolicyoptimization, zhao2025d1scalingreasoningdiffusion}. In this work, we mainly follow the approach of \cite{ou2025principledrldiffusionllms} with a few modifications inspired by \cite{rojas2025improvingreasoningdiffusionlanguage}.
+
+In this work, we employ an algorithm called ELBO-based Sequence-level Policy Optimization (ESPO) \cite{ou2025principledrldiffusionllms}. ESPO is a reinforcement learning algorithm that is spesifically designed for discrete diffusion models. It takes inspiration of an algorithm called Group-relative Policy Optimization (GRPO) \cite{shao2024deepseekmathpushinglimitsmathematical}. In \cite{shao2024deepseekmathpushinglimitsmathematical}, the authors propose a way to estimate the advantage-function in PPO using a monte-carlo estimate of the value-function. GRPO considers an MDP with states defined to be partially completed answers and actions defined to be when a model samples a new token. For a group of answers $\{ y^{(1)}, \dots y^{(G)}\}$ to a prompt $x$ sampled from $\pi_{\theta_\text{old}}$, the GRPO loss is as follows:
+
+\begin{align*}
+    L(\theta) &= \mathbb{E}_{x\sim D, y^{(1)},\dots y^{(G)}\sim\pi_{\theta_\text{old}}(\cdot | x)}\\
+    &[\frac{1}{G}\sum_{i=1}^{G}\frac{1}{L}\sum_{k=1}^{L}\min(\rho^{k,(i)}\hat{A}^{(i)}, \text{clip}(\rho^{k,(i)}, 1 - \epsilon, 1 + \epsilon)\hat{A}^{(i)}) - \beta\mathbb{KL}(\pi_\theta, \pi_{\theta_\text{old}})],
+\end{align*}
+where $G$ is the group size, $L$ the sequence length, which is constant in our setup, $\rho^{k,(i)} = \frac{\pi_\theta(y^{k,(i)} | x, y^{<k,(i)})}{\pi_{\theta_\text{old}}(y^{k,(i)} | x, y^{<k,(i)})}$ and $\hat{A}^{(i)} = R(x, y^{(i)}) - \frac{1}{G}\sum_{j=1}^{G}R(x, y^{(j)})$.
+
+However, GRPO still does not allow us to easily generalize to diffusion models. For this reason, ESPO no longer works in an MDP with states of partially completed answers and actions of generating one new token, as this would require us to evaluate the log-probability of each token separately. ESPO considers an MDP with an initial state as the sequence with all mask tokens, and a terminal state with no mask tokens remaining\textcolor{red}{Reference "Group Sequence Policy Optimization
+" by Gwen team}. Each action corresponds to sampling an entire sequence from the model. Hence, each trajectory of this MDP has exactly two states, one action, and one reward. Although, even with this MDP, the exact log-probability of each action is still intractable, it is possible to use the ELBO as a surrogate of this quantity \cite{ou2025principledrldiffusionllms, rojas2025improvingreasoningdiffusionlanguage}. Even though the ELBO is not an approximation of the sequence-level likelihood, but rather a lower bound, empirically it seems that algorithms using it outperform other approximation methods \cite{ou2025principledrldiffusionllms}. The ESPO loss function is as follows:
+
+\begin{align*}
+    L(\theta) &= \mathbb{E}_{x\sim D, y^{(1)},\dots y^{(G)}\sim\pi_{\theta_\text{old}}(\cdot | x)}\\
+    &[\frac{1}{G}\sum_{i=1}^{G}\min(\rho^{(i)}\hat{A}^{(i)}, \text{clip}(\rho^{(i)}, 1 - \epsilon, 1 + \epsilon)\hat{A}^{(i)}) - \beta\mathbb{KL}(\pi_\theta, \pi_{\theta_\text{old}})],
+\end{align*}
+where $\rho^{(i)} = \frac{\exp\frac{1}{L}\mathcal{L}_\theta(y^{(i)} | x)}{\exp\frac{1}{L}\mathcal{L}_{\theta_\text{old}}(y^{(i)} | x)} = \exp(\frac{1}{L}(\mathcal{L}_\theta(y^{(i)} | x) - \mathcal{L}_{\theta_\text{old}}(y^{(i)} | x)))$.
+\textcolor{red}{Use and reference the ELBO notation from previous part}
+
+The authors of \cite{ou2025principledrldiffusionllms} note that it is important to normalize the ELBOs with the sequence length as otherwise, the exponential function might make the ratio explode or approach zero making the model unable to learn.
+
+
+\subsection{Kullback-Leibler divergence}
+
+\textcolor{red}{Divide the ELBOs by the sequence length or give the corrected $\beta$.}
+
+Kullback-Leibler (KL) divergence is an important part of most RL algorithms. In general, it is an estimate of a distance between two probability distribution. It is given exactly by the following formula:
+
+\begin{equation*}
+    \mathbb{KL}(q, p) = \sum_{x}q(x)\log\frac{q(x)}{p(x)} = \mathbb{E}_{x\sim q}\left[\log\frac{q(x)}{p(x)}\right].
+\end{equation*}
+
+The main problem with KL divergence in LLMs is that an exact computation of even the token-wise KL divergence is infeasible due to the large memory constraints. For the KL divergence of our sequence-level setting, the exact computation is completely impossible due to the huge space of possible answers to a given prompt. This is especially true for diffusion models, where an exact computation of the required log-probability is not be possible in one forward pass of the denoising model. Therefore, KL divergence is usually estimated via e.g. Monte-Carlo integration.
+
+
+\subsubsection{Naive $k_1$ estimate}
+
+In language modelling, the most basic estimate of the KL divergence is the so-called $k_1$ estimate \cite{schulman2020klblog}:
+
+\begin{equation*}
+    \mathbb{KL}_{k_1}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}\right].
+\end{equation*}
+
+The $k_1$ estimate is unbiased, but high in variance and hence not used as much as other estimates \cite{schulman2020klblog}. In addition, the gradient of the estimate is extremely biased \cite{tang2025pitfallskldivergencegradient}, which is especially harmful for language modelling, as gradient based optimizers are always used. In fact, the expected value of the gradient of the $k_1$ estimate zero \cite{tang2025pitfallskldivergencegradient}. In addition, the estimate can often be negative, which is not possible for the exact KL divergence. For these reasons, the naive $k_1$ estimate is not often used in practice.
+
+
+\subsubsection{Variance-reduced $k_3$ estimate}
+
+A better estimate for the KL divergence can be constructed by noting that $\mathbb{E}_{y\sim \pi_\theta}[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)} - 1] = 0$ \cite{schulman2020klblog}. Schulman uses this to produce another unbiased estimate, that has lower variance compared to $k_1$. The estimate is as follows:
+
+\begin{equation*}
+    \mathbb{KL}_{k_3}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} + \frac{\pi_\text{ref}(y)}{\pi_\theta(y)} - 1\right].
+\end{equation*}
+
+The $k_3$ estimate has the benefit of being non negative and low variance \cite{schulman2020klblog}. In natural language processing, this estimate is probably the most widely used. However, similarly to $k_1$, the gradient of this estimate is not unbiased. The gradient of the $k_3$ estimate actually optimizes the reverse-KL divergence $\mathbb{KL}(\pi_\text{ref}, \pi_\theta)$ \cite{tang2025pitfallskldivergencegradient}.
+
+\subsubsection{Biased $k_2$ estimate}
+
+A final common KL divergence estimate is the so-called $k_2$ estimate:
+
+\begin{equation*}
+    \mathbb{KL}_{k_2}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\frac{1}{2}\left(\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}\right)^2\right].
+\end{equation*}
+
+The $k_2$ estimate is obtained by the second order Taylor series expansion of the KL divergence \cite{schulman2020klblog}. The estimate is biased, however, very low in variance, which makes it more stable than the other estimates. Another benefit of this estimate is that the gradient of $k_2$ is unbiased. Hence, if it is optimized for during RL with gradient based methods, the final result will approach the one we expect.
+
+In this thesis, we employ $k_2$ to estimate the KL divergence between the new and the reference policy. As we use diffusion models and the ELBO as a biased surrogate for the log probability of the generated tokens, the KL estimate is biased in all cases. Hence, we prioritize low variance and stable gradients.
+
+
 
 
 \subsection{Reward function}
