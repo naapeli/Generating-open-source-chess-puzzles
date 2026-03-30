@@ -1,12 +1,21 @@
 import os
 from pathlib import Path
 import json
+import re
 
 import numpy as np
 import torch
 # from torchaudio.functional import edit_distance
 from rapidfuzz.distance import Levenshtein
 
+
+def fen_to_padded(fen):  # make the format the same as 
+    board, side, castling, enpassant = fen.split(" ")[:4]
+    board = re.sub(r"\d", lambda digit: "." * int(digit.group()), board)
+    board = re.sub("/", "", board)
+    castling = "".join([char if char in castling else "." for char in "KQkq"])
+    enpassant = ".." if enpassant != "-" else enpassant
+    return " ".join([board, side, castling, enpassant])
 
 def PV_distance(pv1: str, pv2: str) -> bool:
     pv1 = pv1.split(" ", 1)[0]  # only check if the first move is the same
@@ -15,7 +24,7 @@ def PV_distance(pv1: str, pv2: str) -> bool:
     return Levenshtein.distance(pv1, pv2) >= 1  # max length of edit_distance is max(len(pv1), len(pv2))
 
 def board_distance(fen1: str, fen2: str) -> bool:
-    return Levenshtein.distance(fen1, fen2) >= 6
+    return Levenshtein.distance(fen_to_padded(fen1), fen_to_padded(fen2)) >= 6
 
 
 class ReplayBuffer:
