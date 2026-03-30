@@ -192,7 +192,6 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
     themes = theme_preprocessor.inverse_transform(theme_tokens.cpu().numpy())
     true_ratings = ratings.repeat_interleave(group_size, dim=0)
 
-    device = fen_tokens.device
     fen_tokens_cpu = fen_tokens.cpu()
 
     fens = []
@@ -305,7 +304,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
         writer.add_scalar(f"Components/{key}", value, step)
     writer.add_scalar("Reward", rewards[is_generated].float().mean().item(), step)
 
-    return rewards
+    return rewards.to(device=device, dtype=torch.float32)
 
 def save_state():
     checkpoint_path = save_path / f"model_{step:07d}.pt"
@@ -374,7 +373,7 @@ while not end:
             global_themes = torch.cat(gather_themes)
             global_ratings = torch.cat(gather_ratings)
             global_elbos = torch.cat(gather_elbos)
-            global_rewards = get_rewards(global_fens, global_themes, global_ratings, global_is_generated, global_elbos).to(device=device, dtype=torch.float32)
+            global_rewards = get_rewards(global_fens, global_themes, global_ratings, global_is_generated, global_elbos)
             reward_chunks = list(global_rewards.chunk(world_size, dim=0))
         rewards = torch.zeros(len(step_fens), device=device, dtype=torch.float32)
         scatter(rewards, scatter_list=reward_chunks if master_process else None, src=0)
@@ -429,18 +428,6 @@ while not end:
     if step % save_period == 0 and save_checkpoints:
         save_state()
 
-# if master_process:
-#     writer.add_hparams({
-#         "batch_size": batch_size,
-#         "group_size": group_size,
-#         "n_gradient_updates_per_generation": n_gradient_updates_per_generation,
-#         "lr": config.lr,
-#         "weight_decay": config.weight_decay,
-#         "PPO_eps": eps,
-#         "PPO_beta": beta
-#     }, {
-#         "rewards": rewards.mean().item()
-#     })
 
 engine.quit()
 if master_process: writer.close()
