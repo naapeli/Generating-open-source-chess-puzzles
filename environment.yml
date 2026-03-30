@@ -22,3 +22,4 @@ dependencies:
       - setuptools==80.0.0
       - RapidFuzz
       - tqdm
+      - optuna==4.8.0

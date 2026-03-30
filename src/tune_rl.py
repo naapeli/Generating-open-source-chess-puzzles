@@ -67,7 +67,7 @@ def objective(trial):
     torch.set_float32_matmul_precision("high")
 
     # Logging
-    logging_path = base_path / "runs"/ "rl" / "espo" / "tune" / f"trial_{trial.number}"
+    logging_path = base_path / "runs"/ "rl" / "espo" / "tune" / args.study_name / f"trial_{trial.number}"
     writer = SummaryWriter(logging_path)
 
     reference_checkpoint_path = base_path / "supervised_checkpoints" / "model_0940000.pt"
@@ -247,7 +247,7 @@ def objective(trial):
             writer.add_scalar(f"Components/{key}", value, step)
         writer.add_scalar("Reward", rewards[is_generated].float().mean().item(), step)
 
-        return rewards
+        return rewards.to(device=device, dtype=torch.float32)
 
     step = 0
     end = False
@@ -363,7 +363,7 @@ if __name__ == "__main__":
     # Disable Optuna's default print logs to keep the console clean
     optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-    tune_dir = Path("./src/runs/rl/espo/tune")
+    tune_dir = Path("./src/runs/rl/espo/tune") / args.study_name
     tune_dir.mkdir(parents=True, exist_ok=True)
     db_path = tune_dir / f"{args.study_name}.db"
 
