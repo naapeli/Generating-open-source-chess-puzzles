@@ -134,7 +134,7 @@ If the solution to a puzzle is unique, counter-intuitivity metric makes sense fo
 
 Realized that the correct metrics should look the following (counter-intuitiveness was computed from all positions and not the ones with a unique solution):
 
-\begin{table}[h]
+\begin{table}[ht]
     \centering
     \caption{The proportion of positions satisfying a criterion. An average is taken over 1000 generated positions from the model or 1000 randomly sampled positions from the Lichess Puzzle dataset. The values in the parenthesis are the corresponding values in \cite{feng2025generatingcreativechesspuzzles}.}
     \begin{tabular}{|c|c|c|}
@@ -164,7 +164,7 @@ What group size should I use in GRPO? Currently, I set group size to batch size 
 \section{28.1}
 ESPO now overfits to one position (if the reward is the negative number of nonzero tokens in the generated tokens, the model ends up generating just zeros)
 
-\begin{figure}[h]
+\begin{figure}[ht]
      \centering
      \begin{subfigure}[t]{0.48\textwidth}
          \centering
@@ -270,7 +270,7 @@ Realized that the large clips I had previously were due to too large of a learni
 
 Because we generate $G$ positions with the same conditioning, the model often gets zero rewards and doesn't learn during RL. When removing the fen and pv distance checks, the model starts to change (initial test made the reward worse, when previously, it didn't move at all, meaning that there is a bug somewhere).
 
-\begin{figure}[h]
+\begin{figure}
     \includegraphics[width=\textwidth]{figures/Nonzero_reward_positions.png}
     \caption{The rewards mostly make sense (0.5 might be too high reward for positions that have normal amount of pieces)}
 \end{figure}
@@ -279,7 +279,7 @@ Because we generate $G$ positions with the same conditioning, the model often ge
 
 Found a good value for RL $\beta = 10^{-3}$. Implemented a rating model that predicts the difficulty of a puzzle based on themes and a fen. The following is an image of a checkpoint (training still continues and the model is getting better) of the errors of the model. The average error in the elo rating is around 278 and the median error is 223.
 
-\begin{figure}[ht]
+\begin{figure}
     \centering
     \begin{subfigure}[t]{0.48\textwidth}
         \centering
@@ -297,10 +297,92 @@ Found a good value for RL $\beta = 10^{-3}$. Implemented a rating model that pre
 
 Realized that \cite{feng2025generatingcreativechesspuzzles} only checks the pv distance for the first move and not the whole solution line during RL.
 
-\begin{figure}[h]
-    \includesvg[width=\textwidth]{figures/rating_model_errors20000.svg}
-    \caption{Errors up to 20 000 steps. In the orange histogram, the themes used to help the regression are shuffled to make the model's dependence on the themes clearer.}
+\begin{figure}
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includesvg[width=\textwidth]{figures/rating_model_errors20000.svg}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includesvg[width=\textwidth]{figures/rating_model_errors63000.svg}
+    \end{subfigure}
+    \caption{Errors up to 20 000 steps (left) and 63 000 (right). In the orange histogram, the themes used to help the regression are shuffled to make the model's dependence on the themes clearer.}
 \end{figure}
+
+The average absolute error for the best rating model on the test set is 202 elo points and the median error is 257 elo points. Hence, we can probably confidently use it in the reward function.
+
+\section{3.3}
+
+The puzzles generated with the new supervised model (step 760,000 from 1,000,000) yielded better results over 10 000 generated positions with the themes taken from the Lichess puzzle dataset randomly.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        & Lichess puzzles & Masked Diffusion & Last & Paper \\
+        \hline
+        Legal & 100\% & 97.3\% & 96.8\% & 99.72\%\\
+        \hline
+        Unique & 81.7\% (95.25\%) & 17.6\% & 9.67\% & 30.89\%\\
+        \hline
+        Counter-intuitive & 4.3\% (2.25\%) & 2.7\% & 23.7\% & 1.11\%\\
+        \hline
+        Puzzle & 4.1\% (2.14\%) & 0.47\% & 0.1\% & 0.34\%\\
+        \hline
+    \end{tabular}
+\end{table}
+
+These positions have more overlap with the Lichess dataset than previous 0.12\%, but the board Levenshtein distance is still higher than with the paper at 13.19 (average minimum distance between the generated positions and the Lichess dataset, which was 8.528 in the paper).
+
+The distance between the Lichess puzzle dataset to itself is 13.12 (11.914 in the paper). The implementations may differ slightly, I only average over 100 positions.
+
+\section{16.3}
+
+In RL, the uniqueness and counter intuitiveness improve when using batch size 16, group size 8, eps 0.3, beta $5\cdot 10^{-4}$, lr $3\cdot 10^{-5}$ and weight decay $10^{-5}$. The reward was -2 for illegal positions, 0.5 for unique but not counter-intuitive positions, 2 for unique and counter-intuitiveness positions and 0 otherwise.
+
+The distribution of themes affects the performance of the model a lot. Before RL, the Lichess puzzle dataset theme distribution produces much better results, however, after RL with my own theme distribution, the performance on my own distribution gets much better, but on the Lichess distribution does not increase. After RL, the uniqueness is around 8\%, while the counter-intuitiveness (filtered for unique positions) is around 10\% ($p(\text{counter-intuitive} | \text{unique}) \approx 10\%$). In total, the proportion of puzzles, which pass both uniqueness and counter-intuitiveness is around 0.8\% with potential for further improvement. The proportion of exact overlap with the Lichess puzzles dataset is around 0.05\% or 5 positions from 9216. The board Levenshtein distance to the Lichess dataset is around 13.79, which is slightly higher than before RL training despite the reward having no diversity filtering. After looking at the actual generated puzzles, around 80\% of the ones that meet both uniqueness and counter-intuitiveness criteria are double check puzzles (with the same principal variation).
+
+
+\section{17.3}
+
+When we give -2 for illegal, 0.5 for unique, 2 for unique and counter-intuitive and 0 reward otherwise, the counter intuitiveness and uniqueness both increase, but the diversity decreases (80\% of the good puzzles generated by the model have the double check theme with the same solution or principal variation). After modifying the reward such that for positive reward, the generation must have a different PV first move than all others in the batch, the uniqueness still increases, but the counter-intuitiveness doesn't really increase meaningfully. Instead, the PV distance between the puzzles in the batch increases steadily.
+
+\section{18.3}
+
+The model generated a great position while training:
+
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/HighlightPos1803.png}
+        \caption{\footnotesize 6rk/p2R3p/2p4r/6p1/8/2N1KQq1/\allowbreak PP6/\allowbreak 3R4 b - - 1 27 \protect\footnotemark}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/HighlightPos1803v2.png}
+        \caption{\footnotesize r2kn3/pp3R2/2pbp2q/8/3PN3/4PQ2/\allowbreak PP3P1P/\allowbreak 7K w - - 1 22 \protect\footnotemark}
+    \end{subfigure}    
+\end{figure}
+
+
+\addtocounter{footnote}{-1}
+\footnotetext{Solution: 1.Re6+ Ne4 2.Rxe4+ Kxe4 3.Re8+ Kd3 4.Qxf3+}
+\stepcounter{footnote}
+\footnotetext{Solution: 1.Nxd6 Nxd6 2.Rf8+ Kc7 3.Rxa8}
+
+
+\section{20.3}
+
+I realized that the explanation of division by sequence length in \cite{ou2025principledrldiffusionllms} is bad, as it only shows that the division by the sequence length happens for the RL loss and not the kl divergence. Hence, in the previous implementations I have had, the KL coefficient $\beta$ is almost 10000 times larger than what was chosen in \cite{feng2025generatingcreativechesspuzzles} ($1 / 76^2\approx1.73\cdot 10^{-4}$). Authors of \cite{rojas2025improvingreasoningdiffusionlanguage} do not divide by the sequence length, but otherwise the algorithm is very similar to ESPO. Hence, we remove the division by the sequence length (as it is constant as well in our use case). This way the algorithm matches more closely the one in \cite{feng2025generatingcreativechesspuzzles}.
+
+
+\section{24.3}
+
+I realized that since \cite{feng2025generatingcreativechesspuzzles} works with token-level KL-divergences, their KL-divergence is a lot smaller than what I have. Their is a sum off small divergences, whereas mine is one larger divergence ($x_1 ^ 2  + \dots + x_n ^ 2 \leq (x_1 + \dots + x_n) ^ 2, x_i \geq 0$).
 
 \clearpage
 \bibliography{references.bib}
