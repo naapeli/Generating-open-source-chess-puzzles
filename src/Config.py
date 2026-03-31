@@ -10,10 +10,11 @@ class Config:
     masking_schedule = string_to_schedule(schedule)
 
     # tokenization
-    n_fen_tokens: int = 48  # 48 real tokens and one mask token
+    n_tokens: int = 52  # 52 real tokens and one mask token
     n_themes: int = 66
     rating_dim: int = 1
     fen_length: int = 76
+    move_length: int = 5
     mask_token: FENTokens = FENTokens.mask
 
     # model architecture

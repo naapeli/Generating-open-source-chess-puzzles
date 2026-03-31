@@ -14,7 +14,7 @@ import argparse
 
 from MaskedDiffusion.model import MaskedDiffusion
 from Config import Config
-from tokenization.tokenization import tokens_to_fen, scale_ratings, FENTokens
+from tokenization.tokenization import tokens_to_fen, tokens_to_move, scale_ratings, FENTokens
 
 
 def main():
@@ -108,60 +108,41 @@ def main():
     if continue_from_checkpoint: muon.load_state_dict(checkpoint["muon"])
 
     # ====================== LOSS FUNCTION ======================
-    def compute_loss(model: MaskedDiffusion, fens, themes, ratings):
+    def compute_loss(model: MaskedDiffusion, fens, moves, themes, ratings):
         # could use the variance reduced version in rl.espo, but for supervised learning, this is good enough (variance is not a problem)
+        tokens = torch.cat([fens, moves], dim=1)
         batch_size = len(ratings)
         t = (torch.rand(1) + torch.arange(1, batch_size + 1, 1) / batch_size) % 1
         alpha_t = config.masking_schedule(t).unsqueeze(1).to(device)
-        random_mask = torch.rand(fens.size(), device=device) < alpha_t
-        masked_fens = torch.where(random_mask, fens, config.mask_token)
+
+        random_mask = torch.rand(tokens.size(), device=device) < alpha_t
+        masked_tokens = torch.where(random_mask, tokens, config.mask_token)
 
         with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
-            logits = model(masked_fens, themes, ratings)
+            logits = model(masked_tokens, themes, ratings)
         unwrapped_model = model.module if distributed else model
-        return unwrapped_model.elbo_loss(t, logits, fens, masked_fens)
+        return unwrapped_model.elbo_loss(t, logits, tokens, masked_tokens)
 
     # ====================== VALIDATION ======================
     def write_logits(step):
-        logits = torch.zeros((config.fen_length, config.n_fen_tokens), dtype=torch.float32, device=device)
+        probs_sum = torch.zeros((config.fen_length + config.move_length, config.n_tokens), dtype=torch.float32, device=device)
         samples = torch.tensor(0, device=device)
-        for validation_fen, validation_theme, validation_rating in validationloader:
-            validation_fen, validation_theme, validation_rating = validation_fen.to(dtype=torch.long, device=device), validation_theme.to(dtype=torch.float32, device=device), validation_rating.to(dtype=torch.float32, device=device)
+        for validation_fen, validation_move, validation_theme, validation_rating in validationloader:
+            validation_fen, validation_move, validation_theme, validation_rating = validation_fen.to(dtype=torch.long, device=device), validation_move.to(dtype=torch.long, device=device), validation_theme.to(dtype=torch.float32, device=device), validation_rating.to(dtype=torch.float32, device=device)
+            tokens = torch.cat([validation_fen, validation_move], dim=1)
             with torch.no_grad():
                 with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
-                    sub_logits = model(validation_fen, validation_theme, validation_rating)
-                logits += sub_logits.sum(dim=0)
+                    sub_logits = model(tokens, validation_theme, validation_rating)
+                sub_probs = F.softmax(sub_logits, dim=2).to(dtype=torch.float32)
+                probs_sum += sub_probs.sum(dim=0)
                 samples += len(validation_rating)
         if distributed:
-            all_reduce(logits, op=ReduceOp.SUM)
+            all_reduce(probs_sum, op=ReduceOp.SUM)
             all_reduce(samples, op=ReduceOp.SUM)
         
-        logits = logits / samples
-        logits = F.log_softmax(logits, dim=1)
+        avg_probs = probs_sum / samples
 
-        all_indices = torch.arange(config.n_fen_tokens)
-        if master_process: validation_writer.add_scalars("Impossible token logits/max",
-                                        {"board": logits[:64, ~(all_indices <= FENTokens.black_king)].max(),
-                                        "side": logits[64:65, ~((all_indices >= FENTokens.side_white) & (all_indices <= FENTokens.side_black))].max(),
-                                        "castle": logits[65:69, ~((all_indices >= FENTokens.no_castle) & (all_indices <= FENTokens.castle_black_queen))].max(),
-                                        "enpassant": logits[69:71, ~((all_indices >= FENTokens.no_en_passant) & (all_indices <= FENTokens.en_passant_h))].max(),
-                                        "halfmove": logits[71:73, ~((all_indices >= FENTokens.pad_counter) & (all_indices <= FENTokens.counter_9))].max(),
-                                        "fullmove": logits[73:76, ~((all_indices >= FENTokens.pad_counter) & (all_indices <= FENTokens.counter_9))].max()}, step)
-        if master_process: validation_writer.add_scalars("Impossible token logits/mean",
-                                        {"board": logits[:64, ~(all_indices <= FENTokens.black_king)].mean(),
-                                        "side": logits[64:65, ~((all_indices >= FENTokens.side_white) & (all_indices <= FENTokens.side_black))].mean(),
-                                        "castle": logits[65:69, ~((all_indices >= FENTokens.no_castle) & (all_indices <= FENTokens.castle_black_queen))].mean(),
-                                        "enpassant": logits[69:71, ~((all_indices >= FENTokens.no_en_passant) & (all_indices <= FENTokens.en_passant_h))].mean(),
-                                        "halfmove": logits[71:73, ~((all_indices >= FENTokens.pad_counter) & (all_indices <= FENTokens.counter_9))].mean(),
-                                        "fullmove": logits[73:76, ~((all_indices >= FENTokens.pad_counter) & (all_indices <= FENTokens.counter_9))].mean()}, step)
-        if master_process: validation_writer.add_scalars("Possible logits/mean",
-                                        {"board": logits[:64, (all_indices <= FENTokens.black_king)].mean(),
-                                        "side": logits[64:65, ((all_indices >= FENTokens.side_white) & (all_indices <= FENTokens.side_black))].mean(),
-                                        "castle": logits[65:69, ((all_indices >= FENTokens.no_castle) & (all_indices <= FENTokens.castle_black_queen))].mean(),
-                                        "enpassant": logits[69:71, ((all_indices >= FENTokens.no_en_passant) & (all_indices <= FENTokens.en_passant_h))].mean(),
-                                        "halfmove": logits[71:73, ((all_indices >= FENTokens.pad_counter) & (all_indices <= FENTokens.counter_9))].mean(),
-                                        "fullmove": logits[73:76, ((all_indices >= FENTokens.pad_counter) & (all_indices <= FENTokens.counter_9))].mean()}, step)
-        if master_process: validation_writer.add_image("Probabilities", logits.unsqueeze(0).exp(), step)
+        if master_process: validation_writer.add_image("Probabilities", avg_probs.unsqueeze(0), step)
 
     def write_fen(step):
         validation_themes = torch.zeros((config.n_validation_generations, config.n_themes), dtype=torch.float32, device=device)
@@ -169,20 +150,21 @@ def main():
         validation_themes[:, indices] = 1
         validation_ratings = scale_ratings(3000 * torch.rand(config.n_validation_generations, dtype=torch.float32, device=device) + 300)
         unwrapped_model = model.module if distributed else model
-        fens = unwrapped_model.sample(validation_themes, validation_ratings, steps=128)
-        for generated_fen in fens:
+        tokens = unwrapped_model.sample(validation_themes, validation_ratings, steps=512)
+        for generated_tokens in tokens:
             try:
-                string = tokens_to_fen(generated_fen)
-                if master_process: validation_writer.add_text("Generations/fen", string, step)
+                fen_str = tokens_to_fen(generated_tokens)
+                move_str = tokens_to_move(generated_tokens)
+                if master_process: validation_writer.add_text("Generations/fen", f"{fen_str} move: {move_str}", step)
             except:
                 pass
 
     def compute_validation_loss():
         total = torch.zeros(2, dtype=torch.float32, device=device)
         with torch.no_grad():
-            for validation_fen, validation_theme, validation_rating in validationloader:
-                validation_fen, validation_theme, validation_rating = validation_fen.to(dtype=torch.long, device=device), validation_theme.to(dtype=torch.float32, device=device), validation_rating.to(dtype=torch.float32, device=device)
-                validation_loss = compute_loss(model, validation_fen, validation_theme, validation_rating).sum()
+            for validation_fen, validation_move, validation_theme, validation_rating in validationloader:
+                validation_fen, validation_move, validation_theme, validation_rating = validation_fen.to(dtype=torch.long, device=device), validation_move.to(dtype=torch.long, device=device), validation_theme.to(dtype=torch.float32, device=device), validation_rating.to(dtype=torch.float32, device=device)
+                validation_loss = compute_loss(model, validation_fen, validation_move, validation_theme, validation_rating).sum()
                 total[0] += validation_loss.detach()
                 total[1] += len(validation_rating)
         if distributed:
@@ -221,13 +203,13 @@ def main():
         if distributed:
             trainsampler.set_epoch(epoch)
 
-        for fen, theme, rating in trainloader:
-            fen, theme, rating = fen.to(dtype=torch.long, device=device), theme.to(dtype=torch.float32, device=device), rating.to(dtype=torch.float32, device=device)
+        for fen, move, theme, rating in trainloader:
+            fen, move, theme, rating = fen.to(dtype=torch.long, device=device), move.to(dtype=torch.long, device=device), theme.to(dtype=torch.float32, device=device), rating.to(dtype=torch.float32, device=device)
 
             adam.zero_grad()
             muon.zero_grad()
 
-            loss = compute_loss(model, fen, theme, rating)
+            loss = compute_loss(model, fen, move, theme, rating)
             loss.mean().backward()
 
             norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
