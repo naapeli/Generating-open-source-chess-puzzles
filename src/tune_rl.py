@@ -40,7 +40,7 @@ def objective(trial):
     base_path = Path("./src")
 
     # Hyperparameters from trial
-    lr = trial.suggest_float("lr", 1e-6, 3.0, log=True)
+    lr = trial.suggest_float("lr", 1e-8, 1e-2, log=True)
     beta = trial.suggest_float("beta", 1e-5, 3.0, log=True)
     
     # Static parameters
@@ -67,7 +67,7 @@ def objective(trial):
     torch.set_float32_matmul_precision("high")
 
     # Logging
-    logging_path = base_path / "runs"/ "rl" / "espo" / "tune" / args.study_name / f"trial_{trial.number}"
+    logging_path = base_path / "runs"/ "rl" / "espo" / "tune" / args.study_name / f"trial_{trial.number}_lr_{lr:2e}_beta_{beta:2e}"
     writer = SummaryWriter(logging_path)
 
     reference_checkpoint_path = base_path / "supervised_checkpoints" / "model_0940000.pt"
@@ -224,24 +224,28 @@ def objective(trial):
         is_valid[valid_indices] = True
         valid_mask = is_valid & is_generated
 
-        log_data = {
-            "legal_rate": legal_position[is_generated].float().mean().item(),
-            "uniqueness_rate": unique_solution[is_generated].float().mean().item(),
-            "counter_intuitive_rate": counter_intuitive_solution[is_generated].float().mean().item(),
-            "counter_intuitive_rate_given_unique": counter_intuitive_solution[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "entropy": entropies[is_generated].float().mean().item(),
-            "piece_counts": piece_counts[is_generated & legal_position].float().mean().item(),
-            "themes_match_rate": themes_match[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "dist_inter_fen": inter_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "dist_intra_fen": intra_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "dist_inter_pv": inter_batch_pv_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "dist_intra_pv": intra_batch_pv_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "intra_dist": intra_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "inter_dist": inter_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "all_dist": all_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "rating_abs_diff": (-1000 * rating_penalty[valid_mask]).float().mean().item() if valid_mask.any() else 1000,
-            "pass_diversity_filtering": pass_diversity_filtering[valid_mask].float().mean().item() if valid_mask.any() else 0,
-        }
+        log_data = {}
+        if is_generated.any():
+            log_data["legal_rate"] = legal_position[is_generated].float().mean().item()
+            log_data["uniqueness_rate"] = unique_solution[is_generated].float().mean().item()
+            log_data["counter_intuitive_rate"] = counter_intuitive_solution[is_generated].float().mean().item()
+            log_data["entropy"] = entropies[is_generated].float().mean().item()
+
+            if valid_mask.any():
+                log_data["counter_intuitive_rate_given_unique"] = counter_intuitive_solution[valid_mask].float().mean().item()
+                log_data["themes_match_rate"] = themes_match[valid_mask].float().mean().item()
+                log_data["dist_inter_fen"] = inter_batch_fen_dist[valid_mask].float().mean().item()
+                log_data["dist_intra_fen"] = intra_batch_fen_dist[valid_mask].float().mean().item()
+                log_data["dist_inter_pv"] = inter_batch_pv_dist[valid_mask].float().mean().item()
+                log_data["dist_intra_pv"] = intra_batch_pv_dist[valid_mask].float().mean().item()
+                log_data["intra_dist"] = intra_distances[valid_mask].float().mean().item()
+                log_data["inter_dist"] = inter_distances[valid_mask].float().mean().item()
+                log_data["all_dist"] = all_distances[valid_mask].float().mean().item()
+                log_data["rating_abs_diff"] = (-1000 * rating_penalty[valid_mask]).float().mean().item()
+                log_data["pass_diversity_filtering"] = pass_diversity_filtering[valid_mask].float().mean().item()
+
+            if (is_generated & legal_position).any():
+                log_data["piece_counts"] = piece_counts[is_generated & legal_position].float().mean().item()
         
         for key, value in log_data.items():
             writer.add_scalar(f"Components/{key}", value, step)
