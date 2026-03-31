@@ -40,19 +40,20 @@ class MaskedDiffusion(nn.Module):
     def __init__(self, config):
         super().__init__()
 
-        self.FEN_embedding = nn.Embedding(config.n_fen_tokens + 1, config.embed_dim)  # one additional mask token
+        self.FEN_embedding = nn.Embedding(config.n_tokens + 1, config.embed_dim)  # one additional mask token
         self.theme_embedding = nn.Linear(config.n_themes, config.embed_dim, bias=False)
         self.ratings_embedding = nn.Linear(config.rating_dim, config.embed_dim, bias=True)
-        self.positional_embedding = nn.Embedding(config.fen_length, config.embed_dim)
+        self.positional_embedding = nn.Embedding(config.fen_length + config.move_length, config.embed_dim)
 
         self.blocks = nn.ModuleList([Block(config) for _ in range(config.n_layers)])
-        self.classifier = nn.Linear(config.embed_dim, config.n_fen_tokens, bias=False)
+        self.classifier = nn.Linear(config.embed_dim, config.n_tokens, bias=False)
 
         self.config = config
 
-    def forward(self, fen_tokens, theme_tokens, ratings):
-        pos = torch.arange(0, self.config.fen_length, dtype=torch.long, device=fen_tokens.device)
-        x = self.positional_embedding(pos) + self.FEN_embedding(fen_tokens)
+    def forward(self, tokens, theme_tokens, ratings):
+        seq_length = self.config.fen_length + self.config.move_length
+        pos = torch.arange(0, seq_length, dtype=torch.long, device=tokens.device)
+        x = self.positional_embedding(pos) + self.FEN_embedding(tokens)
 
         context = self.theme_embedding(theme_tokens).unsqueeze(1)
         emb_ratings = self.ratings_embedding(ratings.unsqueeze(1)).unsqueeze(1)
@@ -64,11 +65,11 @@ class MaskedDiffusion(nn.Module):
         logits = self.classifier(x)
         return logits
 
-    def elbo_loss(self, t, logits, true_fen_tokens, masked_fen_tokens):
+    def elbo_loss(self, t, logits, true_tokens, masked_tokens):
         weight = self.config.masking_schedule.get_weight(torch.as_tensor(t)).unsqueeze(1).to(logits.device)
         assert weight.ndim == 2
-        mask = masked_fen_tokens == self.config.mask_token
-        loss = -torch.sum(mask * weight * F.cross_entropy(torch.movedim(logits, 2, 1), true_fen_tokens, reduction="none"), dim=1)
+        mask = masked_tokens == self.config.mask_token
+        loss = -torch.sum(mask * weight * F.cross_entropy(torch.movedim(logits, 2, 1), true_tokens, reduction="none"), dim=1)
         return loss
     
     @torch.compile
@@ -76,10 +77,10 @@ class MaskedDiffusion(nn.Module):
     def sample(self, theme_tokens, ratings, steps=256):
         batch_size = len(ratings)
         device = ratings.device
-        fen_length = self.config.fen_length
+        seq_length = self.config.fen_length + self.config.move_length
         mask_token = self.config.mask_token
     
-        fen = torch.full((batch_size, fen_length), mask_token, device=device, dtype=torch.long)  # start the fen so that all tokens are masked
+        tokens = torch.full((batch_size, seq_length), mask_token, device=device, dtype=torch.long)
 
         T_grid = torch.linspace(0, 1, steps + 1, device=device).to(device)
         for i in range(steps, 0, -1):
@@ -88,16 +89,16 @@ class MaskedDiffusion(nn.Module):
             alpha_t = self.config.masking_schedule(t)
             alpha_s = self.config.masking_schedule(s)
             
-            logits = self(fen, theme_tokens, ratings) 
+            logits = self(tokens, theme_tokens, ratings) 
             probs = F.softmax(logits, dim=2)
             
             p_unmask = (alpha_s - alpha_t) / (1.0 - alpha_t + 1e-9)
             p_mask = (1.0 - alpha_s) / (1.0 - alpha_t + 1e-9)
-            probs = torch.cat([probs * p_unmask, torch.full((batch_size, fen_length, 1), p_mask, device=device, dtype=probs.dtype)], dim=2)
+            probs = torch.cat([probs * p_unmask, torch.full((batch_size, seq_length, 1), p_mask, device=device, dtype=probs.dtype)], dim=2)
 
-            is_masked = (fen == mask_token)
-            flattened_probs = probs.view(-1, self.config.n_fen_tokens + 1)
-            new_samples = torch.multinomial(flattened_probs, num_samples=1).view(batch_size, fen_length)
-            fen = torch.where(is_masked, new_samples, fen)
+            is_masked = (tokens == mask_token)
+            flattened_probs = probs.view(-1, self.config.n_tokens + 1)
+            new_samples = torch.multinomial(flattened_probs, num_samples=1).view(batch_size, seq_length)
+            tokens = torch.where(is_masked, new_samples, tokens)
         
-        return fen
+        return tokens

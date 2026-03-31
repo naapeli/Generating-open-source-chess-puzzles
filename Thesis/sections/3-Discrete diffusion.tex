@@ -1,7 +1,7 @@
 \section{Discrete diffusion}
 \label{sec:discrete diffusion}
 
-Diffusion models are generative models that iteratively denoise inputs to generate items. Often, they are used in image \textcolor{red}{add references where this is done}, video or audio generation, where the samples are continuous and the model removes Gaussian noise on each step. In recent years, many advances have been taken with diffusion models in discrete domains for instance with applying diffusion on continuous embeddings of the discrete data \textcolor{red}{add references where this was done}. However, such models in the language modelling domain for instance, mostly do not perform as well as other models. Therefore, diffusion models that truly work on discrete data by iteratively unmasking masked tokens, were developed \cite{austin2021structureddenoisingdiffusionmodels}. Although, in the field of language models, these models can perform comparatively to LLMs, they require much more compute during training to achieve the same performance \cite{nie2025scalingmaskeddiffusionmodels}. Nevertheless, masked diffusion language models might offer benefits during inference especially in efficiency \cite{nie2025scalingmaskeddiffusionmodels}.
+Diffusion models are generative models that iteratively denoise inputs to generate items. Often, they are used in image \textcolor{red}{add references where this is done}, video or audio generation, where the samples are continuous and the model removes Gaussian noise on each step. In recent years, many advances have been taken with diffusion models in discrete domains for instance with applying diffusion on continuous embeddings of the discrete data \textcolor{red}{add references where this was done, maybe \cite{li2022diffusionlmimprovescontrollabletext}, see the references in \cite{shi2025simplifiedgeneralizedmaskeddiffusion}}. However, such models in the language modelling domain for instance, mostly do not perform as well as other models. Therefore, diffusion models that truly work on discrete data by iteratively unmasking masked tokens, were developed \cite{austin2021structureddenoisingdiffusionmodels}. Although, in the field of language models, these models can perform comparatively to LLMs, they require much more compute during training to achieve the same performance \cite{nie2025scalingmaskeddiffusionmodels}. Nevertheless, masked diffusion language models might offer benefits during inference especially in efficiency \cite{nie2025scalingmaskeddiffusionmodels}.
 
 In this work, we train a masked diffusion model to generate chess puzzles. We express each chess board as a sequence of tokens, in the same way one would express natural language. We describe the exact tokenization procedure in section \ref{sec:chessboard representation}. For the model itself, we follow the work of \cite{shi2025simplifiedgeneralizedmaskeddiffusion}.
 
@@ -85,16 +85,16 @@ where $L$ is the sequence length. One may note that the ELBO is just the sum of 
 \subsubsection{Monte-Carlo integration}
 \label{sec:MC integration}
 
-To estimate the value of the ELBO, we employ Monte-Carlo (MC) sampling to estimate the inner expectation. The expectation can be estimated by sampling $K$ different random masks, corrupting $x_0$ with the them, computing the sum of the appropriate cross-entropies and finally averaging over the $K$ losses. The estimate of the expected value looks as follows:
+To estimate the value of the ELBO, we employ Monte-Carlo (MC) sampling \cite{methodsofnumericalintegration} to estimate the inner expectation. For a given $t$, the expectation can be estimated by sampling $K$ different random masks, corrupting $x_0$ with them, computing the sum of the appropriate cross-entropies and finally averaging over the $K$ losses. The estimate of the expected value looks as follows:
 
 \begin{align*}
     &\mathbb{E}_{q(x_t | x_0)}\left[\sum_{i=1}^{L}\bold{1}[(x_t^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t^{(k)})^{(i)}\right]\\
     \approx&\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_t^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t^{(k)})^{(i)}.
 \end{align*}
 
-In practice, we employ a 1-point MC estimate for the expectation, as the variance of estimate does not effect the variance of the total estimate much \cite{rojas2025improvingreasoningdiffusionlanguage}.
+In practice, we employ a 1-point MC estimate for the expectation. As the variance of the expectation estimate does not affect the total variance of the ELBO estimate a lot \cite{rojas2025improvingreasoningdiffusionlanguage}, we choose to use the available video memory to either increase the batch size during supervised training or to reduce the variance of choosing the values of the variable $t$, which induces most of the variance to the ELBO estimate \cite{rojas2025improvingreasoningdiffusionlanguage}.
 
-In addition to the estimation of the expectation, during supervised training, we employ a 1-point MC estimate for the outer integral over $t$ as well. Supervised training is a lot more stable than reinforcement learning and hence the variance of the ELBO estimate does not effect the training as much. We deem it more important to use all available vram to increase the batch size instead of using more MC or quadrature samples. The final ELBO for supervised training has the form:
+In addition to the estimation of the expectation, during supervised training, we employ a 1-point MC estimate for the outer integral over $t$ as well. Supervised training is a lot more stable than reinforcement learning and hence the variance of the ELBO estimate does not affect the training as much. We deem it more important to use all available VRAM to increase the batch size instead of using more MC or quadrature samples. The final ELBO for supervised training has the form:
 
 \begin{equation*}
     \mathcal{L}_\theta(x, x_0) = \frac{1}{N}\sum_{j=1}^{N}\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_{t_j}^{(k)})^{(i)},
@@ -105,18 +105,20 @@ where $t_j\sim\mathcal{U}(0, 1)$ and $N = K = 1$.
 \subsubsection{Gauss-Legendre quadrature}
 \label{sec:gauss-legendre quadrature}
 
-As mentioned in section \ref{sec:MC integration}, reinforcement learning is a lot less stable than supervised training. Therefore, it is essential to minimize the variance of the ELBO estimate. To minimize variance, we take inspiration from \cite{rojas2025improvingreasoningdiffusionlanguage} and estimate the outer integral in \eqref{eq:ELBO} with a Gauss-Legendre quadrature. The authors of \cite{rojas2025improvingreasoningdiffusionlanguage} show that most of the variance in the ELBO MC estimate is coming from randomly sampling the value of $t$. With a quadrature, the values of $t$ are no longer random, but deterministic and evenly spaced. Therefore, the variance of the ELBO estimate is a lot lower with a quadrature. The ELBO estimate used during RL has the form:
+As mentioned in section \ref{sec:MC integration}, reinforcement learning is usually a lot less stable than supervised training. Therefore, it is essential to minimize the variance of the ELBO estimate. To minimize variance, we take inspiration from \cite{rojas2025improvingreasoningdiffusionlanguage} and estimate the outer integral in \eqref{eq:ELBO} with a Gauss-Legendre quadrature \cite{methodsofnumericalintegration}. The authors of \cite{rojas2025improvingreasoningdiffusionlanguage} show that most of the variance in the ELBO MC estimate is coming from randomly sampling the value of $t$. With a quadrature, the values of $t$ are no longer random, but deterministic and more evenly spaced depending on what quadrature rule one uses. For an $n$-point Gauss-Legendre quadrature, the nodes $x_j$ are the roots of an $n$-th Legendre polynomial $P_n(x)$ normalized so that $P_n(1) = 1$. The nodes and the weights $w_j'$ are chosen so that the approximation is exact up to polynomials of degree $2n - 1$ \cite{methodsofnumericalintegration}. The nodes lie in the interval $[-1, 1]$ and are symmetric around 0. To integrate a function over the interval $[0, 1]$, one uses the following transformation \cite{numericalmethodsinscientificcomputing}:
+
+\begin{align*}
+    \int_{0}^{1}f(x)\text{d}x \approx\sum_{j=1}^{N}\underbrace{\frac{w_j'}{2}}_{w_j} f\bigg(\underbrace{\frac{x_j}{2} + \frac{1}{2}}_{t_j}\bigg).
+\end{align*}
+
+Using this transformation, the ELBO estimate used during RL has the form:
 
 \begin{equation*}
-    \mathcal{L}_\theta(x, x_0) = \sum_{j=1}^{N}w_j\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_{t_j}^{(k)})^{(i)},
+    \mathcal{L}_\theta(x, x_0) = \sum_{j=1}^{N}w_j\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_{t_j}^{(k)})^{(i)}.
     \label{eq:RL ELBO}
 \end{equation*}
-where $w_j$ and $t_j$ are chosen based on the 
-\textcolor{red}{Reference Methods of Numerical Integration Philip J. Davis, Philip Rabinowitz}
 
-
-Even with a few sample points, the variance of the ELBO estimate drops significantly compared to the equivalent MC estimate \cite{rojas2025improvingreasoningdiffusionlanguage}.
-
+Even with a few sample points, the variance of the ELBO estimate drops significantly compared to the equivalent MC estimate \cite{rojas2025improvingreasoningdiffusionlanguage}. This is expected, as asymptotically, the bias of the MC estimate follows $O(\frac{1}{N^2})$ and the variance follows $O(\frac{1}{NK})$, whereas, for the quadrature estimate, the bias follows $O(\frac{1}{N^4})$ and the variance $O(\frac{1}{N^2K})$, or better if additional smoothness assumptions of the integrand are made \cite{rojas2025improvingreasoningdiffusionlanguage}. Therefore, the quadrature estimate is more efficient in terms of the number of samples required to achieve a certain level of accuracy. Hence, we employ the quadrature estimate during reinforcement learning.
 
 \subsection{Sampling}
 \label{sec:sampling}
