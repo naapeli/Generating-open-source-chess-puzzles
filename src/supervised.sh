@@ -1,17 +1,17 @@
 #!/bin/bash -l
 #SBATCH --job-name=MaskedDiffusion
-#SBATCH --time=0-24:00:00
+#SBATCH --time=0-12:00:00
 #SBATCH --output=output.out
-#SBATCH --mem=128G
+#SBATCH --mem=64G
 #SBATCH --nodes=1
 # #SBATCH --ntasks=8
 # #SBATCH --gpus=h200:8
-#SBATCH --ntasks=4
-#SBATCH --gpus=h200:4
-# #SBATCH --constraint="a100|h100|h200"
-# #SBATCH --gpus=4
-# #SBATCH --ntasks=8
-# #SBATCH --gpus=v100:8
+# #SBATCH --ntasks=4
+# #SBATCH --gpus=h200:4
+#SBATCH --constraint="a100|h100|h200"
+#SBATCH --gpus=4
+# #SBATCH --ntasks=2
+# #SBATCH --gpus=v100:2
 #SBATCH --cpus-per-gpu=10
 
 
