@@ -29,7 +29,9 @@ def main():
     base_path = Path("./src")
     
     # ====================== LOAD CHECKPOINT ======================
-    if continue_from_checkpoint: checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0760000.pt", map_location="cpu", weights_only=False)  # as the config was saved as well, cannot use weights_only=True
+    if continue_from_checkpoint:
+        # checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0760000.pt", map_location="cpu", weights_only=False)  # as the config was saved as well, cannot use weights_only=True
+        checkpoint = torch.load(base_path / "supervised_checkpoints" / "best_move_model" / "model_0680000.pt", map_location="cpu", weights_only=False)
 
     # ====================== DEVICE ======================
     if distributed:
@@ -70,7 +72,7 @@ def main():
     # ====================== LOGGING ======================
     if master_process:
         if continue_from_checkpoint:
-            logging_path = base_path / "runs"/ "supervised" / "real_model_v2"
+            logging_path = base_path / "runs"/ "supervised" / "best_move_model"
         else:
             current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
             logging_path = base_path / "runs"/ "supervised" / current_time
@@ -80,15 +82,14 @@ def main():
 
     # ====================== DATASET ======================
     dataset_path = base_path / "dataset"
-    trainset = torch.load(dataset_path / "train" / "trainset.pt", weights_only=False, map_location="cpu")
-    validationset = torch.load(dataset_path / "validation" / "validationset.pt", weights_only=False, map_location="cpu")
-    # validationset = Subset(validationset, list(range(100)))  # do not use the entire validation set if using a cpu
+    trainset = torch.load(dataset_path / "with_best_move" / "trainset.pt", weights_only=False, map_location="cpu")
+    testset = torch.load(dataset_path / "with_best_move" / "testset.pt", weights_only=False, map_location="cpu")
     trainsampler = DistributedSampler(trainset, shuffle=True, rank=rank, num_replicas=world_size) if distributed else None
-    validationsampler = DistributedSampler(validationset, shuffle=True, rank=rank, num_replicas=world_size) if distributed else None
+    validationsampler = DistributedSampler(testset, shuffle=True, rank=rank, num_replicas=world_size) if distributed else None
     assert config.batch_size % world_size == 0
     local_batch_size = config.batch_size // world_size
     trainloader = DataLoader(trainset, batch_size=local_batch_size, shuffle=not distributed, sampler=trainsampler, num_workers=10 if distributed else 0, pin_memory=distributed)
-    validationloader = DataLoader(validationset, batch_size=8 * local_batch_size, shuffle=not distributed, sampler=validationsampler, num_workers=10 if distributed else 0, pin_memory=distributed)
+    validationloader = DataLoader(testset, batch_size=8 * local_batch_size, shuffle=not distributed, sampler=validationsampler, num_workers=10 if distributed else 0, pin_memory=distributed)
 
     # ====================== MODEL ======================
     model = MaskedDiffusion(config)
@@ -177,7 +178,7 @@ def main():
             validation_writer.add_scalar("Loss", validation_loss, step)
 
     def save_state():
-        checkpoint_path = base_path / "supervised_checkpoints" / f"model_{step:07d}.pt"
+        checkpoint_path = base_path / "supervised_checkpoints" / "best_move_model" / f"model_{step:07d}.pt"
         base_model = model.module if distributed else model
         if hasattr(base_model, "_orig_mod"):
             base_model = base_model._orig_mod
