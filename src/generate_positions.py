@@ -1,6 +1,6 @@
+import argparse
 import queue
 import torch
-import numpy as np
 from pathlib import Path
 import pandas as pd
 from chess.engine import SimpleEngine
@@ -16,11 +16,17 @@ from metrics.cook import cook
 
 torch.set_float32_matmul_precision("high")
 
+parser = argparse.ArgumentParser(description="Generate chess positions")
+parser.add_argument("--model-type", choices=["moves", "no-moves"], required=True, help="Decide if the model generates a move or does not")
+args = parser.parse_args()
+
+generates_moves = args.model_type == "moves"
+
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 base_path = Path("./src")
-# checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
+checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
 # checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0007000.pt", map_location="cpu", weights_only=False)
-checkpoint = torch.load(base_path / "supervised_checkpoints" / "best_move_model" / "model_0780000.pt", map_location="cpu", weights_only=False)
+# checkpoint = torch.load(base_path / "supervised_checkpoints" / "best_move_model" / "model_0780000.pt", map_location="cpu", weights_only=False)
 
 config = checkpoint["config"]
 model = MaskedDiffusion(config)
@@ -59,9 +65,10 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device, rat
     try:
         try:
             fen = tokens_to_fen(fen_tokens)
-            move = tokens_to_move(move_tokens)
             entry["fen"] = fen
-            entry["best_move"] = move
+            if move_tokens is not None:
+                move = tokens_to_move(move_tokens)
+                entry["best_move"] = move
         except:
             return entry
 
@@ -76,7 +83,8 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device, rat
         if puzzle is not None:
             entry["is_puzzle"] = True
             entry["main_line"] = " ".join([move.uci() for move in puzzle.mainline])
-            entry["best_move_matches"] = move == puzzle.mainline[0].uci()
+            if move_tokens is not None:
+                entry["best_move_matches"] = move == puzzle.mainline[0].uci()
             existing_themes = cook(puzzle, engine)
             entry["actual_themes"] = existing_themes
             
@@ -110,11 +118,15 @@ for iteration in range(n // batch_size):
 
     module = model.module if hasattr(model, "module") else model
     tokens = module.sample(themes_one_hot, scaled_ratings, steps=512, temperature=0.1)
-    fen_tokens = tokens[:, :config.fen_length]
-    move_tokens = tokens[:, config.fen_length:]
+    if generates_moves:
+        fen_tokens = tokens[:, :config.fen_length]
+        move_tokens = tokens[:, config.fen_length:]
+    else:
+        fen_tokens = tokens
+        move_tokens = None
 
     batch_results = Parallel(n_jobs=n_jobs, backend="threading")(
-        delayed(process_puzzle)(fen_tokens[i], move_tokens[i], base_themes[i], base_ratings[i], device, rating_model) for i in range(batch_size)
+        delayed(process_puzzle)(fen_tokens[i], move_tokens[i] if move_tokens is not None else None, base_themes[i], base_ratings[i], device, rating_model) for i in range(batch_size)
     )
     
     results_list.extend(batch_results)
@@ -124,5 +136,5 @@ while not engine_pool.empty():
     engine.quit()
 
 df = pd.DataFrame(results_list)
-output_path = base_path / "Generate_positions" / "best_move_model2.csv"
+output_path = base_path / "Generate_positions" / "temperature01.csv"
 df.to_csv(output_path, index=False)
