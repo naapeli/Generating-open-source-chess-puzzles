@@ -31,7 +31,7 @@ def main():
     # ====================== LOAD CHECKPOINT ======================
     if continue_from_checkpoint:
         # checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0760000.pt", map_location="cpu", weights_only=False)  # as the config was saved as well, cannot use weights_only=True
-        checkpoint = torch.load(base_path / "supervised_checkpoints" / "best_move_model" / "model_0680000.pt", map_location="cpu", weights_only=False)
+        checkpoint = torch.load(base_path / "supervised_checkpoints" / "best_move_model" / "model_0780000.pt", map_location="cpu", weights_only=False)
 
     # ====================== DEVICE ======================
     if distributed:
@@ -154,8 +154,8 @@ def main():
         tokens = unwrapped_model.sample(validation_themes, validation_ratings, steps=512)
         for generated_tokens in tokens:
             try:
-                fen_str = tokens_to_fen(generated_tokens)
-                move_str = tokens_to_move(generated_tokens)
+                fen_str = tokens_to_fen(generated_tokens[:config.fen_length])
+                move_str = tokens_to_move(generated_tokens[config.fen_length:])
                 if master_process: validation_writer.add_text("Generations/fen", f"{fen_str} move: {move_str}", step)
             except:
                 pass

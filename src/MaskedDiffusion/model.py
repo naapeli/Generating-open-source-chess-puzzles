@@ -74,7 +74,7 @@ class MaskedDiffusion(nn.Module):
     
     @torch.compile
     @torch.no_grad()
-    def sample(self, theme_tokens, ratings, steps=256):
+    def sample(self, theme_tokens, ratings, steps=256, temperature=1.0):
         batch_size = len(ratings)
         device = ratings.device
         seq_length = self.config.fen_length + self.config.move_length
@@ -90,7 +90,7 @@ class MaskedDiffusion(nn.Module):
             alpha_s = self.config.masking_schedule(s)
             
             logits = self(tokens, theme_tokens, ratings) 
-            probs = F.softmax(logits, dim=2)
+            probs = F.softmax(logits / temperature, dim=2)
             
             p_unmask = (alpha_s - alpha_t) / (1.0 - alpha_t + 1e-9)
             p_mask = (1.0 - alpha_s) / (1.0 - alpha_t + 1e-9)
