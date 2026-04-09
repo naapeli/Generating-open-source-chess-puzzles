@@ -51,7 +51,7 @@ class MaskedDiffusion(nn.Module):
         self.config = config
 
     def forward(self, tokens, theme_tokens, ratings):
-        seq_length = self.config.fen_length + self.config.move_length
+        seq_length = tokens.size(1)
         pos = torch.arange(0, seq_length, dtype=torch.long, device=tokens.device)
         x = self.positional_embedding(pos) + self.FEN_embedding(tokens)
 
@@ -77,7 +77,7 @@ class MaskedDiffusion(nn.Module):
     def sample(self, theme_tokens, ratings, steps=256, temperature=1.0):
         batch_size = len(ratings)
         device = ratings.device
-        seq_length = self.config.fen_length + self.config.move_length
+        seq_length = self.config.fen_length + (self.config.move_length if self.config.predict_moves else 0)
         mask_token = self.config.mask_token
     
         tokens = torch.full((batch_size, seq_length), mask_token, device=device, dtype=torch.long)

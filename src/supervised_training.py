@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torch.optim import AdamW, Muon
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
@@ -14,24 +14,29 @@ import argparse
 
 from MaskedDiffusion.model import MaskedDiffusion
 from Config import Config
-from tokenization.tokenization import tokens_to_fen, tokens_to_move, scale_ratings, FENTokens
+from tokenization.tokenization import tokens_to_fen, tokens_to_move, scale_ratings
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--distributed", action="store_true")
-    parser.add_argument("--continue_from_checkpoint", action="store_true")
+    parser.add_argument("--checkpoint_name", type=str, default=None)
+    parser.add_argument("--run_name", type=str, default=None, help="Name of the run. Defaults to best_move_model if continuing, else current time.")
 
     args = parser.parse_args()
     distributed = args.distributed
-    continue_from_checkpoint = args.continue_from_checkpoint
+    continue_from_checkpoint = args.checkpoint_name != None
 
     base_path = Path("./src")
     
+    run_name = args.run_name
+    if not run_name:
+        run_name = datetime.now().strftime("%Y%m%d-%H%M%S")
+    logging_path = base_path / "runs" / "supervised" / run_name
+
     # ====================== LOAD CHECKPOINT ======================
     if continue_from_checkpoint:
-        # checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0760000.pt", map_location="cpu", weights_only=False)  # as the config was saved as well, cannot use weights_only=True
-        checkpoint = torch.load(base_path / "supervised_checkpoints" / "best_move_model" / "model_0780000.pt", map_location="cpu", weights_only=False)
+        checkpoint = torch.load(logging_path / args.checkpoint_name, map_location="cpu", weights_only=False)
 
     # ====================== DEVICE ======================
     if distributed:
@@ -56,13 +61,11 @@ def main():
     device = torch.device(device)
 
     # ====================== CONFIG ======================
-    # config = Config(n_layers=1, batch_size=1024, n_steps=50, train_logging_interval=1, validation_interval=5, save_interval=500, n_validation_generations=1, embed_dim=128, lr=1e-2, weight_decay=0)
-    # config = Config(n_layers=1, batch_size=1024, n_steps=1000, train_logging_interval=1, validation_interval=100, save_interval=500, n_validation_generations=1)
     if continue_from_checkpoint:
         config = checkpoint["config"]
     else:
         config = Config(train_logging_interval=10, validation_interval=10000, n_steps=1_000_000, save_interval=20_000, batch_size=1024)
-
+        
     # ====================== SEED AND PRECISION ======================
     torch.manual_seed(rank)
     if torch.cuda.is_available():
@@ -71,14 +74,25 @@ def main():
 
     # ====================== LOGGING ======================
     if master_process:
-        if continue_from_checkpoint:
-            logging_path = base_path / "runs"/ "supervised" / "best_move_model"
-        else:
-            current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-            logging_path = base_path / "runs"/ "supervised" / current_time
-
+        logging_path.mkdir(parents=True, exist_ok=True)
         train_writer = SummaryWriter(logging_path / "train")
         validation_writer = SummaryWriter(logging_path / "validation")
+
+        if not continue_from_checkpoint:
+            import yaml
+            hparams = {
+                "predict_moves": config.predict_moves,
+                "masking_schedule": config.schedule,
+                "n_heads": config.n_heads,
+                "n_layers": config.n_layers,
+                "embed_dim": config.embed_dim,
+                "lr": config.lr,
+                "weight_decay": config.weight_decay,
+                "batch_size": config.batch_size,
+                "n_steps": config.n_steps,
+            }
+            with open(logging_path / "config.yml", "w") as f:
+                yaml.dump(hparams, f)
 
     # ====================== DATASET ======================
     dataset_path = base_path / "dataset"
@@ -111,7 +125,7 @@ def main():
     # ====================== LOSS FUNCTION ======================
     def compute_loss(model: MaskedDiffusion, fens, moves, themes, ratings):
         # could use the variance reduced version in rl.espo, but for supervised learning, this is good enough (variance is not a problem)
-        tokens = torch.cat([fens, moves], dim=1)
+        tokens = torch.cat([fens, moves], dim=1) if config.predict_moves else fens
         batch_size = len(ratings)
         t = (torch.rand(1) + torch.arange(1, batch_size + 1, 1) / batch_size) % 1
         alpha_t = config.masking_schedule(t).unsqueeze(1).to(device)
@@ -126,11 +140,12 @@ def main():
 
     # ====================== VALIDATION ======================
     def write_logits(step):
-        probs_sum = torch.zeros((config.fen_length + config.move_length, config.n_tokens), dtype=torch.float32, device=device)
+        seq_len = config.fen_length + config.move_length if config.predict_moves else config.fen_length
+        probs_sum = torch.zeros((seq_len, config.n_tokens), dtype=torch.float32, device=device)
         samples = torch.tensor(0, device=device)
         for validation_fen, validation_move, validation_theme, validation_rating in validationloader:
             validation_fen, validation_move, validation_theme, validation_rating = validation_fen.to(dtype=torch.long, device=device), validation_move.to(dtype=torch.long, device=device), validation_theme.to(dtype=torch.float32, device=device), validation_rating.to(dtype=torch.float32, device=device)
-            tokens = torch.cat([validation_fen, validation_move], dim=1)
+            tokens = torch.cat([validation_fen, validation_move], dim=1) if config.predict_moves else validation_fen
             with torch.no_grad():
                 with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
                     sub_logits = model(tokens, validation_theme, validation_rating)
@@ -155,8 +170,11 @@ def main():
         for generated_tokens in tokens:
             try:
                 fen_str = tokens_to_fen(generated_tokens[:config.fen_length])
-                move_str = tokens_to_move(generated_tokens[config.fen_length:])
-                if master_process: validation_writer.add_text("Generations/fen", f"{fen_str} move: {move_str}", step)
+                if config.predict_moves:
+                    move_str = tokens_to_move(generated_tokens[config.fen_length:])
+                    if master_process: validation_writer.add_text("Generations/fen", f"{fen_str} move: {move_str}", step)
+                else:
+                    if master_process: validation_writer.add_text("Generations/fen", fen_str, step)
             except:
                 pass
 
@@ -178,7 +196,7 @@ def main():
             validation_writer.add_scalar("Loss", validation_loss, step)
 
     def save_state():
-        checkpoint_path = base_path / "supervised_checkpoints" / "best_move_model" / f"model_{step:07d}.pt"
+        checkpoint_path = logging_path / f"model_{step:07d}.pt"
         base_model = model.module if distributed else model
         if hasattr(base_model, "_orig_mod"):
             base_model = base_model._orig_mod
