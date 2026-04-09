@@ -16,6 +16,7 @@ class Config:
     fen_length: int = 76
     move_length: int = 5
     mask_token: FENTokens = FENTokens.mask
+    predict_moves: bool = True
 
     # model architecture
     n_heads: int = 8
