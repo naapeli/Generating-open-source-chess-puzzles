@@ -190,26 +190,23 @@ def tokenize(df: pd.DataFrame) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor
     return torch.from_numpy(fens), torch.from_numpy(moves), torch.from_numpy(themes), torch.from_numpy(ratings)
 
 def tokens_to_fen(tokens: torch.Tensor) -> str:
-    try:
-        tokens = tokens.squeeze()
-        if tokens.ndim != 1 or tokens.size(0) != 76:
-            raise RuntimeError()
-        
-        tokens = tokens.tolist()
-        board = "".join(board_token_2_str[token] for token in tokens[:64])
-        board = "/".join(board[i:i + 8] for i in range(0, len(board), 8))
-        board = re.sub(r"\.+", lambda string: str(len(string.group())), board)
-        side = side_token_2_str[tokens[64]]
-        castling = "".join(castling_token_2_str[token] for token in tokens[65:69])
-        castling = "-" if castling == "----" else re.sub("-", "", castling)
-        en_passant = "".join([enpassant_token_2_str[token] for token in tokens[69:71]])
-        en_passant = "-" if en_passant == "--" else en_passant  # maybe check that one is not - and the other something else in the future (if the generative model generates an illegal puzzle)
-        halfmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[71:73]))
-        fullmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[73:76]))
+    tokens = tokens.squeeze()
+    if tokens.ndim != 1 or tokens.size(0) != 76:
+        raise RuntimeError()
+    
+    tokens = tokens.tolist()
+    board = "".join(board_token_2_str[token] for token in tokens[:64])
+    board = "/".join(board[i:i + 8] for i in range(0, len(board), 8))
+    board = re.sub(r"\.+", lambda string: str(len(string.group())), board)
+    side = side_token_2_str[tokens[64]]
+    castling = "".join(castling_token_2_str[token] for token in tokens[65:69])
+    castling = "-" if castling == "----" else re.sub("-", "", castling)
+    en_passant = "".join([enpassant_token_2_str[token] for token in tokens[69:71]])
+    en_passant = "-" if en_passant == "--" else en_passant  # maybe check that one is not - and the other something else in the future (if the generative model generates an illegal puzzle)
+    halfmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[71:73]))
+    fullmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[73:76]))
 
-        return " ".join([board, side, castling, en_passant, halfmove_counter, fullmove_counter])
-    except KeyError:
-        raise NotLegalPositionError("The tokens do not yield a legal position")
+    return " ".join([board, side, castling, en_passant, halfmove_counter, fullmove_counter])
 
 def tokens_to_move(tokens: torch.Tensor) -> str:
     if tokens.ndim != 1 or tokens.size(0) != 5:
