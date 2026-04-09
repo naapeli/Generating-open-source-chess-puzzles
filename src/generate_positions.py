@@ -20,7 +20,7 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 base_path = Path("./src")
 # checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
 # checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0007000.pt", map_location="cpu", weights_only=False)
-checkpoint = torch.load(base_path / "supervised_checkpoints" / "best_move_model" / "model_0680000.pt", map_location="cpu", weights_only=False)
+checkpoint = torch.load(base_path / "supervised_checkpoints" / "best_move_model" / "model_0780000.pt", map_location="cpu", weights_only=False)
 
 config = checkpoint["config"]
 model = MaskedDiffusion(config)
@@ -109,7 +109,7 @@ for iteration in range(n // batch_size):
     scaled_ratings = scale_ratings(base_ratings).to(device=device, dtype=torch.float32)
 
     module = model.module if hasattr(model, "module") else model
-    tokens = module.sample(themes_one_hot, scaled_ratings, steps=128)
+    tokens = module.sample(themes_one_hot, scaled_ratings, steps=512, temperature=0.1)
     fen_tokens = tokens[:, :config.fen_length]
     move_tokens = tokens[:, config.fen_length:]
 
@@ -124,5 +124,5 @@ while not engine_pool.empty():
     engine.quit()
 
 df = pd.DataFrame(results_list)
-output_path = base_path / "Generate_positions" / "best_move_model.csv"
+output_path = base_path / "Generate_positions" / "best_move_model2.csv"
 df.to_csv(output_path, index=False)
