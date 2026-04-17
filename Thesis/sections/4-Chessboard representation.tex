@@ -3,3 +3,31 @@
 
 
 \subsection{Tokenization}
+
+To generate new chess positions with deep learning models, one has to transform each puzzle into a format the model can understand. This is done in a process called tokenization. To achieve this, we take inspiration from \cite{ruoss2024amortizedplanninglargescaletransformers, feng2025generatingcreativechesspuzzles} and use the convenient fen notation to represent the board state. A fen string contains most of the information that is needed to reconstruct a chess position (e.g. three-fold repetition is not directly encoded).  It contains information about the board state, the player whose turn it is to move, castling rights, a possible en passant target square, a halfmove counter and a fullmove counter. A full fen string of the initial position after 1. e4 looks as follows:
+
+\begin{equation*}
+    \resizebox{\textwidth}{!}{$
+        \underbrace{\text{rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR}}_{\text{board}} \underbrace{\text{b}}_{\text{side}} \underbrace{\text{KQkq}}_{\text{castling}} \underbrace{\text{e3}}_{\text{en passant}} \underbrace{0}_{\text{halfmove}} \underbrace{1}_{\text{fullmove}}
+    $}
+\end{equation*}
+
+We tokenize this fen string by padding the representation to a fixed length of 76 tokens. The board consists of 64 tokens, each representing a square on the board. The remaining 12 tokens are used to represent the side to move (1 token), the castling rights (4 tokens), the en passant target square (2 tokens), the halfmove counter (2 tokens) and the fullmove counter (3 tokens). The same fen in a tokenized form looks as follows:
+
+\begin{equation*}
+    \resizebox{\textwidth}{!}{$
+        \underbrace{
+            \begin{array}{l}
+                10, 8, 9, 11, 12, 9, 8, 10, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, \\
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, \\
+                0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 4, 2, 3, 5, 6, 3, 2, 4
+            \end{array}
+        }_{\text{board}}, \underbrace{14}_{\text{side}}, \underbrace{16, 17, 18, 19}_{\text{castling}}, \underbrace{33, 23}_{\text{en passant}}, \underbrace{37, 38}_{\text{halfmove}}, \underbrace{37, 37, 39}_{\text{fullmove}}
+    $}
+\end{equation*}
+
+In total, we use a vocabulary of 52 tokens, where 13 tokens represent different pieces and an empty square and are only used for the board representation. The remaining token vocabulary is used to represent the side to move with two tokens, the castling rights with four tokens and one no castling token, the en passant target square with eight file, eight rank and one no en passant token. Finally, the counters are represented with ten tokens for the numbers and an additional padding token.
+
+In addition to the fen, we experiment with concatenating the best move to the fen tokens. For this, we use the uci notation to represent the move and the same tokens as for the en passant, however, we need five additional tokens to represent different promotions and a no promotion. 
+
+In addition to the 52 normal tokens, we have a mask token, which is used to represent an unknown token.

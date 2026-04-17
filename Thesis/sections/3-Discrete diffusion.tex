@@ -32,7 +32,7 @@ To generalize this result to the entire token sequence, we use the factorization
 Next, we generalize the previous notation to continuous time by taking the limit $T\rightarrow\infty$ of \eqref{eq:forward process}. We obtain the following equation \cite{austin2021structureddenoisingdiffusionmodels, shi2025simplifiedgeneralizedmaskeddiffusion}:
 
 \begin{equation*}
-    \bar{Q}(t) = \alpha_tI + (1 - \alpha_t)\bold{1}e_m^\top, \quad\text{where }\alpha_t = \exp\left( -\int_{0}^{t}\beta(s)\text{d}s \right).
+    \bar{Q}(t) = \alpha_tI + (1 - \alpha_t)\bold{1}e_m^\top, \quad\text{where }\alpha_t = \exp\left( -\int_{0}^{t}\beta(s)\mathrm{d}s \right).
 \end{equation*}
 
 The function $\beta(s)$ is a continuous functions such that $\beta_i = \frac{\beta(t(i))}{T}$, and must be chosen. Equivalently, one can choose the function $\alpha_t$, which we call the masking schedule. A few common choices for the masking schedule include the linear schedule, the polynomial schedule, the geometric schedule and a cosine schedule. Although, the authors of \cite{shi2025simplifiedgeneralizedmaskeddiffusion} suggest using the linear schedule for training with a cosine grid for $t$ during inference, we opt to use the cosine schedule with a linear grid for $t$ for both training and inference, as it seemed to perform almost equivalently in their experiments. It is additionally simpler to implement as one can always sample random values of $t$ form the uniform distribution during both training and inference. The cosine schedule is is given by the equation:
@@ -61,9 +61,10 @@ During the reverse process, we reverse the masking process and attempt to conver
 
 Hence, if we know the original token sequence $x_0$ that has no masking, we can compute the distribution of a step closer to the unmasked state. However, if we want to sample new datapoints using this process, $x_0$ is unknown. To solve this problem, we introduce the denoising network $\mu_\theta(x_t)\in\Delta(V)^m$, which given a noisy state $x_t$ outputs a probability distribution over the vocabulary $V$ for each masked state. Unmasked tokens remain the same with probability $1$. Using this network and \eqref{eq:reverse process x_0 known}, we define the distribution for $x_s$ as
 
-\begin{equation*}
+\begin{equation}
     p_\theta(x_s | x_t) = q(x_s | x_t, \mu_\theta(x_t)) = \text{Cat}(x_s; \bar{R}^{\mu_\theta(x_t)}(t, s)^\top x_t).
-\end{equation*}
+    \label{eq:reverse process x_0 unknown}
+\end{equation}
 
 This formulation is called mean-parametrization, as the denoising network is attempting to predict the mean of $x_0$ given the noisy input $x_t$. This allows us to sample new sequences from the network by iteratively converting mask tokens into other tokens via sampling from the probability distribution outputted by the network $\mu_\theta$. We describe the sampling procedure in more detail in section \ref{sec:sampling}.
 
@@ -74,10 +75,10 @@ This formulation is called mean-parametrization, as the denoising network is att
 
 \subsection{Evidence lower bound}
 
-To optimize the outputs of the denoising network, an optimization objective is needed. While traditional LLMs are optimized by maximizing the likelihood function, for masked diffusion models, the computation of the likelihood is intractable in an efficient way. Hence, with diffusion models one usually optimizes for the lower bound of the log marginal likelihood called the evidence \cite{shi2025simplifiedgeneralizedmaskeddiffusion, austin2021structureddenoisingdiffusionmodels, kingma2021variationaldiffusionmodels}. If one optimizes the evidence lower bound (ELBO), the hope is that one also increases the likelihood. This usually happens in practice. Hence, this can be considered maximum likelihood optimization, although, one never explicitly optimizes the likelihood. In \cite{shi2025simplifiedgeneralizedmaskeddiffusion}, the authors prove that for masked diffusion models, the evidence lower bound can be expressed in the following bold:
+To optimize the outputs of the denoising network, an optimization objective is needed. While traditional LLMs are optimized by maximizing the likelihood function, for masked diffusion models, the computation of the likelihood is intractable in an efficient way. Hence, with diffusion models one usually optimizes for the lower bound of the log marginal likelihood called the evidence \cite{shi2025simplifiedgeneralizedmaskeddiffusion, austin2021structureddenoisingdiffusionmodels, kingma2021variationaldiffusionmodels}. If one optimizes the evidence lower bound (ELBO), the hope is that one also increases the likelihood. This usually happens in practice. Hence, this can be considered maximum likelihood optimization, although, one never explicitly optimizes the likelihood. In \cite{shi2025simplifiedgeneralizedmaskeddiffusion}, the authors prove that for masked diffusion models, the evidence lower bound can be expressed in the following form:
 
 \begin{equation}
-    \mathcal{L}_\theta(x, x_0) = \int_{0}^{1}\frac{\alpha_t'}{1 - \alpha_t}\mathbb{E}_{q(x_t | x_0)}\left[\sum_{i=1}^{L}\bold{1}[x_t^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t)^{(i)}\right],
+    \mathcal{L}_\theta(x, x_0) = \int_{0}^{1}\frac{\alpha_t'}{1 - \alpha_t}\mathbb{E}_{q(x_t | x_0)}\left[\sum_{i=1}^{L}\bold{1}[x_t^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t)^{(i)}\right] \mathrm{d}t,
     \label{eq:ELBO}
 \end{equation}
 where $L$ is the sequence length. One may note that the ELBO is just the sum of the cross-entropy losses over the masked tokens integrated over time. This makes it easy to implement in practice.
@@ -108,7 +109,7 @@ where $t_j\sim\mathcal{U}(0, 1)$ and $N = K = 1$.
 As mentioned in section \ref{sec:MC integration}, reinforcement learning is usually a lot less stable than supervised training. Therefore, it is essential to minimize the variance of the ELBO estimate. To minimize variance, we take inspiration from \cite{rojas2025improvingreasoningdiffusionlanguage} and estimate the outer integral in \eqref{eq:ELBO} with a Gauss-Legendre quadrature \cite{methodsofnumericalintegration}. The authors of \cite{rojas2025improvingreasoningdiffusionlanguage} show that most of the variance in the ELBO MC estimate is coming from randomly sampling the value of $t$. With a quadrature, the values of $t$ are no longer random, but deterministic and more evenly spaced depending on what quadrature rule one uses. For an $n$-point Gauss-Legendre quadrature, the nodes $x_j$ are the roots of an $n$-th Legendre polynomial $P_n(x)$ normalized so that $P_n(1) = 1$. The nodes and the weights $w_j' = \frac{2}{(1 - x_j^2)P_n'(x_j)^2}$ are chosen so that the approximation is exact up to polynomials of degree $2n - 1$ \cite{methodsofnumericalintegration}. The nodes lie in the interval $[-1, 1]$ and are symmetric around 0. To integrate a function over the interval $[0, 1]$, one uses the following transformation \cite{numericalmethodsinscientificcomputing}:
 
 \begin{align*}
-    \int_{0}^{1}f(x)\text{d}x \approx\sum_{j=1}^{N}\underbrace{\frac{w_j'}{2}}_{w_j} f\bigg(\underbrace{\frac{x_j}{2} + \frac{1}{2}}_{t_j}\bigg).
+    \int_{0}^{1}f(x)\mathrm{d}x \approx\sum_{j=1}^{N}\underbrace{\frac{w_j'}{2}}_{w_j} f\bigg(\underbrace{\frac{x_j}{2} + \frac{1}{2}}_{t_j}\bigg).
 \end{align*}
 
 Using this transformation, the ELBO estimate used during RL has the form:
@@ -122,3 +123,33 @@ Even with a few sample points, the bias and the variance of the ELBO estimate dr
 
 \subsection{Sampling}
 \label{sec:sampling}
+
+When sampling from the masked diffusion model $\mu_\theta$, we employ the reverse process described in \eqref{eq:reverse process x_0 unknown} \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. With ancestral sampling, we iteratively sample tokens from the conditional distribution $p_\theta(x_s | x_t), s < t $. We begin by discretizing the interval $[0, 1]$ into $T$ subintervals $\{ t_i \}_{i=0}^T$, where $T$ is the number of timesteps in the diffusion process. The subintervals can be chosen in many ways, but we choose to use a uniform discretization. In each generation step, we condition the generation on the previously generated tokens and sample new tokens from a categorical distribution according to the masking schedule and the logits of the model. The sampling process is as follows \cite{shi2025simplifiedgeneralizedmaskeddiffusion}:
+
+\textcolor{red}{Talk about block diffusion if we end up sampling the fen before the move.}
+
+\begin{algorithm}[H]
+    \caption{Sampling for masked diffusion models}
+    \label{alg:ancestral sampling}
+    \begin{algorithmic}
+        \algrenewcommand{\algorithmiccomment}[1]{\textcolor{gray}{// #1}}
+        \State Initialize the time grid $\{ t(i) \}_{i=0}^T \leftarrow \mathrm{discretize}([0, 1])$.
+        \State Initialize $x_T$ by setting it to all mask tokens.
+        \For{$j = T, T-1, \dots, 1$}:
+        \State $t \leftarrow t(j)$, $s \leftarrow t(j - 1)$
+        \For{$i = 1, 2, \dots, L$}:
+        \If{$(x_t^{(i)}) = [\mathtt{MASK}]$}:
+        % \State Sample $x_s^{(n)} \sim \mathrm{Cat}(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta^{(n)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
+        \State $\log p_i \leftarrow \log(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta(x_t)^{(i)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
+        \State \Comment{Sample from $\mathrm{Cat}(p_i)$ using the Gumbel-max trick.}
+        \State $u^{(k)}\leftarrow\mathcal{U}([0, 1])$
+        \State $x_s^{(i)} \leftarrow \mathrm{argmax}_k \left( \log p_i^{(k)} - \log(-\log u^{(k)})  \right)$
+        \Else :
+        \State $x_s^{(i)} \leftarrow x_t^{(i)}$
+        \EndIf
+        \EndFor
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+When we sample from the categorical distribution, we employ the Gumbel-max trick \cite{kool2019stochasticbeamsandwheretofindthem}. In \cite{shi2025simplifiedgeneralizedmaskeddiffusion}, the authors note that using this trick yields considerably better sample quality than sampling from a categorical distribution using e.g. binary search on the cdf. With this trick, we consider the log probabilities of all tokens, add $\mathrm{Gumbel}(0)$ distributed noise to each log probability and taking the token with the highest sum. This procedure implicitly truncates small probabilities improving the sample quality compared to other theoretically equivalent sampling procedures. 

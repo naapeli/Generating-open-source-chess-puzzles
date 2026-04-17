@@ -384,6 +384,18 @@ I realized that the explanation of division by sequence length in \cite{ou2025pr
 
 I realized that since \cite{feng2025generatingcreativechesspuzzles} works with token-level KL-divergences, their KL-divergence is a lot smaller than what I have. Their is a sum off small divergences, whereas mine is one larger divergence ($x_1 ^ 2  + \dots + x_n ^ 2 \leq (x_1 + \dots + x_n) ^ 2, x_i \geq 0$).
 
+\section{10.4}
+
+I think I will attempt to train the model to play as well as possible with RL (only mask the tokens of the best move) and see if the ability to generate puzzles changes.
+
+\section{13.4}
+
+After the long tuning run with legal * (10 * passDiversity + uniqueness + 0.5 * counterIntuitiveness) reward, I notice that the model starts to generate only mates-in-one, if the hyperparameters are chosen in the best way, as they always have a unique solution. I think I will increase the weight of the counterIntuitiveness, as it is only given if the position is unique and has a counter intuitive solution. I might try legal * passDiversity * (uniqueness + 10 * counterIntuitiveness) or something.
+
+\section{14.4}
+
+The model that also predicts moves has 129 average cp loss for positions with no checkmate. For checkmates, it finds the correct mate 52\% of the time. In all positions combined, the best move is found 83\% of the time. The model generates an illegal move around 1.75\% of the time (depends also on the amount of steps, which in this case was quite low). For positions that are not puzzles, we cannot give the model information about the theme or the difficulty of the position. Hence, the cp loss for such positions is around 322 (a knights worth) and the move accuracy is around 15\%. The model finds a correct checkmate for around 28\% of the time and generates a legal move about 85\% of the time. Clearly the theme information helps the model quite a lot.
+
 \clearpage
 \bibliography{references.bib}
 \bibliographystyle{ieeetr}

@@ -7,6 +7,7 @@ requires-python = ">=3.14"
 dependencies = [
     "chess>=1.11.2",
     "ipykernel>=7.1.0",
+    "ipywidgets>=8.1.8",
     "matplotlib>=3.10.8",
     "optuna>=4.8.0",
     "pandas>=2.3.3",
