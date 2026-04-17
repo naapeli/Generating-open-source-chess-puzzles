@@ -21,8 +21,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--distributed", action="store_true")
     parser.add_argument("--checkpoint_name", type=str, default=None)
-    parser.add_argument("--run_name", type=str, default=None, help="Name of the run. Defaults to best_move_model if continuing, else current time.")
-
+    parser.add_argument("--run_name", type=str, default=None)
     args = parser.parse_args()
     distributed = args.distributed
     continue_from_checkpoint = args.checkpoint_name != None

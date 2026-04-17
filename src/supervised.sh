@@ -12,4 +12,4 @@
 module load mamba
 module load triton/2024.1-gcc gcc/12.3.0  # needed for torch.compile
 source activate environment
-srun python src/supervised_training.py --distributed --continue_from_checkpoint
+srun python src/supervised_training.py --distributed --run_name best_move_model --checkpoint_name model_0980000.pt
