@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #SBATCH --time=03:00:00
-#SBATCH --output=generations.out
+#SBATCH --output=move_benchmark.out
 #SBATCH --mem=64G
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -13,4 +13,4 @@
 module load mamba
 module load triton/2024.1-gcc gcc/12.3.0  # needed for torch.compile
 source activate environment
-srun python src/generate_positions.py --run_type supervised --run_name best_move_model --checkpoint_name model_0980000.pt --temperature 1.0 --steps 512 --output_file temp1.csv
+srun python src/move_benchmark.py --checkpoint src/runs/supervised/best_move_model/model_0980000.pt --batch_size 12288 --steps 32 --n_samples 50000  # --puzzles

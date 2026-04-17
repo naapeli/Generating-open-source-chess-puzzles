@@ -15,26 +15,55 @@ from torch.optim.lr_scheduler import LinearLR
 from torch.utils.tensorboard import SummaryWriter
 import chess
 from chess import svg
-from chess.engine import SimpleEngine
+from chess.engine import SimpleEngine, Limit
 import cairosvg
 from PIL import Image, ImageDraw
 
 from MaskedDiffusion.model import MaskedDiffusion
 from RatingModel.model import RatingModel
 from rl.espo import espo_loss, generate_grouped_positions, generate_random_themes, compute_elbo, theme_reward, critic_free_ppo_loss, entropy
-from tokenization.tokenization import theme_preprocessor, scale_ratings, unscale_ratings, tokens_to_fen, tokenize_fen
+from tokenization.tokenization import theme_preprocessor, scale_ratings, unscale_ratings, tokens_to_fen, tokenize_fen, tokens_to_move
 from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
 from metrics.cook import cook
 from metrics.diversity_filtering import ReplayBuffer
 from metrics.rewards import good_piece_counts, good_inter_batch_distances, good_intra_batch_distances
 
 
-def get_puzzle(fen, engine_path):
-    if fen is None: return None
-    if not legal(fen): return None
+def get_stockfish_data(fen, model_move, engine_path):
+    if fen is None: return None, None, None
+    if not legal(fen): return None, None, None
     with SimpleEngine.popen_uci(engine_path) as stockfish:
+        board = chess.Board(fen)
+        limit = Limit(depth=15, time=10, nodes=8_000_000)
+        
+        analysis = stockfish.analyse(board, limit=limit)
+        best_move = analysis["pv"][0] if "pv" in analysis else None
+        player_to_move = board.turn
+        best_score = analysis["score"].pov(player_to_move) if "score" in analysis else None
+        
         puzzle = get_unique_puzzle_from_fen(fen, stockfish)
-    return puzzle
+        
+        cp_loss = None
+        if model_move and best_score is not None:
+            try:
+                move = chess.Move.from_uci(model_move)
+                if move in board.legal_moves:
+                    if best_move and move == best_move:
+                        cp_loss = 0
+                    else:
+                        board.push(move)
+                        model_analysis = stockfish.analyse(board, limit=limit)
+                        model_score = model_analysis["score"].pov(player_to_move)
+                        board.pop()
+                        
+                        if not best_score.is_mate() and not model_score.is_mate():
+                            cp_loss = max(0, best_score.score() - model_score.score())
+            except:
+                pass
+
+        if best_move is None:
+            return puzzle, None, cp_loss
+    return puzzle, best_move.uci(), cp_loss
 
 def objective(trial):
     # Hyperparameters from trial
@@ -69,7 +98,7 @@ def objective(trial):
     logging_path = base_path / "runs"/ "rl" / "tune" / args.study_name / f"trial_{trial.number}"
     writer = SummaryWriter(logging_path)
 
-    reference_checkpoint_path = base_path / "runs" / "supervised" / "real_model_v2" / "model_0940000.pt"
+    reference_checkpoint_path = base_path / "runs" / "supervised" / "best_move_model" / "model_0980000.pt"
     reference_checkpoint = torch.load(reference_checkpoint_path, map_location="cpu", weights_only=False)
     
     config = deepcopy(reference_checkpoint["config"])
@@ -133,6 +162,8 @@ def objective(trial):
         inter_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
         intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
         themes_match = torch.zeros(len(fen_tokens), dtype=bool)
+        move_matches = torch.zeros(len(fen_tokens), dtype=bool)
+        cp_losses = torch.full((len(fen_tokens),), float("nan"), dtype=torch.float32)
         rating_penalty = torch.zeros(len(fen_tokens), dtype=torch.float32)
 
         _, sequence_length = fen_tokens.shape
@@ -148,17 +179,23 @@ def objective(trial):
         fen_tokens_cpu = fen_tokens.cpu()
 
         fens = []
+        model_moves = []
         for tokens in fen_tokens_cpu:
             try:
-                fen = tokens_to_fen(tokens)
+                fen = tokens_to_fen(tokens[:config.fen_length])
                 fens.append(fen)
             except:
                 fens.append(None)
+            try:
+                model_move = tokens_to_move(tokens[config.fen_length:])
+                model_moves.append(model_move)
+            except:
+                model_moves.append(None)
 
-        try:
-            puzzles = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle)(fen, engine_path) for fen in fens))
-        except TimeoutError:
-            return torch.zeros(len(fen_tokens), dtype=torch.float32)
+        results = list(Parallel(n_jobs=cpu_count)(delayed(get_stockfish_data)(fen, model_moves[i], engine_path) for i, fen in enumerate(fens)))
+        puzzles = [r[0] for r in results]
+        actual_best_moves = [r[1] for r in results]
+        found_cp_losses = [r[2] for r in results]
 
         valid_indices = []
         valid_gen_themes = []
@@ -168,9 +205,14 @@ def objective(trial):
             if fen is None or not legal(fen):
                 continue
             legal_position[i] = 1
-
+            
             piece_counts[i] = good_piece_counts(fen)
             
+            actual_best_move = actual_best_moves[i]
+            move_matches[i] = (model_moves[i] == actual_best_move)
+            if found_cp_losses[i] is not None:
+                cp_losses[i] = found_cp_losses[i]
+
             puzzle = puzzles[i]
             if puzzle is None:
                 continue
@@ -193,19 +235,19 @@ def objective(trial):
             valid_fen_tokens = fen_tokens[valid_indices]
             
             with torch.no_grad():
-                predicted_ratings = unscale_ratings(rating_model(valid_fen_tokens, gen_theme_tokens))
+                predicted_ratings = unscale_ratings(rating_model(valid_fen_tokens[:, :config.fen_length], gen_theme_tokens))
                 valid_true_ratings = true_ratings[valid_indices].to(device)
                 
                 penalties = -torch.clamp(torch.abs(predicted_ratings - valid_true_ratings) / 1000, 0, 1)
                 rating_penalty[valid_indices] = penalties.cpu()
-
+        
         intra_distances = intra_batch_fen_dist * intra_batch_pv_dist
         inter_distances = inter_batch_fen_dist * inter_batch_pv_dist
         all_distances = intra_distances * inter_distances
         
         pass_diversity_filtering = intra_distances & inter_batch_fen_dist & piece_counts
         rewards = torch.zeros(len(fen_tokens), dtype=torch.float32)
-        rewards = torch.where(legal_position & pass_diversity_filtering & unique_solution & counter_intuitive_solution, 1, 0)
+        rewards = torch.where(pass_diversity_filtering & move_matches, 1.0, 0.0)
 
         rewards = rewards.float()
         log_rewards = rewards.clone()
@@ -213,33 +255,31 @@ def objective(trial):
         if log_rewards.numel() > 0:
             index = torch.argmax(log_rewards).item()
             save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Generations", step)
-
+        
         is_valid = torch.zeros(len(fen_tokens), dtype=torch.bool)
         is_valid[valid_indices] = True
         valid_mask = is_valid & is_generated
 
-        log_data = {}
-        if is_generated.any():
-            log_data["legal_rate"] = legal_position[is_generated].float().mean().item()
-            log_data["uniqueness_rate"] = unique_solution[is_generated].float().mean().item()
-            log_data["counter_intuitive_rate"] = counter_intuitive_solution[is_generated].float().mean().item()
-            log_data["entropy"] = entropies[is_generated].float().mean().item()
-
-            if valid_mask.any():
-                log_data["counter_intuitive_rate_given_unique"] = counter_intuitive_solution[valid_mask].float().mean().item()
-                log_data["themes_match_rate"] = themes_match[valid_mask].float().mean().item()
-                log_data["dist_inter_fen"] = inter_batch_fen_dist[valid_mask].float().mean().item()
-                log_data["dist_intra_fen"] = intra_batch_fen_dist[valid_mask].float().mean().item()
-                log_data["dist_inter_pv"] = inter_batch_pv_dist[valid_mask].float().mean().item()
-                log_data["dist_intra_pv"] = intra_batch_pv_dist[valid_mask].float().mean().item()
-                log_data["intra_dist"] = intra_distances[valid_mask].float().mean().item()
-                log_data["inter_dist"] = inter_distances[valid_mask].float().mean().item()
-                log_data["all_dist"] = all_distances[valid_mask].float().mean().item()
-                log_data["rating_abs_diff"] = (-1000 * rating_penalty[valid_mask]).float().mean().item()
-                log_data["pass_diversity_filtering"] = pass_diversity_filtering[valid_mask].float().mean().item()
-
-            if (is_generated & legal_position).any():
-                log_data["piece_counts"] = piece_counts[is_generated & legal_position].float().mean().item()
+        log_data = {
+            "legal_rate": legal_position[is_generated].float().mean().item(),
+            "uniqueness_rate": unique_solution[is_generated].float().mean().item(),
+            "counter_intuitive_rate": counter_intuitive_solution[is_generated].float().mean().item(),
+            "counter_intuitive_rate_given_unique": counter_intuitive_solution[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "entropy": entropies[is_generated].float().mean().item(),
+            "piece_counts": piece_counts[is_generated & legal_position].float().mean().item(),
+            "themes_match_rate": themes_match[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "dist_inter_fen": inter_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "dist_intra_fen": intra_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "dist_inter_pv": inter_batch_pv_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "dist_intra_pv": intra_batch_pv_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "intra_dist": intra_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "inter_dist": inter_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "all_dist": all_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "rating_abs_diff": (-1000 * rating_penalty[valid_mask]).float().mean().item() if valid_mask.any() else 1000,
+            "pass_diversity_filtering": pass_diversity_filtering[valid_mask].float().mean().item() if valid_mask.any() else 0,
+            "move_match_rate": move_matches[legal_position & is_generated].float().mean().item() if (legal_position & is_generated).any() else 0,
+            "cp_loss": cp_losses[valid_mask & ~torch.isnan(cp_losses)].mean().item() if (valid_mask & ~torch.isnan(cp_losses)).any() else 0,
+        }
         
         for key, value in log_data.items():
             writer.add_scalar(f"Components/{key}", value, step)
@@ -259,7 +299,7 @@ def objective(trial):
         scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
 
         with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
-            step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=512)
+            step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=512, generate_move_last=True, temperature=args.temperature)
         
         is_generated = torch.ones(len(step_fens), dtype=torch.bool, device=device)
         
@@ -351,6 +391,7 @@ if __name__ == "__main__":
     parser.add_argument("--study_name", type=str, required=True)
     parser.add_argument("--steps_per_trial", type=int, default=2000)
     parser.add_argument("--reward_structure", type=str, default="reward = ")
+    parser.add_argument("--temperature", type=float, default=1.0)
     args = parser.parse_args()
 
     # Disable Optuna's default print logs to keep the console clean

@@ -14,7 +14,7 @@ def fen_to_padded(fen):  # make the format the same as
     board = re.sub(r"\d", lambda digit: "." * int(digit.group()), board)
     board = re.sub("/", "", board)
     castling = "".join([char if char in castling else "." for char in "KQkq"])
-    enpassant = ".." if enpassant != "-" else enpassant
+    enpassant = ".." if enpassant == "-" else enpassant
     return " ".join([board, side, castling, enpassant])
 
 def PV_distance(pv1: str, pv2: str) -> bool:
