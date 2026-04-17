@@ -15,7 +15,4 @@ dataset/
 Stockfish/
 
 # tensorboard logs
-src/runs/**
-!src/runs/**/
-!src/runs/supervised/best_move_model/model_0980000.pt
-
+src/runs/
