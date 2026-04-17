@@ -43,7 +43,8 @@ class MaskedDiffusion(nn.Module):
         self.FEN_embedding = nn.Embedding(config.n_tokens + 1, config.embed_dim)  # one additional mask token
         self.theme_embedding = nn.Linear(config.n_themes, config.embed_dim, bias=False)
         self.ratings_embedding = nn.Linear(config.rating_dim, config.embed_dim, bias=True)
-        self.positional_embedding = nn.Embedding(config.fen_length + config.move_length, config.embed_dim)
+        self.seq_length = config.fen_length + (config.move_length if config.predict_moves else 0)
+        self.positional_embedding = nn.Embedding(self.seq_length, config.embed_dim)
 
         self.blocks = nn.ModuleList([Block(config) for _ in range(config.n_layers)])
         self.classifier = nn.Linear(config.embed_dim, config.n_tokens, bias=False)
@@ -51,8 +52,7 @@ class MaskedDiffusion(nn.Module):
         self.config = config
 
     def forward(self, tokens, theme_tokens, ratings):
-        seq_length = tokens.size(1)
-        pos = torch.arange(0, seq_length, dtype=torch.long, device=tokens.device)
+        pos = torch.arange(0, self.seq_length, dtype=torch.long, device=tokens.device)
         x = self.positional_embedding(pos) + self.FEN_embedding(tokens)
 
         context = self.theme_embedding(theme_tokens).unsqueeze(1)
@@ -72,33 +72,87 @@ class MaskedDiffusion(nn.Module):
         loss = -torch.sum(mask * weight * F.cross_entropy(torch.movedim(logits, 2, 1), true_tokens, reduction="none"), dim=1)
         return loss
     
+    # @torch.compile
+    # @torch.no_grad()
+    # def sample(self, theme_tokens, ratings, steps=256, temperature=1.0, generate_move_last=True):
+    #     batch_size = len(ratings)
+    #     device = ratings.device
+    #     mask_token = self.config.mask_token
+    
+    #     tokens = torch.full((batch_size, self.seq_length), mask_token, device=device, dtype=torch.long)
+
+    #     T_grid = torch.linspace(0, 1, steps + 1, device=device).to(device)
+    #     for i in range(steps, 0, -1):
+    #         t = T_grid[i]
+    #         s = T_grid[i - 1]
+    #         alpha_t = self.config.masking_schedule(t)
+    #         alpha_s = self.config.masking_schedule(s)
+            
+    #         logits = self(tokens, theme_tokens, ratings) 
+    #         probs = F.softmax(logits / temperature, dim=2)
+            
+    #         p_unmask = (alpha_s - alpha_t) / (1.0 - alpha_t + 1e-13)
+    #         p_mask = (1.0 - alpha_s) / (1.0 - alpha_t + 1e-13)
+    #         probs = torch.cat([probs * p_unmask, torch.full((batch_size, self.seq_length, 1), p_mask, device=device, dtype=probs.dtype)], dim=2)
+
+    #         is_masked = (tokens == mask_token)
+    #         flattened_probs = probs.view(-1, self.config.n_tokens + 1)
+
+    #         # new_samples = torch.multinomial(flattened_probs, num_samples=1).view(batch_size, self.seq_length)
+
+    #         # do multinomial sampling with gumbel noise as in jax (apparently improves sample quality by a lot as samples with very low probability get cutted)
+    #         log_probs = torch.log(probs + 1e-13)
+    #         u = torch.rand_like(log_probs)
+    #         gumbel_noise = -torch.log(-torch.log(u + 1e-13) + 1e-13)
+    #         new_samples = torch.argmax(log_probs + gumbel_noise, dim=-1)
+            
+    #         tokens = torch.where(is_masked, new_samples, tokens)
+        
+    #     return tokens
+
     @torch.compile
     @torch.no_grad()
-    def sample(self, theme_tokens, ratings, steps=256, temperature=1.0):
+    def sample(self, theme_tokens, ratings, steps=256, temperature=1.0, generate_move_last=True):
         batch_size = len(ratings)
         device = ratings.device
-        seq_length = self.config.fen_length + (self.config.move_length if self.config.predict_moves else 0)
         mask_token = self.config.mask_token
-    
-        tokens = torch.full((batch_size, seq_length), mask_token, device=device, dtype=torch.long)
-
-        T_grid = torch.linspace(0, 1, steps + 1, device=device).to(device)
-        for i in range(steps, 0, -1):
-            t = T_grid[i]
-            s = T_grid[i - 1]
-            alpha_t = self.config.masking_schedule(t)
-            alpha_s = self.config.masking_schedule(s)
-            
-            logits = self(tokens, theme_tokens, ratings) 
-            probs = F.softmax(logits / temperature, dim=2)
-            
-            p_unmask = (alpha_s - alpha_t) / (1.0 - alpha_t + 1e-9)
-            p_mask = (1.0 - alpha_s) / (1.0 - alpha_t + 1e-9)
-            probs = torch.cat([probs * p_unmask, torch.full((batch_size, seq_length, 1), p_mask, device=device, dtype=probs.dtype)], dim=2)
-
-            is_masked = (tokens == mask_token)
-            flattened_probs = probs.view(-1, self.config.n_tokens + 1)
-            new_samples = torch.multinomial(flattened_probs, num_samples=1).view(batch_size, seq_length)
-            tokens = torch.where(is_masked, new_samples, tokens)
         
+        tokens = torch.full((batch_size, self.seq_length), mask_token, device=device, dtype=torch.long)
+        T_grid = torch.linspace(0, 1, steps + 1, device=device).to(device)
+
+        if not self.config.predict_moves:
+            generate_move_last = False
+        if generate_move_last:
+            phases = [(0, self.config.fen_length), (self.config.fen_length, self.seq_length)]
+        else:
+            phases = [(0, self.seq_length)]
+
+        for start_idx, end_idx in phases:
+            for i in range(steps, 0, -1):
+                t = T_grid[i]
+                s = T_grid[i - 1]
+                alpha_t = self.config.masking_schedule(t)
+                alpha_s = self.config.masking_schedule(s)
+                
+                logits = self(tokens, theme_tokens, ratings) 
+                probs = F.softmax(logits / temperature, dim=2)
+                
+                p_unmask = (alpha_s - alpha_t) / (1.0 - alpha_t + 1e-13)
+                p_mask = (1.0 - alpha_s) / (1.0 - alpha_t + 1e-13)
+                
+                probs = torch.cat([probs * p_unmask, torch.full((batch_size, self.seq_length, 1), p_mask, device=device, dtype=probs.dtype)], dim=2)
+
+                # Gumbel-max sampling
+                log_probs = torch.log(probs + 1e-13)
+                u = torch.rand_like(log_probs)
+                gumbel_noise = -torch.log(-torch.log(u + 1e-13) + 1e-13)
+                new_samples = torch.argmax(log_probs + gumbel_noise, dim=-1)
+                
+                is_masked = (tokens == mask_token)
+                in_window = torch.zeros_like(is_masked, dtype=torch.bool)
+                in_window[:, start_idx:end_idx] = True
+                is_updatable = is_masked & in_window
+
+                tokens = torch.where(is_updatable, new_samples, tokens)
+                
         return tokens

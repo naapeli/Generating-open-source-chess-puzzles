@@ -16,24 +16,25 @@ from metrics.cook import cook
 
 torch.set_float32_matmul_precision("high")
 
-parser = argparse.ArgumentParser(description="Generate chess positions")
-parser.add_argument("--model-type", choices=["moves", "no-moves"], required=True, help="Decide if the model generates a move or does not")
+parser = argparse.ArgumentParser()
+parser.add_argument("--run_type", choices=["supervised", "rl"], required=True)
+parser.add_argument("--checkpoint_name", type=str, default=None)
+parser.add_argument("--run_name", type=str, default=None)
+parser.add_argument("--temperature", type=float, default=1.0)
+parser.add_argument("--steps", type=int, default=512)
+parser.add_argument("--output_file", type=str, required=True)
 args = parser.parse_args()
-
-generates_moves = args.model_type == "moves"
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 base_path = Path("./src")
-checkpoint = torch.load(base_path / "supervised_checkpoints" / "model_0940000.pt", map_location="cpu", weights_only=False)
-# checkpoint = torch.load(base_path / "rl_checkpoints" / "model_0007000.pt", map_location="cpu", weights_only=False)
-# checkpoint = torch.load(base_path / "supervised_checkpoints" / "best_move_model" / "model_0780000.pt", map_location="cpu", weights_only=False)
+checkpoint = torch.load(base_path / "runs" / args.run_type / args.run_name / args.checkpoint_name, map_location="cpu", weights_only=False)
 
 config = checkpoint["config"]
 model = MaskedDiffusion(config)
 model.load_state_dict(checkpoint["model"])
 model.to(device=device)
 
-rating_model_checkpoint = torch.load(base_path / "rating_model_checkpoints" / "model_0063000.pt", map_location="cpu", weights_only=False)
+rating_model_checkpoint = torch.load(base_path / "runs" / "rating_model" / "v1" / "model_0063000.pt", map_location="cpu", weights_only=False)
 rating_model = RatingModel(rating_model_checkpoint["config"])
 rating_model.load_state_dict(rating_model_checkpoint["model"])
 rating_model.to(device=device)
@@ -117,8 +118,8 @@ for iteration in range(n // batch_size):
     scaled_ratings = scale_ratings(base_ratings).to(device=device, dtype=torch.float32)
 
     module = model.module if hasattr(model, "module") else model
-    tokens = module.sample(themes_one_hot, scaled_ratings, steps=512, temperature=0.1)
-    if generates_moves:
+    tokens = module.sample(themes_one_hot, scaled_ratings, steps=args.steps, temperature=args.temperature)
+    if config.predict_moves:
         fen_tokens = tokens[:, :config.fen_length]
         move_tokens = tokens[:, config.fen_length:]
     else:
@@ -136,5 +137,5 @@ while not engine_pool.empty():
     engine.quit()
 
 df = pd.DataFrame(results_list)
-output_path = base_path / "Generate_positions" / "temperature01.csv"
+output_path = base_path / "Generate_positions" / args.output_file
 df.to_csv(output_path, index=False)
