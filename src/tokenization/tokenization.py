@@ -10,7 +10,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 # =========================================== FENS ===========================================
 
 class FENTokens(IntEnum):
-    # 48 tokens
+    # 52 tokens
     no_piece = 0
     white_pawn = auto()
     white_knight = auto()
@@ -34,23 +34,23 @@ class FENTokens(IntEnum):
     castle_black_king = auto()
     castle_black_queen = auto()
     
-    no_en_passant = auto()
-    en_passant_1 = auto()
-    en_passant_2 = auto()
-    en_passant_3 = auto()
-    en_passant_4 = auto()
-    en_passant_5 = auto()
-    en_passant_6 = auto()
-    en_passant_7 = auto()
-    en_passant_8 = auto()
-    en_passant_a = auto()
-    en_passant_b = auto()
-    en_passant_c = auto()
-    en_passant_d = auto()
-    en_passant_e = auto()
-    en_passant_f = auto()
-    en_passant_g = auto()
-    en_passant_h = auto()
+    none = auto()
+    rank1 = auto()
+    rank2 = auto()
+    rank3 = auto()
+    rank4 = auto()
+    rank5 = auto()
+    rank6 = auto()
+    rank7 = auto()
+    rank8 = auto()
+    filea = auto()
+    fileb = auto()
+    filec = auto()
+    filed = auto()
+    filee = auto()
+    filef = auto()
+    fileg = auto()
+    fileh = auto()
 
     pad_counter = auto()
     counter_0 = auto()
@@ -63,6 +63,11 @@ class FENTokens(IntEnum):
     counter_7 = auto()
     counter_8 = auto()
     counter_9 = auto()
+
+    promote_q = auto()
+    promote_r = auto()
+    promote_b = auto()
+    promote_n = auto()
 
     mask = auto()
 
@@ -91,12 +96,12 @@ castling_str_2_token = dict(castling_tokens)
 castling_token_2_str = dict([(token, string) for string, token in castling_tokens])
 
 enpassant_tokens = [
-    ("-", FENTokens.no_en_passant), ("1", FENTokens.en_passant_1), ("2", FENTokens.en_passant_2),
-    ("3", FENTokens.en_passant_3), ("4", FENTokens.en_passant_4), ("5", FENTokens.en_passant_5),
-    ("6", FENTokens.en_passant_6), ("7", FENTokens.en_passant_7), ("8", FENTokens.en_passant_8),
-    ("a", FENTokens.en_passant_a), ("b", FENTokens.en_passant_b), ("c", FENTokens.en_passant_c),
-    ("d", FENTokens.en_passant_d), ("e", FENTokens.en_passant_e), ("f", FENTokens.en_passant_f),
-    ("g", FENTokens.en_passant_g), ("h", FENTokens.en_passant_h),
+    ("-", FENTokens.none), ("1", FENTokens.rank1), ("2", FENTokens.rank2),
+    ("3", FENTokens.rank3), ("4", FENTokens.rank4), ("5", FENTokens.rank5),
+    ("6", FENTokens.rank6), ("7", FENTokens.rank7), ("8", FENTokens.rank8),
+    ("a", FENTokens.filea), ("b", FENTokens.fileb), ("c", FENTokens.filec),
+    ("d", FENTokens.filed), ("e", FENTokens.filee), ("f", FENTokens.filef),
+    ("g", FENTokens.fileg), ("h", FENTokens.fileh),
 ]
 enpassant_str_2_token = dict(enpassant_tokens)
 enpassant_token_2_str = dict([(token, string) for string, token in enpassant_tokens])
@@ -110,6 +115,22 @@ counter_tokens = [
 counter_str_2_token = dict(counter_tokens)
 counter_token_2_str = dict([(token, string) for string, token in counter_tokens])
 
+promote_tokens = [
+    ("q", FENTokens.promote_q), ("r", FENTokens.promote_r), 
+    ("b", FENTokens.promote_b), ("n", FENTokens.promote_n), 
+    ("-", FENTokens.none)
+]
+promote_str_2_token = dict(promote_tokens)
+promote_token_2_str = dict([(token, string) for string, token in promote_tokens])
+
+def tokenize_move(move):
+    tokens = [enpassant_str_2_token[c] for c in move[:4]]
+    if len(move) == 5:
+        tokens.append(promote_str_2_token[move[4]])
+    else:
+        tokens.append(FENTokens.none)
+    return tokens
+
 
 def tokenize_fen(fen):
     board, side, castling, enpassant, halfmove, fullmove = fen.split(" ")
@@ -121,7 +142,7 @@ def tokenize_fen(fen):
     castling_tokens = [FENTokens.castle_white_king, FENTokens.castle_white_queen, FENTokens.castle_black_king, FENTokens.castle_black_queen]
     castling = [token if char in castling else FENTokens.no_castle for token, char in zip(castling_tokens, castling_characters)]
     
-    enpassant = [enpassant_str_2_token[enpassant[0]], enpassant_str_2_token[enpassant[1]]] if enpassant != "-" else [FENTokens.no_en_passant, FENTokens.no_en_passant]
+    enpassant = [enpassant_str_2_token[enpassant[0]], enpassant_str_2_token[enpassant[1]]] if enpassant != "-" else [FENTokens.none, FENTokens.none]
 
     halfmove = "." + halfmove if len(halfmove) == 1 else halfmove
     halfmove = [counter_str_2_token[halfmove[0]], counter_str_2_token[halfmove[1]]]
@@ -163,28 +184,40 @@ def unscale_ratings(scaled_ratings):
 
 def tokenize(df: pd.DataFrame) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     fens = np.stack(df["Puzzle_FEN"].apply(tokenize_fen).values, dtype=np.int8)
+    moves = np.stack(df["Moves"].apply(lambda x: tokenize_move(x.split(" ")[1])).values, dtype=np.int8)
     themes = tokenize_themes(df["Themes"]).astype(np.int8)
     ratings = scale_ratings(df["Rating"].astype(np.float16)).to_numpy()
-    return torch.from_numpy(fens), torch.from_numpy(themes), torch.from_numpy(ratings)
+    return torch.from_numpy(fens), torch.from_numpy(moves), torch.from_numpy(themes), torch.from_numpy(ratings)
 
 def tokens_to_fen(tokens: torch.Tensor) -> str:
-    try:
-        tokens = tokens.squeeze()
-        if tokens.ndim != 1 and tokens.size(0) != 76:
-            raise RuntimeError()
-        
-        tokens = tokens.tolist()
-        board = "".join(board_token_2_str[token] for token in tokens[:64])
-        board = "/".join(board[i:i + 8] for i in range(0, len(board), 8))
-        board = re.sub(r"\.+", lambda string: str(len(string.group())), board)
-        side = side_token_2_str[tokens[64]]
-        castling = "".join(castling_token_2_str[token] for token in tokens[65:69])
-        castling = "-" if castling == "----" else re.sub("-", "", castling)
-        en_passant = "".join([enpassant_token_2_str[token] for token in tokens[69:71]])
-        en_passant = "-" if en_passant == "--" else en_passant  # maybe check that one is not - and the other something else in the future (if the generative model generates an illegal puzzle)
-        halfmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[71:73]))
-        fullmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[73:76]))
+    tokens = tokens.squeeze()
+    if tokens.ndim != 1 or tokens.size(0) != 76:
+        raise RuntimeError()
+    
+    tokens = tokens.tolist()
+    board = "".join(board_token_2_str[token] for token in tokens[:64])
+    board = "/".join(board[i:i + 8] for i in range(0, len(board), 8))
+    board = re.sub(r"\.+", lambda string: str(len(string.group())), board)
+    side = side_token_2_str[tokens[64]]
+    castling = "".join(castling_token_2_str[token] for token in tokens[65:69])
+    castling = "-" if castling == "----" else re.sub("-", "", castling)
+    en_passant = "".join([enpassant_token_2_str[token] for token in tokens[69:71]])
+    en_passant = "-" if en_passant == "--" else en_passant  # maybe check that one is not - and the other something else in the future (if the generative model generates an illegal puzzle)
+    halfmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[71:73]))
+    fullmove_counter = re.sub(r"\.", "", "".join(counter_token_2_str[token] for token in tokens[73:76]))
 
-        return " ".join([board, side, castling, en_passant, halfmove_counter, fullmove_counter])
-    except KeyError:
-        raise NotLegalPositionError("The tokens do not yield a legal position")
+    return " ".join([board, side, castling, en_passant, halfmove_counter, fullmove_counter])
+
+def tokens_to_move(tokens: torch.Tensor) -> str:
+    if tokens.ndim != 1 or tokens.size(0) != 5:
+        raise RuntimeError()
+    
+    tokens = tokens.squeeze()
+    tokens = tokens.tolist()
+    move_tokens = tokens[-5:]
+    m1 = enpassant_token_2_str.get(move_tokens[0], "")
+    m2 = enpassant_token_2_str.get(move_tokens[1], "")
+    m3 = enpassant_token_2_str[move_tokens[2]] if move_tokens[2] in enpassant_token_2_str else ""
+    m4 = enpassant_token_2_str[move_tokens[3]] if move_tokens[3] in enpassant_token_2_str else ""
+    promotion = promote_token_2_str.get(move_tokens[4], "")
+    return m1 + m2 + m3 + m4 + (promotion if promotion != "-" else "")

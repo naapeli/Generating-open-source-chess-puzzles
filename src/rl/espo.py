@@ -120,13 +120,13 @@ def critic_free_ppo_loss(model, reference_elbos, old_elbos, fens, themes, rating
     return -loss, kl, is_clipped  # maximize the loss above
 
 
-def generate_grouped_positions(model, themes, ratings, group_size, steps=256):
+def generate_grouped_positions(model, themes, ratings, group_size, steps=256, temperature=1.0, generate_move_last=True):
     themes = themes.repeat_interleave(group_size, dim=0)
     ratings = ratings.repeat_interleave(group_size, dim=0)
 
     module = model.module if hasattr(model, "module") else model
 
-    fens = module.sample(themes, ratings, steps=steps)
+    fens = module.sample(themes, ratings, steps=steps, temperature=temperature, generate_move_last=generate_move_last)
     return fens, themes, ratings
 
 state_of_game_tokens = ("opening", "middlegame", "endgame")
