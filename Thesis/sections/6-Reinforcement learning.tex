@@ -117,7 +117,7 @@ Kullback-Leibler (KL) divergence is an important part of most RL algorithms. In 
     \mathbb{KL}(q, p) = \sum_{x}q(x)\log\frac{q(x)}{p(x)} = \mathbb{E}_{x\sim q}\left[\log\frac{q(x)}{p(x)}\right].
 \end{equation*}
 
-The main problem with KL divergence in LLMs is that an exact computation of even the token-wise KL divergence is infeasible due to the large memory constraints. For the KL divergence of our sequence-level setting, the exact computation is completely impossible due to the huge space of possible answers to a given prompt. This is especially true for diffusion models, where an exact computation of the required log-probability is not be possible in one forward pass of the denoising model. Therefore, KL divergence is usually estimated via e.g. Monte-Carlo integration.
+The main problem with KL divergence in LLMs is that an exact computation of even the token-wise KL divergence is infeasible due to the large memory constraints. For the KL divergence of our sequence-level setting, the exact computation is completely impossible due to the huge space of possible answers to a given prompt. This is especially true for diffusion models, where an exact computation of the required log-probability is not possible in one forward pass of the denoising model. Therefore, KL divergence is usually estimated via e.g. Monte-Carlo integration.
 
 
 \subsubsection{Naive $k_1$ estimate}
@@ -133,7 +133,14 @@ The $k_1$ estimate is unbiased, but high in variance and hence not used as much 
 
 \subsubsection{Variance-reduced $k_3$ estimate}
 
-A better estimate for the KL divergence can be constructed by noting that $\mathbb{E}_{y\sim \pi_\theta}[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)} - 1] = 0$ \cite{schulman2020klblog}. Schulman uses this to produce another unbiased estimate, that has lower variance compared to $k_1$. The estimate is as follows:
+A better estimate for the KL divergence can be constructed by noting the following \cite{schulman2020klblog}:
+
+\begin{align*}
+    \mathbb{E}_{y\sim \pi_\theta}[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)}] &= \int \pi_\theta(y)\frac{\pi_\text{ref}(y)}{\pi_\theta(y)}\mathrm{d}y \\
+    &= \int \pi_\text{ref}(y)\mathrm{d}y \\
+    &= 1.
+\end{align*}
+Hence $\mathbb{E}_{y\sim \pi_\theta}[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)} - 1] = 0$. Schulman uses this to produce another unbiased estimate, that has lower variance compared to $k_1$. The estimate is as follows:
 
 \begin{equation*}
     \mathbb{KL}_{k_3}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} + \frac{\pi_\text{ref}(y)}{\pi_\theta(y)} - 1\right].
@@ -151,7 +158,7 @@ A final common KL divergence estimate is the so-called $k_2$ estimate:
 
 The $k_2$ estimate is obtained by the second order Taylor series expansion of the KL divergence \cite{schulman2020klblog}. The estimate is biased, however, very low in variance, which makes it more stable than the other estimates. Another benefit of this estimate is that the gradient of $k_2$ is unbiased. Hence, if it is optimized for during RL with gradient based methods, the final result will approach the one we expect.
 
-In this thesis, we employ $k_2$ to estimate the KL divergence between the new and the reference policy. As we use diffusion models and the ELBO as a biased surrogate for the log probability of the generated tokens, the KL estimate is biased in all cases. Hence, we prioritize low variance and stable gradients.
+In this thesis, we employ $k_2$ with a one point Monte-Carlo estimate to approximate the KL divergence between the new and the reference policy. As we use diffusion models and the ELBO is a biased surrogate for the log probability of the generated positions, the KL estimate is biased even if we attempted to use an unbiased estimate. Hence, we prioritize low variance and stable gradients.
 
 
 
