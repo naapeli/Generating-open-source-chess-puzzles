@@ -10,7 +10,7 @@ import numpy as np
 
 import optuna
 import torch
-from torch.optim import AdamW, Muon
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.tensorboard import SummaryWriter
 import chess
@@ -121,13 +121,9 @@ def objective(trial):
     capacity = 200_000
     buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
-    params_adam = [p for p in model.parameters() if p.ndim != 2]
-    params_muon = [p for p in model.parameters() if p.ndim == 2]
-    adam = AdamW(params_adam, lr=config.lr, weight_decay=config.weight_decay)
-    muon = Muon(params_muon, lr=config.lr, weight_decay=config.weight_decay)
+    optimizer = AdamW(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     
-    adam_scheduler = LinearLR(adam, start_factor=0.01, end_factor=1, total_iters=20, last_epoch=-1)
-    muon_scheduler = LinearLR(muon, start_factor=0.01, end_factor=1, total_iters=20, last_epoch=-1)
+    lr_scheduler = LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=50, last_epoch=-1)
     
     cpu_count = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 1))
     
@@ -334,8 +330,7 @@ def objective(trial):
         for substep in range(n_gradient_updates_per_generation):
             step += 1
 
-            adam.zero_grad()
-            muon.zero_grad()
+            optimizer.zero_grad()
 
             if group_size == 1:
                 loss, kl, is_clipped = critic_free_ppo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
@@ -351,10 +346,8 @@ def objective(trial):
             norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             total_norm += norm
 
-            adam.step()
-            muon.step()
-            adam_scheduler.step()
-            muon_scheduler.step()
+            optimizer.step()
+            lr_scheduler.step()
 
         # Let optuna know the current state (we can report after a generation is fully done)
         trial.report(mean_reward, step)
@@ -370,7 +363,7 @@ def objective(trial):
         writer.add_scalar("Loss/Loss", total_loss.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("Loss/Grad norm", total_norm.item() / n_gradient_updates_per_generation, step)
         writer.add_scalar("Loss/KL divergence", total_kl.item() / n_gradient_updates_per_generation, step)
-        writer.add_scalar("Loss/learning_rate", adam.param_groups[0]["lr"], step)
+        writer.add_scalar("Loss/learning_rate", optimizer.param_groups[0]["lr"], step)
         writer.add_scalar("Loss/Clips", total_clips.item() / n_gradient_updates_per_generation, step)
 
         torch.cuda.empty_cache()

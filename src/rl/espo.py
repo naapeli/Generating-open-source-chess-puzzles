@@ -23,9 +23,9 @@ def entropy(elbo, sequence_length):
     entropy_vals = -elbo / sequence_length
     return entropy_vals
 
-def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
-    device = ratings.device
-    n_samples = len(ratings)
+def compute_elbo(model, fens, themes=None, ratings=None, mask=None, return_mask=False):
+    device = fens.device
+    n_samples = len(fens)
 
     config = model.module.config if hasattr(model, "module") else model.config
     module = model.module if hasattr(model, "module") else model
@@ -34,9 +34,12 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     alpha_t = config.masking_schedule(t)
     quadrature_weight = quadrature_weights.unsqueeze(0).to(device)
 
-    fens = fens.repeat_interleave(n_quadrature, dim=0)
-    themes = themes.repeat_interleave(n_quadrature, dim=0)
-    ratings = ratings.repeat_interleave(n_quadrature, dim=0)
+    if themes is None:
+        fens = fens.repeat_interleave(n_quadrature, dim=0)
+    else:
+        fens = fens.repeat_interleave(n_quadrature, dim=0)
+        themes = themes.repeat_interleave(n_quadrature, dim=0)
+        ratings = ratings.repeat_interleave(n_quadrature, dim=0)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
     masked_fens = torch.where(random_mask, fens, config.mask_token)
@@ -50,9 +53,9 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
         return elbo, random_mask, t
     return elbo
 
-def compute_elbo_basic(model, fens, themes, ratings, mask=None, t=None, return_mask=False):
-    device = ratings.device
-    n_samples = len(ratings)
+def compute_elbo_basic(model, fens, themes=None, ratings=None, mask=None, t=None, return_mask=False):
+    device = fens.device
+    n_samples = len(fens)
 
     config = model.module.config if hasattr(model, "module") else model.config
     module = model.module if hasattr(model, "module") else model
@@ -61,7 +64,7 @@ def compute_elbo_basic(model, fens, themes, ratings, mask=None, t=None, return_m
     alpha_t = config.masking_schedule(t)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
-    masked_fens = torch.where(random_mask, fens, model.config.mask_token)
+    masked_fens = torch.where(random_mask, fens, config.mask_token)
 
     logits = model(masked_fens, themes, ratings)
     elbo = module.elbo_loss(t, logits, fens, masked_fens)
