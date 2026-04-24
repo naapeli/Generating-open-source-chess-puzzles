@@ -1,1 +1,0 @@
-[rank0]:W0409 10:42:27.201000 1408496 site-packages/torch/_logging/_internal.py:1199] [0/0] Profiler function <class 'torch.autograd.profiler.record_function'> will be ignored

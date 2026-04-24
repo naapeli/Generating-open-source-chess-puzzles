@@ -59,7 +59,7 @@ if not random_themes_and_ratings:
     dataset_ratings = torch.from_numpy(dataset["Rating"].to_numpy())
 
 def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device, rating_model):
-    entry = {"target_themes": base_theme, "target_rating": base_rating.item(), "fen": None, "best_move": None, "is_legal": False, "is_puzzle": False, "counter_intuitive": None, "actual_themes": None, "predicted_rating": None, "themes_match": None, "main_line": None, "best_move_matches": None}
+    entry = {"target_themes": base_theme, "target_rating": base_rating, "fen": None, "best_move": None, "is_legal": False, "is_puzzle": False, "counter_intuitive": None, "actual_themes": None, "predicted_rating": None, "themes_match": None, "main_line": None, "best_move_matches": None}
 
     engine = engine_pool.get()
 
@@ -96,7 +96,8 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device, rat
             
             entry["predicted_rating"] = unscale_ratings(puzzle_rating).item()
             
-            entry["themes_match"] = theme_reward(base_theme, existing_themes)
+            if config.use_context:
+                entry["themes_match"] = theme_reward(base_theme, existing_themes)
 
         return entry
 
@@ -106,19 +107,24 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device, rat
 
 for iteration in range(n // batch_size):
     print(iteration + 1, n // batch_size, flush=True)
-    if random_themes_and_ratings:
-        base_themes, base_ratings = generate_random_themes(batch_size)
-    else:
-        indices = torch.randint(0, len(dataset_ratings), (batch_size,))
-        base_ratings = dataset_ratings[indices]
-        base_themes = [dataset_themes[index] for index in indices]
+    if config.use_context:
+        if random_themes_and_ratings:
+            base_themes, base_ratings = generate_random_themes(batch_size)
+        else:
+            indices = torch.randint(0, len(dataset_ratings), (batch_size,))
+            base_ratings = dataset_ratings[indices]
+            base_themes = [dataset_themes[index] for index in indices]
     
-    base_ratings = base_ratings.to(device=device, dtype=torch.float32)
-    themes_one_hot = torch.from_numpy(theme_preprocessor.transform(base_themes)).to(device=device, dtype=torch.float32)
-    scaled_ratings = scale_ratings(base_ratings).to(device=device, dtype=torch.float32)
+    if config.use_context:
+        base_ratings = base_ratings.to(device=device, dtype=torch.float32)
+        themes_one_hot = torch.from_numpy(theme_preprocessor.transform(base_themes)).to(device=device, dtype=torch.float32)
+        scaled_ratings = scale_ratings(base_ratings).to(device=device, dtype=torch.float32)
+    else:
+        themes_one_hot = None
+        scaled_ratings = None
 
     module = model.module if hasattr(model, "module") else model
-    tokens = module.sample(themes_one_hot, scaled_ratings, steps=args.steps, temperature=args.temperature)
+    tokens = module.sample(themes_one_hot, scaled_ratings, batch_size=batch_size, steps=args.steps, temperature=args.temperature)
     if config.predict_moves:
         fen_tokens = tokens[:, :config.fen_length]
         move_tokens = tokens[:, config.fen_length:]
@@ -127,7 +133,7 @@ for iteration in range(n // batch_size):
         move_tokens = None
 
     batch_results = Parallel(n_jobs=n_jobs, backend="threading")(
-        delayed(process_puzzle)(fen_tokens[i], move_tokens[i] if move_tokens is not None else None, base_themes[i], base_ratings[i], device, rating_model) for i in range(batch_size)
+        delayed(process_puzzle)(fen_tokens[i], move_tokens[i] if move_tokens is not None else None, base_themes[i] if themes_one_hot is not None else None, base_ratings[i] if scaled_ratings is not None else None, device, rating_model) for i in range(batch_size)
     )
     
     results_list.extend(batch_results)

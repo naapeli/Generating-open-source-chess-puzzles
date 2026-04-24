@@ -23,9 +23,9 @@ def entropy(elbo, sequence_length):
     entropy_vals = -elbo / sequence_length
     return entropy_vals
 
-def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
-    device = ratings.device
-    n_samples = len(ratings)
+def compute_elbo(model, fens, themes=None, ratings=None, mask=None, return_mask=False):
+    device = fens.device
+    n_samples = len(fens)
 
     config = model.module.config if hasattr(model, "module") else model.config
     module = model.module if hasattr(model, "module") else model
@@ -34,9 +34,12 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     alpha_t = config.masking_schedule(t)
     quadrature_weight = quadrature_weights.unsqueeze(0).to(device)
 
-    fens = fens.repeat_interleave(n_quadrature, dim=0)
-    themes = themes.repeat_interleave(n_quadrature, dim=0)
-    ratings = ratings.repeat_interleave(n_quadrature, dim=0)
+    if themes is None:
+        fens = fens.repeat_interleave(n_quadrature, dim=0)
+    else:
+        fens = fens.repeat_interleave(n_quadrature, dim=0)
+        themes = themes.repeat_interleave(n_quadrature, dim=0)
+        ratings = ratings.repeat_interleave(n_quadrature, dim=0)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
     masked_fens = torch.where(random_mask, fens, config.mask_token)
@@ -50,9 +53,9 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
         return elbo, random_mask, t
     return elbo
 
-def compute_elbo_basic(model, fens, themes, ratings, mask=None, t=None, return_mask=False):
-    device = ratings.device
-    n_samples = len(ratings)
+def compute_elbo_basic(model, fens, themes=None, ratings=None, mask=None, t=None, return_mask=False):
+    device = fens.device
+    n_samples = len(fens)
 
     config = model.module.config if hasattr(model, "module") else model.config
     module = model.module if hasattr(model, "module") else model
@@ -61,7 +64,7 @@ def compute_elbo_basic(model, fens, themes, ratings, mask=None, t=None, return_m
     alpha_t = config.masking_schedule(t)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
-    masked_fens = torch.where(random_mask, fens, model.config.mask_token)
+    masked_fens = torch.where(random_mask, fens, config.mask_token)
 
     logits = model(masked_fens, themes, ratings)
     elbo = module.elbo_loss(t, logits, fens, masked_fens)
@@ -76,7 +79,7 @@ def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards,
     assert n_samples % group_size == 0
     batch_size = n_samples // group_size
 
-    device = ratings.device
+    device = fens.device
     elbo = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
     # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, t=t, return_mask=False)
 
@@ -120,13 +123,15 @@ def critic_free_ppo_loss(model, reference_elbos, old_elbos, fens, themes, rating
     return -loss, kl, is_clipped  # maximize the loss above
 
 
-def generate_grouped_positions(model, themes, ratings, group_size, steps=256, temperature=1.0, generate_move_last=True):
-    themes = themes.repeat_interleave(group_size, dim=0)
-    ratings = ratings.repeat_interleave(group_size, dim=0)
+def generate_grouped_positions(model, themes, ratings, group_size, batch_size, steps=256, temperature=1.0, generate_move_last=True):
+    if themes is not None:
+        themes = themes.repeat_interleave(group_size, dim=0)
+    if ratings is not None:
+        ratings = ratings.repeat_interleave(group_size, dim=0)
 
     module = model.module if hasattr(model, "module") else model
 
-    fens = module.sample(themes, ratings, steps=steps, temperature=temperature, generate_move_last=generate_move_last)
+    fens = module.sample(themes, ratings, steps=steps, batch_size=batch_size * group_size, temperature=temperature, generate_move_last=generate_move_last)
     return fens, themes, ratings
 
 state_of_game_tokens = ("opening", "middlegame", "endgame")
