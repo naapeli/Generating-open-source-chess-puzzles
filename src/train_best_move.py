@@ -9,7 +9,7 @@ from torch.nn.parallel import DistributedDataParallel
 from torch.distributed import init_process_group, destroy_process_group, all_reduce, ReduceOp
 import chess
 from chess import svg
-from chess.engine import SimpleEngine
+from chess.engine import SimpleEngine, Limit
 import cairosvg
 from PIL import Image, ImageDraw
 import numpy as np
@@ -122,8 +122,7 @@ def main():
 
     # ====================== MODEL ======================
     model = MaskedDiffusion(config)
-    if continue_from_checkpoint:
-        model.load_state_dict(checkpoint["model"])
+    model.load_state_dict(checkpoint["model"])
     model.to(device=device)
 
     if distributed:
@@ -177,25 +176,49 @@ def main():
         unwrapped_model = model.module if distributed else model
         loss_scale = (config.fen_length + config.move_length) / config.move_length
         return unwrapped_model.elbo_loss(t, logits, tokens, masked_tokens) * loss_scale
+    
+    def compute_whole_loss(model, fens, moves):
+        tokens = torch.cat([fens, moves], dim=1)
+        batch_size = len(fens)
+        t = ((torch.rand(1) + torch.arange(1, batch_size + 1, 1) / batch_size) % 1).to(device)
+        alpha_t = config.masking_schedule(t).unsqueeze(1).to(device)
+
+        mask = torch.rand(tokens.size(), device=device) < alpha_t
+        masked_tokens = torch.where(mask, tokens, config.mask_token)
+        with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
+            logits = model(masked_tokens)
+            
+        unwrapped_model = model.module if distributed else model
+        return unwrapped_model.elbo_loss(t, logits, tokens, masked_tokens)
 
     # ====================== METRICS HELPERS ======================
     def get_puzzle_local(fen):
-        if fen is None or not legal(fen): return None
+        if fen is None or not legal(fen): return None, None
         with SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish") as stockfish:
             puzzle = get_unique_puzzle_from_fen(fen, stockfish)
-        return puzzle
+            best_move = None
+            if puzzle:
+                best_move = puzzle.mainline[0].move.uci()
+            elif legal(fen):
+                board = chess.Board(fen)
+                info = stockfish.analyse(board, limit=Limit(time=0.1))
+                if "pv" in info:
+                    best_move = info["pv"][0].uci()
+        return puzzle, best_move
 
-    def get_rewards_local(fen_tokens, elbo, step_idx):
-        # fens is (batch_size, fen_length)
+    def get_rewards_local(gen_tokens, elbo, step_idx):
+        fen_tokens = gen_tokens[:, :config.fen_length]
+        move_tokens = gen_tokens[:, config.fen_length:]
         batch_size = len(fen_tokens)
         
         total_length = config.fen_length + config.move_length
         entropies = -elbo / total_length
-
+        
         legal_position = torch.zeros(batch_size, dtype=bool)
         unique_solution = torch.zeros(batch_size, dtype=bool)
         counter_intuitive_solution = torch.zeros(batch_size, dtype=bool)
         piece_counts = torch.zeros(batch_size, dtype=bool)
+        correct_move = torch.zeros(batch_size, dtype=bool)
         
         inter_batch_fen_dist = torch.zeros(batch_size, dtype=bool)
         intra_batch_fen_dist = torch.zeros(batch_size, dtype=bool)
@@ -210,7 +233,9 @@ def main():
             except:
                 fens.append(None)
 
-        puzzles = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle_local)(fen) for fen in fens))
+        results = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle_local)(fen) for fen in fens))
+        puzzles = [r[0] for r in results]
+        best_moves = [r[1] for r in results]
 
         for i, fen in enumerate(fens):
             if fen is None or not legal(fen): continue
@@ -218,6 +243,14 @@ def main():
             piece_counts[i] = good_piece_counts(fen)
             counter_intuitive_solution[i] = counter_intuitive(fen, engine)
             
+            best_move = best_moves[i]
+            if best_move is not None:
+                try:
+                    predicted_move = tokens_to_move(move_tokens[i].cpu())
+                    correct_move[i] = (predicted_move == best_move)
+                except:
+                    pass
+
             puzzle = puzzles[i]
             if puzzle is None: continue
             unique_solution[i] = 1
@@ -226,11 +259,20 @@ def main():
             pv = " ".join([move.uci() for move in puzzle.mainline])
             intra_batch_fen_dist[i], intra_batch_pv_dist[i] = good_intra_batch_distances(fen, pv, puzzles, i)
             inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
-
+        
+        index = torch.argmax(unique_solution.float() * counter_intuitive_solution.float() + correct_move.float()).item()
+        pred_move = "illegal move"
+        try:
+            pred_move = tokens_to_move(move_tokens[index].cpu())
+        except:
+            pass
+        validation_writer.add_text(f"Generations", f"fen: {fens[index]} predicted move: {pred_move} best move: {best_moves[index]}", step_idx)
+        
         log_data = {
             "entropy": entropies.mean().item(),
             "legal_rate": legal_position.float().mean().item(),
             "uniqueness_rate": unique_solution.float().mean().item(),
+            "correct_move_rate": correct_move[legal_position].float().mean().item() if legal_position.any() else 0,
             "counter_intuitive_rate": counter_intuitive_solution.float().mean().item(),
             "unique_and_counter_intuitive": (unique_solution & counter_intuitive_solution).float().mean().item(),
             "piece_counts": piece_counts[legal_position].float().mean().item() if legal_position.any() else 0,
@@ -285,19 +327,19 @@ def main():
                     val_count = 0
                     for v_fen, v_move in validationloader:
                         v_fen, v_move = v_fen.to(dtype=torch.long, device=device), v_move.to(dtype=torch.long, device=device)
-                        val_loss = compute_loss(model, v_fen, v_move).sum()
+                        val_loss = compute_whole_loss(model, v_fen, v_move).sum()
                         val_loss_sum += val_loss.item()
                         val_count += len(v_fen)
                     validation_writer.add_scalar("Loss", val_loss_sum / val_count, step)
 
                     # Generation metrics
                     unwrapped_model = model.module if distributed else model
-                    gen_tokens = unwrapped_model.sample(batch_size=100, steps=512)
+                    gen_tokens = unwrapped_model.sample(batch_size=64, steps=512)
                     
                     # Compute ELBO for entropy monitoring
                     elbo = compute_elbo_basic(model, gen_tokens)
                     
-                    get_rewards_local(gen_tokens[:, :config.fen_length], elbo, step)
+                    get_rewards_local(gen_tokens, elbo, step)
                 model.train()
 
             if step % args.save_interval == 0 and master_process:

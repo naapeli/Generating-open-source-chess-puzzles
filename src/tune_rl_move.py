@@ -74,12 +74,10 @@ def objective(trial):
     # Static parameters
     n_gradient_updates_per_generation = 4
     total_steps = args.steps_per_trial
-    batch_size = 16
+    batch_size = 2  # 16
     local_batch_size = batch_size
-    group_size = 4
+    group_size = 32  # 4
     eps = 0.3
-    n_positions_added = 16
-    local_n_positions_added = n_positions_added
     lichess_distribution = True
     
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -98,7 +96,9 @@ def objective(trial):
     logging_path = base_path / "runs"/ "rl" / "tune" / args.study_name / f"trial_{trial.number}"
     writer = SummaryWriter(logging_path)
 
-    reference_checkpoint_path = base_path / "runs" / "supervised" / "best_move_model" / "model_0980000.pt"
+    # reference_checkpoint_path = base_path / "runs" / "supervised" / "best_move_model" / "model_0980000.pt"
+    reference_checkpoint_path = base_path / "runs" / "supervised" / "no_context_move_model" / "model_0600000.pt"
+    reference_checkpoint_path = base_path / "runs" / "supervised" / args.model_path
     reference_checkpoint = torch.load(reference_checkpoint_path, map_location="cpu", weights_only=False)
     
     config = deepcopy(reference_checkpoint["config"])
@@ -148,7 +148,7 @@ def objective(trial):
         except Exception:
             pass
 
-    def get_rewards_local(fen_tokens, theme_tokens, ratings, is_generated, elbo, step):
+    def get_rewards_local(fen_tokens, theme_tokens, ratings, elbo, step):
         legal_position = torch.zeros(len(fen_tokens), dtype=bool)
         unique_solution = torch.zeros(len(fen_tokens), dtype=bool)
         counter_intuitive_solution = torch.zeros(len(fen_tokens), dtype=bool)
@@ -165,11 +165,12 @@ def objective(trial):
         _, sequence_length = fen_tokens.shape
         entropies = entropy(elbo.cpu(), sequence_length)
 
-        is_generated = is_generated.cpu()
-
-        group_size = len(fen_tokens) // len(ratings)
-        themes = theme_preprocessor.inverse_transform(theme_tokens.cpu().numpy())
-        true_ratings = ratings.repeat_interleave(group_size, dim=0)
+        if config.use_context:
+            group_size = len(fen_tokens) // len(ratings)
+            themes = theme_preprocessor.inverse_transform(theme_tokens.cpu().numpy())
+            true_ratings = ratings.repeat_interleave(group_size, dim=0)
+        else:
+            group_size = 1
 
         device = fen_tokens.device
         fen_tokens_cpu = fen_tokens.cpu()
@@ -197,7 +198,8 @@ def objective(trial):
         valid_gen_themes = []
 
         for i, fen in enumerate(fens):
-            theme = themes[i // group_size]
+            if config.use_context:
+                theme = themes[i // group_size]
             if fen is None or not legal(fen):
                 continue
             legal_position[i] = 1
@@ -221,12 +223,13 @@ def objective(trial):
             inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
 
             generation_themes = cook(puzzle, engine)
-            themes_match[i] = theme_reward(theme, generation_themes)
+            if config.use_context:
+                themes_match[i] = theme_reward(theme, generation_themes)
 
             valid_indices.append(i)
             valid_gen_themes.append(generation_themes)
 
-        if valid_indices:
+        if valid_indices and config.use_context:
             gen_theme_tokens = torch.tensor(theme_preprocessor.transform(valid_gen_themes), dtype=theme_tokens.dtype, device=device)
             valid_fen_tokens = fen_tokens[valid_indices]
             
@@ -247,22 +250,23 @@ def objective(trial):
 
         rewards = rewards.float()
         log_rewards = rewards.clone()
-        log_rewards[~is_generated] = -float("inf")
         if log_rewards.numel() > 0:
             index = torch.argmax(log_rewards).item()
-            save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Generations", step)
+            board_theme = themes[index // group_size] if config.use_context else None
+            board_rating = ratings[index // group_size].item() if config.use_context else None
+            save_board(fens[index], board_theme, board_rating, "Generations", step)
         
         is_valid = torch.zeros(len(fen_tokens), dtype=torch.bool)
         is_valid[valid_indices] = True
-        valid_mask = is_valid & is_generated
+        valid_mask = is_valid
 
         log_data = {
-            "legal_rate": legal_position[is_generated].float().mean().item(),
-            "uniqueness_rate": unique_solution[is_generated].float().mean().item(),
-            "counter_intuitive_rate": counter_intuitive_solution[is_generated].float().mean().item(),
+            "legal_rate": legal_position.float().mean().item(),
+            "uniqueness_rate": unique_solution.float().mean().item(),
+            "counter_intuitive_rate": counter_intuitive_solution.float().mean().item(),
             "counter_intuitive_rate_given_unique": counter_intuitive_solution[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "entropy": entropies[is_generated].float().mean().item(),
-            "piece_counts": piece_counts[is_generated & legal_position].float().mean().item(),
+            "entropy": entropies.float().mean().item(),
+            "piece_counts": piece_counts[legal_position].float().mean().item(),
             "themes_match_rate": themes_match[valid_mask].float().mean().item() if valid_mask.any() else 0,
             "dist_inter_fen": inter_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
             "dist_intra_fen": intra_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
@@ -273,13 +277,13 @@ def objective(trial):
             "all_dist": all_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
             "rating_abs_diff": (-1000 * rating_penalty[valid_mask]).float().mean().item() if valid_mask.any() else 1000,
             "pass_diversity_filtering": pass_diversity_filtering[valid_mask].float().mean().item() if valid_mask.any() else 0,
-            "move_match_rate": move_matches[legal_position & is_generated].float().mean().item() if (legal_position & is_generated).any() else 0,
+            "move_match_rate": move_matches[legal_position].float().mean().item() if legal_position.any() else 0,
             "cp_loss": cp_losses[valid_mask & ~torch.isnan(cp_losses)].mean().item() if (valid_mask & ~torch.isnan(cp_losses)).any() else 0,
         }
         
         for key, value in log_data.items():
             writer.add_scalar(f"Components/{key}", value, step)
-        writer.add_scalar("Reward", rewards[is_generated].float().mean().item(), step)
+        writer.add_scalar("Reward", rewards.float().mean().item(), step)
 
         return rewards.to(device=device, dtype=torch.float32)
 
@@ -289,36 +293,27 @@ def objective(trial):
     last_rewards = []
     
     while not end:
-        themes, ratings = generate_random_themes(local_batch_size, lichess_distribution=lichess_distribution)
-        ratings = ratings.to(device=device, dtype=torch.float32)
-        themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
-        scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
+        if config.use_context:
+            themes, ratings = generate_random_themes(local_batch_size, lichess_distribution=lichess_distribution)
+            ratings = ratings.to(device=device, dtype=torch.float32)
+            themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
+            scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
+        else:
+            themes = None
+            ratings = None
+            themes_one_hot = None
+            scaled_ratings = None
 
         with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
-            step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=512, generate_move_last=True, temperature=args.temperature)
+            step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, batch_size, steps=512, generate_move_last=True, temperature=args.temperature)
         
-        is_generated = torch.ones(len(step_fens), dtype=torch.bool, device=device)
-        
-        if group_size == 1:
-            sampled_fens, _, sampled_themes, sampled_ratings = buffer.sample(local_n_positions_added)
-            sampled_fens = torch.tensor([tokenize_fen(sampled_fen) for sampled_fen in sampled_fens]).to(device=device)
-            sampled_themes = torch.from_numpy(theme_preprocessor.transform(sampled_themes)).to(device=device, dtype=torch.float32)
-            themes_one_hot = torch.cat([themes_one_hot, sampled_themes], dim=0)
-            ratings = torch.cat([ratings, sampled_ratings.to(device=device)], dim=0)
-            sampled_ratings = scale_ratings(sampled_ratings).to(device=device, dtype=torch.float32)
-            
-            is_generated = torch.cat([is_generated, torch.zeros(local_n_positions_added, dtype=torch.bool, device=device)])
-            step_fens = torch.cat([step_fens, sampled_fens], dim=0)
-            step_themes = torch.cat([step_themes, sampled_themes], dim=0)
-            step_ratings = torch.cat([step_ratings, sampled_ratings], dim=0)
-
         with torch.no_grad():
             reference_elbo, mask, t = compute_elbo(reference_model, step_fens, step_themes, step_ratings, return_mask=True)
             old_elbo = compute_elbo(model, step_fens, step_themes, step_ratings, mask=mask)
 
-        rewards = get_rewards_local(step_fens, themes_one_hot, ratings, is_generated, old_elbo, step)
+        rewards = get_rewards_local(step_fens, themes_one_hot, ratings, old_elbo, step)
         
-        mean_reward = rewards[is_generated].float().mean().item()
+        mean_reward = rewards.float().mean().item()
         last_rewards.append(mean_reward)
         if len(last_rewards) > 20:
             last_rewards.pop(0)
@@ -332,10 +327,7 @@ def objective(trial):
 
             optimizer.zero_grad()
 
-            if group_size == 1:
-                loss, kl, is_clipped = critic_free_ppo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
-            else:
-                loss, kl, is_clipped = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
+            loss, kl, is_clipped = espo_loss(model, reference_elbo, old_elbo, step_fens, step_themes, step_ratings, rewards, group_size, mask=mask, t=t, eps=eps, beta=beta)
             loss = loss.mean()
             total_loss += loss
             total_kl += kl.mean()
@@ -385,6 +377,7 @@ if __name__ == "__main__":
     parser.add_argument("--steps_per_trial", type=int, default=2000)
     parser.add_argument("--reward_structure", type=str, default="reward = ")
     parser.add_argument("--temperature", type=float, default=1.0)
+    parser.add_argument("--model_path", type=str, required=True)
     args = parser.parse_args()
 
     # Disable Optuna's default print logs to keep the console clean
@@ -408,6 +401,7 @@ if __name__ == "__main__":
         direction="maximize", 
         pruner=pruner
     )
+    study.enqueue_trial({"le": 1e-5, "beta": 1, "weight_decay": 1e-5})
     study.optimize(objective, n_trials=args.n_trials)
     
     summary_path = tune_dir / f"{args.study_name}_summary.txt"
