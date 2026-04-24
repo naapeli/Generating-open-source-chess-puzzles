@@ -15,7 +15,7 @@ from torch.nn.parallel import DistributedDataParallel
 from torch.distributed import init_process_group, destroy_process_group, all_reduce, ReduceOp, gather, scatter
 import chess
 from chess import svg
-from chess.engine import SimpleEngine
+from chess.engine import SimpleEngine, Limit
 import cairosvg
 from PIL import Image, ImageDraw
 import numpy as np
@@ -23,7 +23,7 @@ import numpy as np
 from MaskedDiffusion.model import MaskedDiffusion
 from RatingModel.model import RatingModel
 from rl.espo import espo_loss, generate_grouped_positions, generate_random_themes, compute_elbo, compute_elbo_basic, theme_reward, entropy
-from tokenization.tokenization import theme_preprocessor, scale_ratings, unscale_ratings, tokens_to_fen, tokenize_fen
+from tokenization.tokenization import theme_preprocessor, scale_ratings, unscale_ratings, tokens_to_fen, tokenize_fen, tokens_to_move
 from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
 from metrics.cook import cook
 from metrics.diversity_filtering import ReplayBuffer
@@ -40,10 +40,10 @@ parser.add_argument("--lr", type=float, default=3e-4)
 parser.add_argument("--beta", type=float, default=3e-2)
 parser.add_argument("--weight_decay", type=float, default=1e-5)
 parser.add_argument("--reward_structure", type=str, default="")
-parser.add_argument("--n_gradient_updates_per_generation", type=int, default=4)
+parser.add_argument("--n_gradient_updates_per_generation", type=int, default=1)
 parser.add_argument("--batch_size", type=int, default=16)
 parser.add_argument("--group_size", type=int, default=4)
-parser.add_argument("--eps", type=float, default=0.3)
+parser.add_argument("--eps", type=float, default=0.1)
 parser.add_argument("--save_period", type=int, default=2000)
 parser.add_argument("--lichess_distribution", type=bool, default=True)
 parser.add_argument("--temperature", type=float, default=1.0)
@@ -145,12 +145,41 @@ engine = SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockf
 
 # ====================== REWARDS ======================
 
-def get_puzzle(fen):
-    if fen is None: return None
-    if not legal(fen): return None
+def get_stockfish_data(fen, model_move):
+    if fen is None: return None, None, None
+    if not legal(fen): return None, None, None
     with SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish") as stockfish:
+        board = chess.Board(fen)
+        limit = Limit(depth=15, time=10, nodes=8_000_000)
+        
+        analysis = stockfish.analyse(board, limit=limit)
+        best_move = analysis["pv"][0] if "pv" in analysis else None
+        player_to_move = board.turn
+        best_score = analysis["score"].pov(player_to_move) if "score" in analysis else None
+        
         puzzle = get_unique_puzzle_from_fen(fen, stockfish)
-    return puzzle
+        
+        cp_loss = None
+        if model_move and best_score is not None:
+            try:
+                move = chess.Move.from_uci(model_move)
+                if move in board.legal_moves:
+                    if best_move and move == best_move:
+                        cp_loss = 0
+                    else:
+                        board.push(move)
+                        model_analysis = stockfish.analyse(board, limit=limit)
+                        model_score = model_analysis["score"].pov(player_to_move)
+                        board.pop()
+                        
+                        if not best_score.is_mate() and not model_score.is_mate():
+                            cp_loss = max(0, best_score.score() - model_score.score())
+            except:
+                pass
+
+        if best_move is None:
+            return puzzle, None, cp_loss
+    return puzzle, best_move.uci(), cp_loss
 
 def save_board(fen, themes, rating, tag):
     try:
@@ -180,6 +209,8 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
     inter_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     intra_batch_pv_dist = torch.zeros(len(fen_tokens), dtype=bool)
     themes_match = torch.zeros(len(fen_tokens), dtype=bool)
+    move_matches = torch.zeros(len(fen_tokens), dtype=bool)
+    cp_losses = torch.full((len(fen_tokens),), float("nan"), dtype=torch.float32)
     rating_penalty = torch.zeros(len(fen_tokens), dtype=torch.float32)
 
     _, sequence_length = fen_tokens.shape
@@ -188,22 +219,36 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
 
     is_generated = is_generated.cpu()
 
-    group_size = len(fen_tokens) // len(ratings)
-    themes = theme_preprocessor.inverse_transform(theme_tokens.cpu().numpy())
-    true_ratings = ratings.repeat_interleave(group_size, dim=0)
+    if config.use_context:
+        group_size_local = len(fen_tokens) // len(ratings)
+        themes = theme_preprocessor.inverse_transform(theme_tokens.cpu().numpy())
+        true_ratings = ratings.repeat_interleave(group_size_local, dim=0)
 
     fen_tokens_cpu = fen_tokens.cpu()
 
     fens = []
+    model_moves = []
     for tokens in fen_tokens_cpu:
         try:
-            fen = tokens_to_fen(tokens)
+            fen = tokens_to_fen(tokens[:config.fen_length])
             fens.append(fen)
         except:
             fens.append(None)
+        
+        if config.predict_moves:
+            try:
+                model_move = tokens_to_move(tokens[config.fen_length:])
+                model_moves.append(model_move)
+            except:
+                model_moves.append(None)
+        else:
+            model_moves.append(None)
 
     try:
-        puzzles = list(Parallel(n_jobs=cpu_count)(delayed(get_puzzle)(fen) for fen in fens))
+        results = list(Parallel(n_jobs=cpu_count)(delayed(get_stockfish_data)(fen, model_moves[i]) for i, fen in enumerate(fens)))
+        puzzles = [r[0] for r in results]
+        actual_best_moves = [r[1] for r in results]
+        found_cp_losses = [r[2] for r in results]
     except TimeoutError:
         print("Stockfish timed out")
         return torch.zeros(len(fen_tokens), dtype=torch.float32)
@@ -212,12 +257,18 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
     valid_gen_themes = []
 
     for i, fen in enumerate(fens):
-        theme = themes[i // group_size]
+        if config.use_context:
+            theme = themes[i // group_size_local]
         if fen is None or not legal(fen):
             continue
         legal_position[i] = 1
 
         piece_counts[i] = good_piece_counts(fen)
+        
+        actual_best_move = actual_best_moves[i]
+        move_matches[i] = (model_moves[i] == actual_best_move)
+        if found_cp_losses[i] is not None:
+            cp_losses[i] = found_cp_losses[i]
 
         counter_intuitive_solution[i] = counter_intuitive(fen, engine)
         
@@ -232,7 +283,8 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
         inter_batch_fen_dist[i], inter_batch_pv_dist[i] = good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
 
         generation_themes = cook(puzzle, engine)
-        themes_match[i] = theme_reward(theme, generation_themes)
+        if config.use_context:
+            themes_match[i] = theme_reward(theme, generation_themes)
 
         # if the position returns a high reward, add it to the buffer
         # good_distances = intra_batch_fen_dist[i] and intra_batch_pv_dist[i] and inter_batch_fen_dist[i] and inter_batch_pv_dist[i]
@@ -242,7 +294,7 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
         valid_indices.append(i)
         valid_gen_themes.append(generation_themes)
 
-    if valid_indices:
+    if valid_indices and config.use_context:
         gen_theme_tokens = torch.tensor(theme_preprocessor.transform(valid_gen_themes), dtype=theme_tokens.dtype, device=device)
         valid_fen_tokens = fen_tokens[valid_indices]
         
@@ -256,23 +308,25 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
     intra_distances = intra_batch_fen_dist * intra_batch_pv_dist
     inter_distances = inter_batch_fen_dist * inter_batch_pv_dist
     all_distances = intra_distances * inter_distances
-    
+
+    unique_and_counter_intuitive = unique_solution & counter_intuitive_solution
     pass_diversity_filtering = intra_distances & inter_batch_fen_dist & piece_counts# & entropy_reward
-    rewards = torch.zeros(len(fen_tokens), dtype=torch.float32)
-    # rewards = torch.where(legal_position & unique_solution & counter_intuitive_solution & pass_diversity_filtering, 1.0, rewards)
-    # rewards = torch.where(legal_position, rewards, -2.0)
-    rewards = legal_position * pass_diversity_filtering * (unique_solution + counter_intuitive_solution)
+    
+    rewards = torch.where(legal_position & unique_solution & counter_intuitive_solution & pass_diversity_filtering, 1.0, 0.0)
+    # rewards = legal_position * (unique_solution + counter_intuitive_solution + 100 * unique_and_counter_intuitive)
+    rewards = torch.where(legal_position, rewards, -2.0)
+    # rewards = legal_position * pass_diversity_filtering * (unique_solution + counter_intuitive_solution)
     rewards = rewards.to(torch.float32)
 
     # save the images of some positions
     log_rewards = rewards.clone()
     log_rewards[~is_generated] = -float("inf")
     index = torch.argmax(log_rewards).item()
-    save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Generations")
+    save_board(fens[index], themes[index // group_size_local] if config.use_context else None, ratings[index // group_size_local] if config.use_context else None, "Generations")
     for index, reward in enumerate(log_rewards):
         if not (unique_solution[index] & counter_intuitive_solution[index] & themes_match[index]):
             continue
-        save_board(fens[index], themes[index // group_size], ratings[index // group_size], "Puzzles")
+        save_board(fens[index], themes[index // group_size_local] if config.use_context else None, ratings[index // group_size_local] if config.use_context else None, "Puzzles")
 
     is_valid = torch.zeros(len(fen_tokens), dtype=torch.bool)
     is_valid[valid_indices] = True
@@ -283,10 +337,10 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
         "uniqueness_rate": unique_solution[is_generated].float().mean().item(),
         "counter_intuitive_rate": counter_intuitive_solution[is_generated].float().mean().item(),
         "counter_intuitive_rate_given_unique": counter_intuitive_solution[valid_mask].float().mean().item() if valid_mask.any() else 0,
-        "unique_and_counter_intuitive": (unique_solution & counter_intuitive_solution)[is_generated].float().mean().item(),
+        "unique_and_counter_intuitive": unique_and_counter_intuitive[is_generated].float().mean().item(),
         "entropy": entropies[is_generated].float().mean().item(),
         "piece_counts": piece_counts[is_generated & legal_position].float().mean().item(),
-        "themes_match_rate": themes_match[valid_mask].float().mean().item() if valid_mask.any() else 0,
+        "themes_match_rate": themes_match[valid_mask].float().mean().item() if valid_mask.any() and config.use_context else 0,
         "dist_inter_fen": inter_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
         "dist_intra_fen": intra_batch_fen_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
         "dist_inter_pv": inter_batch_pv_dist[valid_mask].float().mean().item() if valid_mask.any() else 0,
@@ -294,8 +348,10 @@ def get_rewards(fen_tokens, theme_tokens, ratings, is_generated, elbo):
         "intra_dist": intra_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
         "inter_dist": inter_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
         "all_dist": all_distances[valid_mask].float().mean().item() if valid_mask.any() else 0,
-        "rating_abs_diff": (-1000 * rating_penalty[valid_mask]).float().mean().item() if valid_mask.any() else 1000,
+        "rating_abs_diff": (-1000 * rating_penalty[valid_mask]).float().mean().item() if valid_mask.any() and config.use_context else 0,
         "pass_diversity_filtering": pass_diversity_filtering[valid_mask].float().mean().item() if valid_mask.any() else 0,
+        "move_match_rate": move_matches[legal_position].float().mean().item() if legal_position.any() and config.predict_moves else 0,
+        "cp_loss": cp_losses[valid_mask & ~torch.isnan(cp_losses)].mean().item() if (valid_mask & ~torch.isnan(cp_losses)).any() and config.predict_moves else 0,
     }
     
     for key, value in log_data.items():
@@ -319,14 +375,18 @@ def save_state():
 step = checkpoint["step"] if continue_from_checkpoint else 0
 end = False
 while not end:
-    themes, ratings = generate_random_themes(local_batch_size, lichess_distribution=lichess_distribution)
-    ratings = ratings.to(device=device, dtype=torch.float32)
-    themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
-    scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
+    if config.use_context:
+        themes, ratings = generate_random_themes(local_batch_size, lichess_distribution=lichess_distribution)
+        ratings = ratings.to(device=device, dtype=torch.float32)
+        themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
+        scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
+    else:
+        themes, ratings = None, None
+        themes_one_hot, scaled_ratings = None, None
 
     # generate the fens from the old_model
     with torch.autocast(device_type=device_type, dtype=torch.bfloat16):  # make the sampling a little faster with less precision
-        step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, steps=512, temperature=args.temperature)
+        step_fens, step_themes, step_ratings = generate_grouped_positions(model, themes_one_hot, scaled_ratings, group_size, local_batch_size, steps=512, temperature=args.temperature)
     
     is_generated = torch.ones(len(step_fens), dtype=torch.bool, device=device)
     
@@ -340,20 +400,24 @@ while not end:
     if distributed:
         gather_is_generated = [torch.zeros_like(is_generated) for _ in range(world_size)] if master_process else None
         gather_fens = [torch.zeros_like(step_fens) for _ in range(world_size)] if master_process else None
-        gather_themes = [torch.zeros_like(themes_one_hot) for _ in range(world_size)] if master_process else None
-        gather_ratings = [torch.zeros_like(ratings) for _ in range(world_size)] if master_process else None
         gather_elbos = [torch.zeros_like(old_elbo) for _ in range(world_size)] if master_process else None
+        
         gather(is_generated, gather_list=gather_is_generated, dst=0)
         gather(step_fens, gather_list=gather_fens, dst=0)
-        gather(themes_one_hot, gather_list=gather_themes, dst=0)
-        gather(ratings, gather_list=gather_ratings, dst=0)
         gather(old_elbo, gather_list=gather_elbos, dst=0)
+
+        if config.use_context:
+            gather_themes = [torch.zeros_like(themes_one_hot) for _ in range(world_size)] if master_process else None
+            gather_ratings = [torch.zeros_like(ratings) for _ in range(world_size)] if master_process else None
+            gather(themes_one_hot, gather_list=gather_themes, dst=0)
+            gather(ratings, gather_list=gather_ratings, dst=0)
+
         if master_process:
             global_is_generated = torch.cat(gather_is_generated)
             global_fens = torch.cat(gather_fens)
-            global_themes = torch.cat(gather_themes)
-            global_ratings = torch.cat(gather_ratings)
             global_elbos = torch.cat(gather_elbos)
+            global_themes = torch.cat(gather_themes) if config.use_context else None
+            global_ratings = torch.cat(gather_ratings) if config.use_context else None
             global_rewards = get_rewards(global_fens, global_themes, global_ratings, global_is_generated, global_elbos)
             reward_chunks = list(global_rewards.chunk(world_size, dim=0))
         rewards = torch.zeros(len(step_fens), device=device, dtype=torch.float32)
