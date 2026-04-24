@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from MaskingSchedule.MaskingSchedule import MaskingSchedule, CosineSchedule, string_to_schedule
+from MaskingSchedule.MaskingSchedule import string_to_schedule
 from tokenization.tokenization import FENTokens
 
 
@@ -18,6 +18,7 @@ class Config:
     move_length: int = 5
     mask_token: FENTokens = FENTokens.mask
     predict_moves: bool = True
+    use_context: bool = True
     n_tokens = n_fen_tokens + n_move_tokens if predict_moves else n_fen_tokens
 
     # model architecture

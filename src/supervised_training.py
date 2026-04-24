@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import AdamW, Muon
+from torch.optim.lr_scheduler import SequentialLR, LinearLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel
@@ -63,7 +64,7 @@ def main():
     if continue_from_checkpoint:
         config = checkpoint["config"]
     else:
-        config = Config(train_logging_interval=10, validation_interval=10000, n_steps=1_000_000, save_interval=20_000, batch_size=1024)
+        config = Config(train_logging_interval=10, validation_interval=10_000, n_steps=1_000_000, save_interval=100_000, batch_size=1024)
         
     # ====================== SEED AND PRECISION ======================
     torch.manual_seed(rank)
@@ -89,6 +90,7 @@ def main():
                 "weight_decay": config.weight_decay,
                 "batch_size": config.batch_size,
                 "n_steps": config.n_steps,
+                "use_context": config.use_context,
             }
             with open(logging_path / "config.yml", "w") as f:
                 yaml.dump(hparams, f)
@@ -114,26 +116,36 @@ def main():
     model = torch.compile(model)
 
     # ====================== OPTIMIZER ======================
-    params_adam = [p for p in model.parameters() if p.ndim != 2]
-    params_muon = [p for p in model.parameters() if p.ndim == 2]
-    adam = AdamW(params_adam, lr=config.lr, weight_decay=config.weight_decay)
-    muon = Muon(params_muon, lr=config.lr, weight_decay=config.weight_decay)
-    if continue_from_checkpoint: adam.load_state_dict(checkpoint["adam"])
-    if continue_from_checkpoint: muon.load_state_dict(checkpoint["muon"])
+    optimizer = AdamW(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+    scheduler1 = LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=1000)
+    scheduler2 = CosineAnnealingLR(optimizer, T_max=config.n_steps, eta_min=0.1 * config.lr)
+    lr_scheduler = SequentialLR(optimizer, schedulers=[scheduler1, scheduler2], milestones=[1000], last_epoch=checkpoint["step"] if continue_from_checkpoint else -1)
+    if continue_from_checkpoint:
+        try:
+            optimizer.load_state_dict(checkpoint["optimizer"])
+        except Exception as e:
+            pass
 
     # ====================== LOSS FUNCTION ======================
-    def compute_loss(model: MaskedDiffusion, fens, moves, themes, ratings):
+    def compute_loss(model: MaskedDiffusion, fens, moves, themes=None, ratings=None):
         # could use the variance reduced version in rl.espo, but for supervised learning, this is good enough (variance is not a problem)
         tokens = torch.cat([fens, moves], dim=1) if config.predict_moves else fens
-        batch_size = len(ratings)
+        batch_size = len(fens)
         t = (torch.rand(1) + torch.arange(1, batch_size + 1, 1) / batch_size) % 1
+        if master_process:
+            train_writer.add_scalars("t", {"min": t.min(), "max": t.max(), "mean": t.mean()}, step)
+            train_writer.add_scalars("alpha_t", {"min": config.masking_schedule(t).min(), "max": config.masking_schedule(t).max(), "mean": config.masking_schedule(t).mean()}, step)
+            train_writer.add_scalars("t_weight", {"min": config.masking_schedule.get_weight(t).min(), "max": config.masking_schedule.get_weight(t).max(), "mean": config.masking_schedule.get_weight(t).mean()}, step)
         alpha_t = config.masking_schedule(t).unsqueeze(1).to(device)
 
         random_mask = torch.rand(tokens.size(), device=device) < alpha_t
         masked_tokens = torch.where(random_mask, tokens, config.mask_token)
 
         with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
-            logits = model(masked_tokens, themes, ratings)
+            if config.use_context:
+                logits = model(masked_tokens, themes, ratings)
+            else:
+                logits = model(masked_tokens)
         unwrapped_model = model.module if distributed else model
         return unwrapped_model.elbo_loss(t, logits, tokens, masked_tokens)
 
@@ -147,10 +159,13 @@ def main():
             tokens = torch.cat([validation_fen, validation_move], dim=1) if config.predict_moves else validation_fen
             with torch.no_grad():
                 with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
-                    sub_logits = model(tokens, validation_theme, validation_rating)
+                    if config.use_context:
+                        sub_logits = model(tokens, validation_theme, validation_rating)
+                    else:
+                        sub_logits = model(tokens)
                 sub_probs = F.softmax(sub_logits, dim=2).to(dtype=torch.float32)
                 probs_sum += sub_probs.sum(dim=0)
-                samples += len(validation_rating)
+                samples += len(validation_fen)
         if distributed:
             all_reduce(probs_sum, op=ReduceOp.SUM)
             all_reduce(samples, op=ReduceOp.SUM)
@@ -160,12 +175,15 @@ def main():
         if master_process: validation_writer.add_image("Probabilities", avg_probs.unsqueeze(0), step)
 
     def write_fen(step):
-        validation_themes = torch.zeros((config.n_validation_generations, config.n_themes), dtype=torch.float32, device=device)
-        indices = torch.randint(0, config.n_themes, (config.n_validation_generations,))
-        validation_themes[:, indices] = 1
-        validation_ratings = scale_ratings(3000 * torch.rand(config.n_validation_generations, dtype=torch.float32, device=device) + 300)
         unwrapped_model = model.module if distributed else model
-        tokens = unwrapped_model.sample(validation_themes, validation_ratings, steps=512)
+        if config.use_context:
+            validation_themes = torch.zeros((config.n_validation_generations, config.n_themes), dtype=torch.float32, device=device)
+            indices = torch.randint(0, config.n_themes, (config.n_validation_generations,))
+            validation_themes[:, indices] = 1
+            validation_ratings = scale_ratings(3000 * torch.rand(config.n_validation_generations, dtype=torch.float32, device=device) + 300)
+            tokens = unwrapped_model.sample(validation_themes, validation_ratings, steps=512)
+        else:
+            tokens = unwrapped_model.sample(batch_size=config.n_validation_generations, steps=512)
         for generated_tokens in tokens:
             try:
                 fen_str = tokens_to_fen(generated_tokens[:config.fen_length])
@@ -182,9 +200,12 @@ def main():
         with torch.no_grad():
             for validation_fen, validation_move, validation_theme, validation_rating in validationloader:
                 validation_fen, validation_move, validation_theme, validation_rating = validation_fen.to(dtype=torch.long, device=device), validation_move.to(dtype=torch.long, device=device), validation_theme.to(dtype=torch.float32, device=device), validation_rating.to(dtype=torch.float32, device=device)
-                validation_loss = compute_loss(model, validation_fen, validation_move, validation_theme, validation_rating).sum()
+                if config.use_context:
+                    validation_loss = compute_loss(model, validation_fen, validation_move, validation_theme, validation_rating).sum()
+                else:
+                    validation_loss = compute_loss(model, validation_fen, validation_move, None, None).sum()
                 total[0] += validation_loss.detach()
-                total[1] += len(validation_rating)
+                total[1] += len(validation_fen)
         if distributed:
             all_reduce(total, op=ReduceOp.SUM)
         return total[0] / total[1]
@@ -202,8 +223,7 @@ def main():
         checkpoint = {
             "model": base_model.state_dict(),
             "config": config,
-            "adam": adam.state_dict(),
-            "muon": muon.state_dict(),
+            "optimizer": optimizer.state_dict(),
             "epoch": epoch,
             "step": step
         }
@@ -224,21 +244,23 @@ def main():
         for fen, move, theme, rating in trainloader:
             fen, move, theme, rating = fen.to(dtype=torch.long, device=device), move.to(dtype=torch.long, device=device), theme.to(dtype=torch.float32, device=device), rating.to(dtype=torch.float32, device=device)
 
-            adam.zero_grad()
-            muon.zero_grad()
+            optimizer.zero_grad()
 
-            loss = compute_loss(model, fen, move, theme, rating)
+            if config.use_context:
+                loss = compute_loss(model, fen, move, theme, rating)
+            else:
+                loss = compute_loss(model, fen, move, None, None)
             loss.mean().backward()
 
             norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            adam.step()
-            muon.step()
+            optimizer.step()
+            lr_scheduler.step()
 
             step += 1
 
             total[0] += loss.detach().sum()
-            total[1] += len(rating) * norm.detach()
-            total[2] += len(rating)
+            total[1] += len(fen) * norm.detach()
+            total[2] += len(fen)
             if step % config.train_logging_interval == 0 or step == 1:
                 if distributed: all_reduce(total, op=ReduceOp.SUM)
                 if master_process: train_writer.add_scalar("Loss", total[0] / total[2], step)
@@ -282,6 +304,7 @@ def main():
             "train_logging_interval": config.train_logging_interval,
             "save_interval": config.save_interval,
             "n_validation_generations": config.n_validation_generations,
+            "use_context": config.use_context,
         }, {
             "validation_loss": validation_loss
         })
