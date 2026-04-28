@@ -1,6 +1,6 @@
 import chess
 
-from .diversity_filtering import board_distance, PV_distance
+from .diversity_filtering import board_distance, PV_distance, get_board_distance, get_pv_distance
 
 
 piece_counts = {chess.PAWN: 8, chess.KNIGHT: 2, chess.BISHOP: 2, chess.ROOK: 2, chess.QUEEN: 1, chess.KING: 1}
@@ -15,26 +15,30 @@ def good_piece_counts(fen):
                 return False
     return True
 
-def good_inter_batch_distances(fen, pv, sampled_fens, sampled_pvs):
-    good_board_distance = True
-    good_pv_distance = True
+def inter_batch_distances(fen, pv, sampled_fens, sampled_pvs):
+    min_board_dist = float('inf')
+    min_pv_dist = float('inf')
     for sampled_fen, sampled_pv in zip(sampled_fens, sampled_pvs):
-        good_board_distance = good_board_distance and board_distance(fen, sampled_fen)
-        good_pv_distance = good_pv_distance and PV_distance(sampled_pv, pv)
-        if not good_board_distance and not good_pv_distance:  # if both are bad
-            return good_board_distance, good_pv_distance
-    return good_board_distance, good_pv_distance
+        bd = get_board_distance(fen, sampled_fen)
+        if bd < min_board_dist:
+            min_board_dist = bd
+        if pv and sampled_pv:
+            pd = get_pv_distance(sampled_pv, pv)
+            if pd < min_pv_dist:
+                min_pv_dist = pd
+    return min_board_dist if min_board_dist != float('inf') else 0, min_pv_dist if min_pv_dist != float('inf') else 0
 
-def good_intra_batch_distances(fen, pv, puzzles, i):
-    good_board_distance = True
-    good_pv_distance = True
-    for index, other_puzzle in enumerate(puzzles):
-        if other_puzzle is None or index == i:
+def intra_batch_distances(fen, pv, fens, pvs, i):
+    min_board_dist = float('inf')
+    min_pv_dist = float('inf')
+    for index, (other_fen, other_pv) in enumerate(zip(fens, pvs)):
+        if other_fen is None or index == i:
             continue
-        other_fen = other_puzzle.game.board().fen()
-        other_pv = " ".join([move.uci() for move in other_puzzle.mainline])
-        good_board_distance = good_board_distance and board_distance(fen, other_fen)
-        good_pv_distance = good_pv_distance and PV_distance(pv, other_pv)
-        if not good_board_distance and not good_pv_distance:  # if both are bad
-            return good_board_distance, good_pv_distance
-    return good_board_distance, good_pv_distance
+        bd = get_board_distance(fen, other_fen)
+        if bd < min_board_dist:
+            min_board_dist = bd
+        if pv and other_pv:
+            pd = get_pv_distance(pv, other_pv)
+            if pd < min_pv_dist:
+                min_pv_dist = pd
+    return min_board_dist if min_board_dist != float('inf') else 0, min_pv_dist if min_pv_dist != float('inf') else 0

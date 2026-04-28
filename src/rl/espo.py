@@ -53,14 +53,22 @@ def compute_elbo(model, fens, themes=None, ratings=None, mask=None, return_mask=
         return elbo, random_mask, t
     return elbo
 
-def compute_elbo_basic(model, fens, themes=None, ratings=None, mask=None, t=None, return_mask=False):
+def compute_elbo_basic(model, fens, themes=None, ratings=None, mask=None, t=None, return_mask=False, n_mc=n_quadrature):
     device = fens.device
     n_samples = len(fens)
 
     config = model.module.config if hasattr(model, "module") else model.config
     module = model.module if hasattr(model, "module") else model
 
-    t = ((torch.rand(1) + torch.arange(n_samples) / n_samples) % 1).to(device)[torch.randperm(n_samples, device=device)] if t is None else t
+    if themes is None:
+        fens = fens.repeat_interleave(n_mc, dim=0)
+    else:
+        fens = fens.repeat_interleave(n_mc, dim=0)
+        themes = themes.repeat_interleave(n_mc, dim=0)
+        ratings = ratings.repeat_interleave(n_mc, dim=0)
+
+    total_samples = n_samples * n_mc
+    t = ((torch.rand(1) + torch.arange(total_samples) / total_samples) % 1).to(device)[torch.randperm(total_samples, device=device)] if t is None else t
     alpha_t = config.masking_schedule(t)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
@@ -68,6 +76,7 @@ def compute_elbo_basic(model, fens, themes=None, ratings=None, mask=None, t=None
 
     logits = model(masked_fens, themes, ratings)
     elbo = module.elbo_loss(t, logits, fens, masked_fens)
+    elbo = elbo.reshape(n_samples, n_mc).mean(dim=1)
     elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
     assert (elbo <= 0).all(), f"elbo should be a lower bound of a probability, {elbo}"
     if return_mask:
