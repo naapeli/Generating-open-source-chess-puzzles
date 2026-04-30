@@ -28,7 +28,7 @@ Given an MDP $\mathcal{M}$, we consider an agent that explores $\mathcal{M}$. Th
 
 \subsection{Policy gradient theorem}
 
-In reinforcement learning, one often models the value function by function approximation, e.g. using a neural network, and uses an implicit greedy policy. In natural language processing, however, it is often more convenient to model a policy directly with function approximation, as the pretrained language model can serve as the policy\protect\footnote{In this work, we will use the terms model and policy interchangeably.}. This way, the trained policy will remain stochastic allowing sampling of answers. One can also avoid explicitly learning the value-function, which may affect the stability of the learning algorithm. We call methods, which learn the policy directly policy gradient methods. These methods rely on the policy gradient theorem, which yields gradients for the expected episodic reward \cite{lehmann2024definitiveguidepolicygradients}.
+In reinforcement learning, one often models the value function by function approximation, e.g. using a neural network, and uses an implicit greedy policy. In natural language processing, however, it is often more convenient to model a policy directly with function approximation, as the pretrained language model can serve as the policy\protect\footnote{In this work, we will use the terms model and policy interchangeably.}. This way, the trained policy will remain stochastic allowing sampling of completions. One can also avoid explicitly learning the value-function, which may affect the stability of the learning algorithm. We call methods, which learn the policy directly policy gradient methods. These methods rely on the policy gradient theorem, which yields gradients for the expected episodic reward \cite{lehmann2024definitiveguidepolicygradients}.
 
 \begin{definition}[Expected episodic reward]
     For a given policy $\pi_\theta$ and a distribution of starting states $p_0$, the function $J(\theta)$ is called the expected episodic reward and is given by the following equation:
@@ -105,6 +105,18 @@ where $\rho^{(i)} = \frac{\exp\frac{1}{L}\mathcal{L}_\theta(y^{(i)} | x)}{\exp\f
 \textcolor{red}{Use and reference the ELBO notation from previous part}
 
 The authors of \cite{ou2025principledrldiffusionllms} note that it is important to normalize the ELBOs with the sequence length as otherwise, the exponential function might make the ratio explode or approach zero making the model unable to learn.
+
+
+\subsection{Denoising diffusion policy optimization}
+
+Denoising diffusion policy optimization (DDPO) is an RL algorithm designed for diffusion models \cite{black2024trainingdiffusionmodelsreinforcement}. In their work, \citeauthor{black2024trainingdiffusionmodelsreinforcement} define an MDP for a continuous diffusion model. We take inspiration from their MDP formulation for our discrete diffusion model. We define the MDP for our problem as follows:
+
+\begin{align*}
+    &s_i = (x_{t(i)}, i), \quad a_i = x_{t(i - 1)}, \quad \pi_\theta(a_i | s_i) = p_\theta(x_{t(i - 1)} | x_{t(i)}), \\
+    &P(s_{i - 1}, r_i | s_i, a_i) = (\delta_{x_{t(i - 1)}}, \delta_{i - 1}, \delta_{r_i}), \quad p_0 = (x_{t(n_\mathrm{steps})}, n_\mathrm{steps}),
+\end{align*}
+
+where each transition is deterministic. The action probabilities $p_\theta(x_{t - 1} | x_t)$ are given by \eqref{eq:reverse process x_0 unknown} and 
 
 
 \subsection{Kullback-Leibler divergence}
