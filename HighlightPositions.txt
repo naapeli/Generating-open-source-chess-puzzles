@@ -27,3 +27,6 @@ rn3rk1/pp3ppp/2p1pn2/q1b5/N1PN4/1P1PB2P/5PP1/1R1Q1RK1 w - - 2 15
 
 
 8/3Q4/2p2rp1/1pP3k1/2qP1p2/5P1p/4P2P/4BK2 w - - 0 39
+
+
+5rk1/1b3rb1/p3p1QB/3qp3/Pp1pn3/1P6/2P1KPPR/7R w - - 6 30
