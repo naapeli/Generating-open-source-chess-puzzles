@@ -15,5 +15,4 @@
 module load mamba
 module load triton/2024.1-gcc gcc/12.3.0  # needed for torch.compile
 source activate environment
-srun python src/train_rl_ddpo.py --run_name run10 --reference_path "./src/runs/supervised/no_context_move_model/model_0600000.pt" --batch_size 32 --ppo_epochs 1 --ppo_minibatch_size 256 --kl_coef 0.03 --entropy_coef 0.03 --steps 128 --lr 3e-5
-# srun python src/train_rl_ddpo.py --run_name run3 --reference_path "./src/runs/supervised/no_context_move_model/model_0600000.pt" --batch_size 32 --ppo_epochs 1 --ppo_minibatch_size 64 --kl_coef 0.0 --entropy_coef 0.0 --steps 32 --lr 3e-5
+srun python src/train_rl_ddpo.py --run_name paper_experiments/fig9v5 --reference_path "./src/runs/supervised/no_context_move_model/model_0600000.pt" --batch_size 64 --ppo_epochs 2 --ppo_minibatch_size 256 --kl_coef 0.0 --entropy_coef 0.0 --steps 128 --lr 3e-5 --n_artificial 0  # 16
