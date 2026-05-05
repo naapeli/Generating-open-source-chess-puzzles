@@ -28,7 +28,6 @@ from MaskingSchedule.MaskingSchedule import string_to_schedule
 def log_rewards(components: dict[str, float], rewards, step: int):
     for key, value in components.items():
         writer.add_scalar(f"Components/{key}", value, step)
-    # writer.add_scalar("Reward", rewards.float().mean().item(), step)  # NOTE: log the rewards after adding the kl and entropy penalties
 
 def log_metrics(loss, grad_norm, kl_divergence, clips, step):
     writer.add_scalar("Loss/Loss", loss, step)
@@ -155,14 +154,13 @@ def get_reward(x_t, entropy, config, step):
 
         # if the position returns a high reward, add it to the buffer
         good_distances = (intra_batch_fen_dist[i] >= 6) and (intra_batch_pv_dist[i] >= 1) and (inter_batch_fen_dist[i] >= 6)   # and (inter_batch_pv_dist[i] >= 1)
-        if i < batch_size - args.n_artificial and unique_solution[i] and counter_intuitive_solution[i] and piece_counts[i] and good_distances:
+        if unique_solution[i] and counter_intuitive_solution[i] and piece_counts[i] and good_distances:
             buffer.add(fen, pv, [], -1)
 
         valid_indices.append(i)
 
     is_valid = torch.zeros(batch_size, dtype=torch.bool)
     is_valid[valid_indices] = True
-    valid_mask = is_valid
 
     unique_and_counter_intuitive = unique_solution & counter_intuitive_solution
     
@@ -176,34 +174,29 @@ def get_reward(x_t, entropy, config, step):
     all_distances = intra_distances & inter_distances
 
     # pass_diversity_filtering = good_intra_fen & good_intra_pv & good_inter_fen & piece_counts & (entropy > 0.6)
-    pass_diversity_filtering = torch.ones(batch_size, dtype=bool)
-
-    gen_mask = torch.ones(batch_size, dtype=torch.bool)
-    if args.n_artificial > 0:
-        gen_mask[-args.n_artificial:] = False
-    log_legal = legal_position & gen_mask
-    log_valid = valid_mask & gen_mask
+    # pass_diversity_filtering = torch.ones(batch_size, dtype=bool)
+    pass_diversity_filtering = piece_counts & good_intra_fen
 
     components = {
-        "legal_rate": legal_position[gen_mask].float().mean().item(),
-        "uniqueness_rate": unique_solution[gen_mask].float().mean().item(),
-        "counter_intuitive_rate": counter_intuitive_solution[gen_mask].float().mean().item(),
-        "counter_intuitive_rate_given_unique": counter_intuitive_solution[log_valid].float().mean().item() if log_valid.any() else 0,
-        "unique_and_counter_intuitive": unique_and_counter_intuitive[gen_mask].float().mean().item(),
-        "entropy": entropy[gen_mask].float().mean().item(),
-        "piece_counts": piece_counts[log_legal].float().mean().item() if log_legal.any() else 0,
-        # "themes_match_rate": themes_match[log_valid].float().mean().item() if log_valid.any() and config.use_context else 0,
-        "dist_inter_fen": inter_batch_fen_dist[log_legal].float().mean().item() if log_legal.any() else 0,
-        "dist_intra_fen": intra_batch_fen_dist[log_legal].float().mean().item() if log_legal.any() else 0,
-        "dist_inter_pv": inter_batch_pv_dist[log_legal].float().mean().item() if log_legal.any() else 0,
-        "dist_intra_pv": intra_batch_pv_dist[log_legal].float().mean().item() if log_legal.any() else 0,
-        "intra_dist": intra_distances[log_legal].float().mean().item() if log_legal.any() else 0,
-        "inter_dist": inter_distances[log_legal].float().mean().item() if log_legal.any() else 0,
-        "all_dist": all_distances[log_legal].float().mean().item() if log_legal.any() else 0,
-        # "rating_abs_diff": (-1000 * rating_penalty[log_valid]).float().mean().item() if log_valid.any() and config.use_context else 0,
-        "pass_diversity_filtering": pass_diversity_filtering[log_legal].float().mean().item() if log_legal.any() else 0,
-        "move_match_rate": move_matches[log_legal].float().mean().item() if log_legal.any() and config.predict_moves else 0,
-        "cp_loss": cp_losses[log_valid & ~torch.isnan(cp_losses)].mean().item() if (log_valid & ~torch.isnan(cp_losses)).any() and config.predict_moves else 0,
+        "legal_rate": legal_position.float().mean().item(),
+        "uniqueness_rate": unique_solution.float().mean().item(),
+        "counter_intuitive_rate": counter_intuitive_solution.float().mean().item(),
+        "counter_intuitive_rate_given_unique": counter_intuitive_solution[is_valid].float().mean().item() if is_valid.any() else 0,
+        "unique_and_counter_intuitive": unique_and_counter_intuitive.float().mean().item(),
+        "entropy": entropy.float().mean().item(),
+        "piece_counts": piece_counts[legal_position].float().mean().item() if legal_position.any() else 0,
+        # "themes_match_rate": themes_match[is_valid].float().mean().item() if is_valid.any() and config.use_context else 0,
+        "dist_inter_fen": inter_batch_fen_dist[legal_position].float().mean().item() if legal_position.any() else 0,
+        "dist_intra_fen": intra_batch_fen_dist[legal_position].float().mean().item() if legal_position.any() else 0,
+        "dist_inter_pv": inter_batch_pv_dist[legal_position].float().mean().item() if legal_position.any() else 0,
+        "dist_intra_pv": intra_batch_pv_dist[legal_position].float().mean().item() if legal_position.any() else 0,
+        "intra_dist": intra_distances[legal_position].float().mean().item() if legal_position.any() else 0,
+        "inter_dist": inter_distances[legal_position].float().mean().item() if legal_position.any() else 0,
+        "all_dist": all_distances[legal_position].float().mean().item() if legal_position.any() else 0,
+        # "rating_abs_diff": (-1000 * rating_penalty[is_valid]).float().mean().item() if is_valid.any() and config.use_context else 0,
+        "pass_diversity_filtering": pass_diversity_filtering[legal_position].float().mean().item() if legal_position.any() else 0,
+        "move_match_rate": move_matches[legal_position].float().mean().item() if legal_position.any() and config.predict_moves else 0,
+        "cp_loss": cp_losses[is_valid & ~torch.isnan(cp_losses)].mean().item() if (is_valid & ~torch.isnan(cp_losses)).any() and config.predict_moves else 0,
     }
 
     rewards = torch.zeros(batch_size, dtype=torch.float32)
@@ -214,10 +207,9 @@ def get_reward(x_t, entropy, config, step):
 
     log_rewards(components, rewards, step)
 
-    eval_rewards = rewards[gen_mask]
-    index = torch.argmax(eval_rewards).item()
+    index = torch.argmax(rewards).item()
     save_board(batch_fens[index], "Generations")
-    for index, reward in enumerate(eval_rewards):
+    for index, reward in enumerate(rewards):
         if not (unique_solution[index] & counter_intuitive_solution[index] & pass_diversity_filtering[index]):
             continue
         save_board(batch_fens[index], "Puzzles")
@@ -231,16 +223,17 @@ def seq_log_prob(log_probs, x_t, x_s, MASK_ID):
     token_log_probs = x_s_log_probs * mask
     return token_log_probs.sum(dim=-1)
 
-def kl_divergence(model_log_probs, ref_log_probs, x_t, x_s, MASK_ID):
-    mask = ((x_t == MASK_ID) & (x_s != MASK_ID)).float()
+def kl_divergence(model_log_probs, ref_log_probs, x_t, p_unmask, MASK_ID):
+    mask = (x_t == MASK_ID).float()
     kl_div_vocab = F.kl_div(input=ref_log_probs, target=model_log_probs, log_target=True, reduction="none").sum(dim=2)
-    token_kl = kl_div_vocab * mask
+    token_kl = kl_div_vocab * mask * p_unmask
     return token_kl.sum(dim=1)
 
-def entropy(log_probs, x_t, x_s, MASK_ID):
-    mask = ((x_t == MASK_ID) & (x_s != MASK_ID)).float()
-    entropy = -(torch.exp(log_probs) * log_probs).sum(dim=2) * mask
-    return entropy.sum(dim=1)
+def entropy(log_probs, x_t, p_unmask, MASK_ID):
+    mask = (x_t == MASK_ID).float()
+    entropy_vocab = -(torch.exp(log_probs) * log_probs).sum(dim=2)
+    token_entropy = entropy_vocab * mask * p_unmask
+    return token_entropy.sum(dim=1)
 
 def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, step):
     model.eval()
@@ -279,12 +272,17 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             ref_logits = ref_model(x_t, None, None)
             ref_log_probs = F.log_softmax(ref_logits, dim=2)
 
-            p_unmask = (alpha_s - alpha_t) / (1.0 - alpha_t + 1e-13)
-            p_mask = (1.0 - alpha_s) / (1.0 - alpha_t + 1e-13)
-            p_mask_tensor = p_mask.view(1, 1, 1).expand(total_batch_size, model.seq_length, 1)
-            probs = torch.cat([model_probs * p_unmask, p_mask_tensor], dim=2)
-
-            dist = torch.distributions.Categorical(probs)
+            # p_unmask = (alpha_s - alpha_t) / (1.0 - alpha_t + 1e-13)
+            # p_mask = (1.0 - alpha_s) / (1.0 - alpha_t + 1e-13)
+            # p_mask_tensor = p_mask.view(1, 1, 1).expand(total_batch_size, model.seq_length, 1)
+            # probs = torch.cat([model_probs * p_unmask, p_mask_tensor], dim=2)
+            log_p_unmask = torch.log(alpha_s - alpha_t) - torch.log(1.0 - alpha_t + 1e-13)
+            p_unmask = torch.exp(log_p_unmask)
+            log_p_mask = torch.log(1.0 - alpha_s) - torch.log(1.0 - alpha_t + 1e-13)
+            log_p_mask_tensor = log_p_mask.view(1, 1, 1).expand(total_batch_size, model.seq_length, 1)
+            log_probs = torch.cat([model_log_probs + log_p_unmask, log_p_mask_tensor], dim=2)
+            
+            dist = torch.distributions.Categorical(logits=log_probs)
             sampled_tokens = dist.sample()
             
             mask = (x_t == config.mask_token)
@@ -294,10 +292,10 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
                 x_s_art = torch.where(U < 1.0 - alpha_s, config.mask_token, x_0_art)
                 x_s[-args.n_artificial:] = x_s_art
 
-            step_entropy = entropy(model_log_probs, x_t, x_s, config.mask_token) / model.seq_length
+            step_entropy = entropy(model_log_probs, x_t, p_unmask, config.mask_token) / model.seq_length
             total_entropy += step_entropy
 
-            step_kl = kl_divergence(model_log_probs, ref_log_probs, x_t, x_s, config.mask_token)  #  / model.seq_length
+            step_kl = kl_divergence(model_log_probs, ref_log_probs, x_t, p_unmask, config.mask_token)  #  / model.seq_length
             total_kl_divergence += step_kl
             
             old_log_probs = seq_log_prob(model_log_probs, x_t, x_s, config.mask_token)
@@ -305,7 +303,6 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             trajectories.append({
                 "x_t": x_t,
                 "x_s": x_s,
-                "p_mask": p_mask,
                 "old_log_probs": old_log_probs,
                 "step_kl": step_kl,
                 "step_entropy": step_entropy
@@ -314,12 +311,22 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             x_t = x_s
 
         rewards = torch.zeros((total_batch_size, args.steps), dtype=torch.float32, device=device)
-        rewards[:, -1] = get_reward(x_t, total_entropy.cpu(), config, step)  # (batch_size, steps)
-        rewards[:, -1] += args.entropy_coef * total_entropy
-        # rewards[:, -1] -= args.kl_coef * total_kl_divergence
         
+        if args.n_artificial > 0:
+            rewards[:-args.n_artificial, -1] = get_reward(x_t[:-args.n_artificial], total_entropy.cpu()[:-args.n_artificial], config, step)
+            rewards[-args.n_artificial:, -1] = 1.0
+        else:
+            rewards[:, -1] = get_reward(x_t, total_entropy.cpu(), config, step)
+            
         kl_divergences = torch.stack([t["step_kl"] for t in trajectories], dim=1)  # (batch_size, steps) (T => 0)
         # entropies = torch.stack([t["step_entropy"] for t in trajectories], dim=1)  # (batch_size, steps) (T => 0)
+        if args.n_artificial > 0:
+            # entropies[-args.n_artificial:, :] = 0.0
+            kl_divergences[-args.n_artificial:, :] = 0.0
+            total_entropy[-args.n_artificial:] = 0.0
+            total_kl_divergence[-args.n_artificial:] = 0.0
+        rewards[:, -1] += args.entropy_coef * total_entropy
+        # rewards[:, -1] -= args.kl_coef * total_kl_divergence
         rewards = rewards - args.kl_coef * kl_divergences  #  + args.entropy_coef * entropies
         
         returns = torch.zeros_like(rewards)
@@ -339,10 +346,9 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
     
     x_t = torch.cat([t["x_t"] for t in trajectories], dim=0)
     x_s = torch.cat([t["x_s"] for t in trajectories], dim=0)
-    p_mask = torch.cat([t["p_mask"].view(1).expand(total_batch_size) for t in trajectories], dim=0)
     old_log_probs = torch.cat([t["old_log_probs"] for t in trajectories], dim=0)
 
-    dataset = TensorDataset(x_t, x_s, p_mask, old_log_probs, advantages)
+    dataset = TensorDataset(x_t, x_s, old_log_probs, advantages)
     dataloader = DataLoader(dataset, batch_size=args.ppo_minibatch_size, shuffle=True)
 
     model.train()
@@ -353,9 +359,9 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
         optimizer.zero_grad()
 
         # accumulate the gradients of the whole dataset
-        for x_t, x_s, p_mask, old_log_probs, advantages in dataloader:
+        for x_t, x_s, old_log_probs, advantages in dataloader:
             logits = model(x_t, None, None)
-            model_log_probs = F.log_softmax(logits, dim=2)            
+            model_log_probs = F.log_softmax(logits, dim=2)
             new_log_probs = seq_log_prob(model_log_probs, x_t, x_s, config.mask_token)
             
             ratio = torch.exp(new_log_probs - old_log_probs)
@@ -373,7 +379,7 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
         optimizer.step()
         scheduler.step()
 
-    log_metrics(total_loss / args.ppo_epochs, total_norm / args.ppo_epochs, (total_kl_divergence / model.seq_length).mean().item(), n_clips / (len(dataloader) * args.ppo_epochs), step)
+    log_metrics(total_loss / args.ppo_epochs, total_norm / args.ppo_epochs, (total_kl_divergence / (model.seq_length * args.batch_size)).sum().item(), n_clips / (len(dataloader) * args.ppo_epochs), step)
 
 
 if __name__ == "__main__":
