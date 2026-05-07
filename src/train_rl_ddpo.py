@@ -29,11 +29,17 @@ def log_rewards(components: dict[str, float], rewards, step: int):
     for key, value in components.items():
         writer.add_scalar(f"Components/{key}", value, step)
 
-def log_metrics(loss, grad_norm, kl_divergence, clips, step):
-    writer.add_scalar("Loss/Loss", loss, step)
-    writer.add_scalar("Loss/Grad Norm", grad_norm, step)
+def log_metrics(loss, ppo_loss, entropy_bonus, rl_grad_norm, kl_divergence, clips, step, sup_loss=None, sup_grad_norm=None):
+    writer.add_scalar("Loss/Total Loss", loss, step)
+    writer.add_scalar("Loss/PPO Loss", ppo_loss, step)
+    writer.add_scalar("Loss/Entropy Bonus", entropy_bonus, step)
+    writer.add_scalar("Loss/RL Grad Norm", rl_grad_norm, step)
     writer.add_scalar("Loss/KL divergence", kl_divergence, step)
     writer.add_scalar("Loss/Clips", clips, step)
+    if sup_loss is not None:
+        writer.add_scalar("Loss/Supervised Loss", sup_loss, step)
+    if sup_grad_norm is not None:
+        writer.add_scalar("Loss/Supervised Grad Norm", sup_grad_norm, step)
 
 def get_stockfish_data(fen, model_move):
     if fen is None: return None, None, None, None
@@ -173,9 +179,8 @@ def get_reward(x_t, entropy, config, step):
     inter_distances = good_inter_fen & good_inter_pv
     all_distances = intra_distances & inter_distances
 
-    # pass_diversity_filtering = good_intra_fen & good_intra_pv & good_inter_fen & piece_counts & (entropy > 0.6)
+    pass_diversity_filtering = good_intra_fen & good_inter_fen & good_intra_pv & piece_counts  #  & (entropy > 0.6)
     # pass_diversity_filtering = torch.ones(batch_size, dtype=bool)
-    pass_diversity_filtering = piece_counts & good_intra_fen
 
     components = {
         "legal_rate": legal_position.float().mean().item(),
@@ -200,8 +205,8 @@ def get_reward(x_t, entropy, config, step):
     }
 
     rewards = torch.zeros(batch_size, dtype=torch.float32)
-    rewards = torch.where(legal_position & pass_diversity_filtering & unique_solution, 0.1, rewards)
-    rewards = torch.where(legal_position & pass_diversity_filtering & unique_and_counter_intuitive, 1, rewards)
+    rewards = torch.where(legal_position & pass_diversity_filtering & unique_solution, 1, rewards)  # 0.1
+    rewards = torch.where(legal_position & pass_diversity_filtering & unique_and_counter_intuitive, 10, rewards)  # 1
     rewards = torch.where(~legal_position, -2, rewards)
     rewards = rewards.to(torch.float32)
 
@@ -232,26 +237,16 @@ def kl_divergence(model_log_probs, ref_log_probs, x_t, p_unmask, MASK_ID):
 def entropy(log_probs, x_t, p_unmask, MASK_ID):
     mask = (x_t == MASK_ID).float()
     entropy_vocab = -(torch.exp(log_probs) * log_probs).sum(dim=2)
+    if isinstance(p_unmask, torch.Tensor) and p_unmask.dim() == 1:
+        p_unmask = p_unmask.unsqueeze(1)
     token_entropy = entropy_vocab * mask * p_unmask
     return token_entropy.sum(dim=1)
 
 def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, step):
     model.eval()
     with torch.no_grad():
-        total_batch_size = args.batch_size + args.n_artificial
+        total_batch_size = args.batch_size
         x_t = torch.full((total_batch_size, model.seq_length), config.mask_token, dtype=torch.long, device=device)
-        
-        # sample positions with good rewards from the buffer to enhance training
-        if args.n_artificial > 0:
-            sampled_fens, sampled_pvs, _, _ = buffer.sample(args.n_artificial)
-            x_0_art_list = []
-            for fen, pv in zip(sampled_fens, sampled_pvs):
-                fen_tokens = tokenize_fen(fen)
-                move_str = pv.split(" ")[0] if " " in pv else pv
-                move_tokens = tokenize_move(move_str)
-                x_0_art_list.append(fen_tokens + move_tokens)
-            x_0_art = torch.tensor(x_0_art_list, dtype=torch.long, device=device)
-            U = torch.rand((args.n_artificial, model.seq_length), device=device)
 
         trajectories = [] # Tuples of (x_t, x_s, p_mask, old_log_probs)
 
@@ -288,10 +283,6 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             mask = (x_t == config.mask_token)
             x_s = torch.where(mask, sampled_tokens, x_t)
 
-            if args.n_artificial > 0:
-                x_s_art = torch.where(U < 1.0 - alpha_s, config.mask_token, x_0_art)
-                x_s[-args.n_artificial:] = x_s_art
-
             step_entropy = entropy(model_log_probs, x_t, p_unmask, config.mask_token) / model.seq_length
             total_entropy += step_entropy
 
@@ -305,27 +296,19 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
                 "x_s": x_s,
                 "old_log_probs": old_log_probs,
                 "step_kl": step_kl,
-                "step_entropy": step_entropy
+                "step_entropy": step_entropy,
+                "p_unmask": p_unmask.view(1).expand(total_batch_size)
             })
             
             x_t = x_s
 
         rewards = torch.zeros((total_batch_size, args.steps), dtype=torch.float32, device=device)
         
-        if args.n_artificial > 0:
-            rewards[:-args.n_artificial, -1] = get_reward(x_t[:-args.n_artificial], total_entropy.cpu()[:-args.n_artificial], config, step)
-            rewards[-args.n_artificial:, -1] = 1.0
-        else:
-            rewards[:, -1] = get_reward(x_t, total_entropy.cpu(), config, step)
+        rewards[:, -1] = get_reward(x_t, total_entropy.cpu(), config, step)
             
         kl_divergences = torch.stack([t["step_kl"] for t in trajectories], dim=1)  # (batch_size, steps) (T => 0)
         # entropies = torch.stack([t["step_entropy"] for t in trajectories], dim=1)  # (batch_size, steps) (T => 0)
-        if args.n_artificial > 0:
-            # entropies[-args.n_artificial:, :] = 0.0
-            kl_divergences[-args.n_artificial:, :] = 0.0
-            total_entropy[-args.n_artificial:] = 0.0
-            total_kl_divergence[-args.n_artificial:] = 0.0
-        rewards[:, -1] += args.entropy_coef * total_entropy
+        # rewards[:, -1] += args.entropy_coef * total_entropy
         # rewards[:, -1] -= args.kl_coef * total_kl_divergence
         rewards = rewards - args.kl_coef * kl_divergences  #  + args.entropy_coef * entropies
         
@@ -347,39 +330,98 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
     x_t = torch.cat([t["x_t"] for t in trajectories], dim=0)
     x_s = torch.cat([t["x_s"] for t in trajectories], dim=0)
     old_log_probs = torch.cat([t["old_log_probs"] for t in trajectories], dim=0)
+    p_unmasks = torch.cat([t["p_unmask"] for t in trajectories], dim=0)
 
-    dataset = TensorDataset(x_t, x_s, old_log_probs, advantages)
+    dataset = TensorDataset(x_t, x_s, old_log_probs, advantages, p_unmasks)
     dataloader = DataLoader(dataset, batch_size=args.ppo_minibatch_size, shuffle=True)
 
     model.train()
     total_loss = 0
+    total_ppo_loss = 0
+    total_entropy_bonus = 0
+    total_sup_loss = 0
     n_clips = 0
-    total_norm = 0
+    total_rl_norm = 0
+    total_sup_norm = 0
     for epoch in range(args.ppo_epochs):
         optimizer.zero_grad()
-
-        # accumulate the gradients of the whole dataset
-        for x_t, x_s, old_log_probs, advantages in dataloader:
-            logits = model(x_t, None, None)
+        for x_t_batch, x_s_batch, old_log_probs_batch, advantages_batch, p_unmask_batch in dataloader:
+            logits = model(x_t_batch, None, None)
             model_log_probs = F.log_softmax(logits, dim=2)
-            new_log_probs = seq_log_prob(model_log_probs, x_t, x_s, config.mask_token)
+            new_log_probs = seq_log_prob(model_log_probs, x_t_batch, x_s_batch, config.mask_token)
             
-            ratio = torch.exp(new_log_probs - old_log_probs)
-            surr1 = ratio * advantages
-            surr2 = torch.clamp(ratio, 1.0 - args.eps, 1.0 + args.eps) * advantages
-            loss = -torch.min(surr1, surr2).sum() / (args.steps * total_batch_size)
+            ratio = torch.exp(new_log_probs - old_log_probs_batch)
+            surr1 = ratio * advantages_batch
+            surr2 = torch.clamp(ratio, 1.0 - args.eps, 1.0 + args.eps) * advantages_batch
+            
+            batch_entropy = entropy(model_log_probs, x_t_batch, p_unmask_batch, config.mask_token) / model.seq_length
+            
+            ppo_loss_val = -torch.min(surr1, surr2).sum() / (args.steps * total_batch_size)
+            entropy_bonus_val = (args.entropy_coef * batch_entropy.sum()) / (args.steps * total_batch_size)
+            
+            loss_ppo = ppo_loss_val - entropy_bonus_val
 
-            loss.backward()
+            loss_ppo.backward()
             
-            total_loss += loss.item()
+            total_loss += loss_ppo.item()
+            total_ppo_loss += ppo_loss_val.item()
+            total_entropy_bonus += entropy_bonus_val.item()
             n_clips += (surr2 < surr1).float().mean().item()
 
-        total_norm += torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0).item()
+        rl_grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0).item()
+        
+        # Save RL gradients
+        rl_grads = [p.grad.clone() if p.grad is not None else None for p in model.parameters()]
+        optimizer.zero_grad()
+
+        # supervised loss for puzzles in the buffer (that are known to be good)
+        if args.n_artificial > 0:
+            sampled_fens, sampled_pvs, _, _ = buffer.sample(args.n_artificial)
+            x_0_art_list = []
+            for fen, pv in zip(sampled_fens, sampled_pvs):
+                fen_tokens = tokenize_fen(fen)
+                move_str = pv.split(" ")[0] if " " in pv else pv
+                move_tokens = tokenize_move(move_str)
+                x_0_art_list.append(fen_tokens + move_tokens)
+            x_0_art = torch.tensor(x_0_art_list, dtype=torch.long, device=device)
+            
+            t = torch.rand(args.n_artificial, device=device)
+            alpha_t = config.masking_schedule(t).unsqueeze(1)
+            U = torch.rand((args.n_artificial, model.seq_length), device=device)
+            x_t_art = torch.where(U < 1.0 - alpha_t, config.mask_token, x_0_art)
+            
+            logits_art = model(x_t_art, None, None)
+            
+            loss_sup = args.sup_loss_coef * model.elbo_loss(t, logits_art, x_0_art, x_t_art).mean()
+            loss_sup.backward()
+            
+            total_sup_loss += loss_sup.item()
+            total_sup_norm += torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0).item()
+            
+        # Add RL gradients back to the parameters
+        for p, rl_g in zip(model.parameters(), rl_grads):
+            if rl_g is not None:
+                if p.grad is not None:
+                    p.grad += rl_g
+                else:
+                    p.grad = rl_g.clone()
+
+        total_rl_norm += rl_grad_norm
 
         optimizer.step()
         scheduler.step()
 
-    log_metrics(total_loss / args.ppo_epochs, total_norm / args.ppo_epochs, (total_kl_divergence / (model.seq_length * args.batch_size)).sum().item(), n_clips / (len(dataloader) * args.ppo_epochs), step)
+    log_metrics(
+        total_loss / args.ppo_epochs,
+        total_ppo_loss / args.ppo_epochs,
+        total_entropy_bonus / args.ppo_epochs,
+        total_rl_norm / args.ppo_epochs,
+        (total_kl_divergence / (model.seq_length * args.batch_size)).sum().item(),
+        n_clips / (len(dataloader) * args.ppo_epochs),
+        step,
+        total_sup_loss / args.ppo_epochs if args.n_artificial > 0 else None,
+        total_sup_norm / args.ppo_epochs if args.n_artificial > 0 else None
+    )
 
 
 if __name__ == "__main__":
@@ -395,6 +437,7 @@ if __name__ == "__main__":
     # parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--kl_coef", type=float, default=0.03)
     parser.add_argument("--entropy_coef", type=float, default=0.03)
+    parser.add_argument("--sup_loss_coef", type=float, default=1.0)
     parser.add_argument("--eps", type=float, default=0.2)
     parser.add_argument("--steps", type=int, default=256)
     parser.add_argument("--ppo_epochs", type=int, default=1)
