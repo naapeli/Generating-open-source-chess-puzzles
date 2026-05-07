@@ -31,3 +31,7 @@ rn3rk1/pp3ppp/2p1pn2/q1b5/N1PN4/1P1PB2P/5PP1/1R1Q1RK1 w - - 2 15
 
 5rk1/1b3rb1/p3p1QB/3qp3/Pp1pn3/1P6/2P1KPPR/7R w - - 6 30
 1R6/2p2pkp/r5p1/p7/Q7/2b1B3/P1n1qPN1/6K1 w - - 1 26
+
+
+From the first good runs!!!
+4r2k/6p1/pQ1B3p/2PpP2n/4Ppq1/P5P1/1P1Nb1KP/4R2R b - - 1 34

@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --time=0-04:00:00
+#SBATCH --time=0-12:00:00
 # #SBATCH --time=0-00:30:00
 #SBATCH --output=outputrl.out
 #SBATCH --mem=64G
@@ -15,4 +15,4 @@
 module load mamba
 module load triton/2024.1-gcc gcc/12.3.0  # needed for torch.compile
 source activate environment
-srun python src/train_rl_ddpo.py --run_name paper_experiments/fig9v23 --reference_path "./src/runs/supervised/no_context_move_model/model_0600000.pt" --batch_size 16 --ppo_epochs 1 --ppo_minibatch_size 256 --kl_coef 0.03 --entropy_coef 0.03 --steps 128 --lr 3e-5 --n_artificial 64 --sup_loss_coef 0.001
+srun python src/train_rl_espo.py --run_name run8 --reference_path "./src/runs/supervised/no_context_move_model/model_0600000.pt" --batch_size 16 --n_gradient_updates_per_generation 1 --beta 0.01 --steps 128 --lr 1e-6 --n_arteficial 16
