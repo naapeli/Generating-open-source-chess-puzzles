@@ -15,6 +15,10 @@ from pathlib import Path
 import argparse
 from joblib import Parallel, delayed
 import os
+import random
+
+from torch.nn.parallel import DistributedDataParallel
+from torch.distributed import init_process_group, destroy_process_group, all_reduce, ReduceOp, gather, scatter
 
 from MaskedDiffusion.model import MaskedDiffusion
 from tokenization.tokenization import tokens_to_fen, tokens_to_move, tokenize_fen, tokenize_move
@@ -26,6 +30,7 @@ from MaskingSchedule.MaskingSchedule import string_to_schedule
 from rl.espo import compute_elbo, kl_estimate, entropy
 
 def log_metrics(total_loss, grad_norm, kl_divergence, clips, step, lr, reward=None):
+    if writer is None: return
     writer.add_scalar("Loss/Total Loss", total_loss, step)
     writer.add_scalar("Loss/RL Grad Norm", grad_norm, step)
     writer.add_scalar("Loss/KL divergence", kl_divergence, step)
@@ -72,6 +77,7 @@ def get_stockfish_data(fen, model_move):
     return puzzle, best_move.uci(), cp_loss, pv_string
 
 def save_board(fen, tag, step):
+    if writer is None: return
     try:
         board = chess.Board(fen)
         svg_data = svg.board(board, size=300)
@@ -201,10 +207,9 @@ def get_reward(x_t, entropy_vals, config, step):
 
     rewards = rewards.to(torch.float32)
 
-    for key, value in components.items():
-        writer.add_scalar(f"Components/{key}", value, step)
-    writer.add_scalar("Reward", rewards.float().mean().item(), step)
-
+    if writer is not None:
+        for key, value in components.items():
+            writer.add_scalar(f"Components/{key}", value, step)
     log_rewards = rewards.clone()
     index = torch.argmax(log_rewards).item()
     save_board(batch_fens[index], "Generations", step)
@@ -215,14 +220,15 @@ def get_reward(x_t, entropy_vals, config, step):
     
     return rewards.to(x_t.device, dtype=torch.float32)
 
-def train_espo(model, reference_model, optimizer, scheduler, config, device, args, step):
+def train_espo(model, reference_model, optimizer, scheduler, config, device, args, step, master_process, distributed, world_size, local_batch_size, local_n_arteficial):
     model.eval()
     
     with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
-        step_fens = model.sample(None, None, steps=args.steps, batch_size=args.batch_size, temperature=args.temperature, generate_move_last=False)
+        sample_model = model.module if distributed else model
+        step_fens = sample_model.sample(None, None, steps=args.steps, batch_size=local_batch_size, temperature=args.temperature, generate_move_last=False)
     
-    if args.n_arteficial > 0:
-        sampled_fens, sampled_pvs, _, _ = buffer.sample(args.n_arteficial)
+    if local_n_arteficial > 0:
+        sampled_fens, sampled_pvs, _, _ = buffer.sample(local_n_arteficial)
         x_0_art_list = []
         for fen, pv in zip(sampled_fens, sampled_pvs):
             fen_tokens = tokenize_fen(fen)
@@ -239,13 +245,28 @@ def train_espo(model, reference_model, optimizer, scheduler, config, device, arg
         reference_elbo, mask, t = compute_elbo(reference_model, combined_fens, themes=None, ratings=None, return_mask=True)
         old_elbo = compute_elbo(model, combined_fens, themes=None, ratings=None, mask=mask)
 
-    old_elbo_gen = old_elbo[:args.batch_size]
-    entropy_vals = entropy(old_elbo_gen.cpu(), step_fens.shape[1])
+    old_elbo_gen = old_elbo[:local_batch_size]
+    entropy_vals = entropy(old_elbo_gen, step_fens.shape[1])
     
-    rewards_gen = get_reward(step_fens, entropy_vals, config, step)
+    if distributed:
+        gather_fens = [torch.zeros_like(step_fens) for _ in range(world_size)] if master_process else None
+        gather_entropies = [torch.zeros_like(entropy_vals) for _ in range(world_size)] if master_process else None
+        
+        gather(step_fens, gather_list=gather_fens, dst=0)
+        gather(entropy_vals, gather_list=gather_entropies, dst=0)
 
-    if args.n_arteficial > 0:
-        rewards_art = torch.full((args.n_arteficial,), 1.0, device=device)
+        if master_process:
+            global_fens = torch.cat(gather_fens)
+            global_entropies = torch.cat(gather_entropies)
+            global_rewards = get_reward(global_fens, global_entropies.cpu(), config, step)
+            reward_chunks = list(global_rewards.chunk(world_size, dim=0))
+        rewards_gen = torch.zeros(len(step_fens), device=device, dtype=torch.float32)
+        scatter(rewards_gen, scatter_list=reward_chunks if master_process else None, src=0)
+    else:
+        rewards_gen = get_reward(step_fens, entropy_vals.cpu(), config, step)
+
+    if local_n_arteficial > 0:
+        rewards_art = torch.full((local_n_arteficial,), 1.0, device=device)
         rewards = torch.cat([rewards_gen, rewards_art], dim=0)
     else:
         rewards = rewards_gen
@@ -299,21 +320,45 @@ def train_espo(model, reference_model, optimizer, scheduler, config, device, arg
         total_kl += kl.item()
         total_clips += is_clipped.float().mean().item()
 
-    log_metrics(
-        total_loss / args.n_gradient_updates_per_generation,
-        total_norm / args.n_gradient_updates_per_generation,
-        total_kl / args.n_gradient_updates_per_generation,
-        total_clips / args.n_gradient_updates_per_generation,
-        step,
-        optimizer.param_groups[0]["lr"],
-        rewards_gen.float().mean().item()
-    )
+    if distributed:
+        t_total_loss = torch.tensor(total_loss, device=device)
+        t_total_norm = torch.tensor(total_norm, device=device)
+        t_total_kl = torch.tensor(total_kl, device=device)
+        t_total_clips = torch.tensor(total_clips, device=device)
+        t_rewards_mean = torch.tensor(rewards_gen.float().mean().item(), device=device)
+
+        all_reduce(t_total_loss, op=ReduceOp.AVG)
+        all_reduce(t_total_norm, op=ReduceOp.AVG)
+        all_reduce(t_total_kl, op=ReduceOp.AVG)
+        all_reduce(t_total_clips, op=ReduceOp.AVG)
+        all_reduce(t_rewards_mean, op=ReduceOp.AVG)
+
+        total_loss = t_total_loss.item()
+        total_norm = t_total_norm.item()
+        total_kl = t_total_kl.item()
+        total_clips = t_total_clips.item()
+        rewards_mean = t_rewards_mean.item()
+    else:
+        rewards_mean = rewards_gen.float().mean().item()
+
+    if master_process:
+        log_metrics(
+            total_loss / args.n_gradient_updates_per_generation,
+            total_norm / args.n_gradient_updates_per_generation,
+            total_kl / args.n_gradient_updates_per_generation,
+            total_clips / args.n_gradient_updates_per_generation,
+            step,
+            optimizer.param_groups[0]["lr"],
+            rewards_mean
+        )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--run_name", type=str, required=True)
     parser.add_argument("--reference_path", type=str, required=True)
+    parser.add_argument("--checkpoint_model", type=str, default=None)
+    parser.add_argument("--save_period", type=int, default=2000)
     parser.add_argument("--n_generations", type=int, default=20000)
     parser.add_argument("--lr", type=float, default=3e-5)
     parser.add_argument("--batch_size", type=int, default=16)
@@ -323,21 +368,57 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=0.03)
     parser.add_argument("--eps", type=float, default=0.2)
+    parser.add_argument("--distributed", action="store_true")
     args = parser.parse_args()
+
+    distributed = args.distributed
+
+    if distributed:
+        assert torch.cuda.is_available()
+        local_rank = int(os.environ["SLURM_PROCID"])
+        rank = local_rank
+        world_size = int(os.environ["SLURM_NTASKS"])
+
+        os.environ["MASTER_ADDR"] = "localhost"
+        os.environ["MASTER_PORT"] = "12355"
+        init_process_group(backend="nccl", rank=rank, world_size=world_size)
+        device = torch.device(f"cuda:{local_rank}")
+        torch.cuda.set_device(device)
+        master_process = rank == 0
+    else:
+        rank = 0
+        local_rank = 0
+        world_size = 1
+        master_process = True
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    random.seed(rank)
+    torch.manual_seed(rank)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(rank)
+
+    local_batch_size = args.batch_size // world_size
+    local_n_arteficial = args.n_arteficial // world_size
 
     cpu_count = int(os.environ.get("SLURM_CPUS_PER_TASK", "1")) * int(os.environ.get("SLURM_NTASKS", "1"))
 
     base_path = Path("./src")
-    path = base_path / "runs" / "rl" / "espov3" / args.run_name
-    path.mkdir(parents=True, exist_ok=True)
-    writer = SummaryWriter(path)
+    path = base_path / "runs" / "rl" / "final_large_runs" / args.run_name
+    if master_process:
+        path.mkdir(parents=True, exist_ok=True)
+        writer = SummaryWriter(path)
+    else:
+        writer = None
 
     capacity = 200_000
     buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
 
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
-    checkpoint = torch.load(args.reference_path, map_location="cpu", weights_only=False)
+    continue_from_checkpoint = args.checkpoint_model is not None
+    reference_checkpoint = torch.load(args.reference_path, map_location="cpu", weights_only=False)
+    if continue_from_checkpoint:
+        checkpoint = torch.load(path / args.checkpoint_model, map_location="cpu", weights_only=False)
+    else:
+        checkpoint = reference_checkpoint
 
     config = checkpoint["config"]
     config.schedule = "linear"
@@ -345,15 +426,39 @@ if __name__ == "__main__":
     model = MaskedDiffusion(config)
     model.load_state_dict(checkpoint["model"])
     model.to(device=device)
-
-    reference_model = MaskedDiffusion(checkpoint["config"])
-    reference_model.load_state_dict(checkpoint["model"])
+    if distributed:
+        model = DistributedDataParallel(model, device_ids=[local_rank])
+    
+    reference_model = MaskedDiffusion(reference_checkpoint["config"])
+    reference_model.load_state_dict(reference_checkpoint["model"])
     reference_model.to(device=device)
     reference_model.eval()
     reference_model.requires_grad_(False)
 
     optimizer = AdamW(model.parameters(), lr=args.lr, betas=(0.9, 0.99), weight_decay=0.1)
-    scheduler = LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=3)
+    if continue_from_checkpoint:
+        optimizer.load_state_dict(checkpoint["optimizer"])
 
-    for step in range(args.n_generations):
-        train_espo(model, reference_model, optimizer, scheduler, config, device, args, step)
+    start_step = checkpoint.get("step", 0) if continue_from_checkpoint else 0
+    scheduler = LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=3, last_epoch=start_step if continue_from_checkpoint else -1)
+
+    def save_state(step_val):
+        checkpoint_path = path / f"model_{step_val:07d}.pt"
+        save_dict = {
+            "model": model.module.state_dict() if distributed else model.state_dict(),
+            "config": config,
+            "optimizer": optimizer.state_dict(),
+            "step": step_val
+        }
+        torch.save(save_dict, checkpoint_path)
+
+    for step in range(start_step, args.n_generations):
+        train_espo(model, reference_model, optimizer, scheduler, config, device, args, step, master_process, distributed, world_size, local_batch_size, local_n_arteficial)
+        
+        if master_process and step > 0 and step % args.save_period == 0:
+            save_state(step)
+
+    if master_process:
+        save_state(args.n_generations)
+        writer.close()
+    if distributed: destroy_process_group()
