@@ -66,7 +66,7 @@ Hence, if we know the original token sequence $x_0$ that has no masking, we can 
     \label{eq:reverse process x_0 unknown}
 \end{equation}
 
-This formulation is called mean-parametrization, as the denoising network is attempting to predict the mean of $x_0$ given the noisy input $x_t$. This allows us to sample new sequences from the network by iteratively converting mask tokens into other tokens via sampling from the probability distribution outputted by the network $\mu_\theta$. We describe the sampling procedure in more detail in section \ref{sec:sampling}.
+This formulation is called mean-parametrization, as the denoising network is attempting to predict the mean of $x_0$ given the noisy input $x_t$. Intuitively, \eqref{eq:reverse process x_0 unknown} can be thought of as if $x_t$ is a mask token, with probability $\frac{\alpha_s - \alpha_t}{1 - \alpha_t}$, we sample a new token from $\mu_\theta(x_t)$, otherwise we keep the token from $x_t$. This allows us to sample new sequences from the network by iteratively converting mask tokens into other tokens via sampling from \eqref{eq:reverse process x_0 unknown}. We describe the sampling procedure in more detail in section \ref{sec:sampling}.
 
 
 % \subsection{Masking schedules}
