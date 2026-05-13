@@ -1,0 +1,398 @@
+\section{Background}
+\label{sec:background}
+
+In this section, we review the theory of the most important concepts used in this work. We begin in section \ref{sec:discrete diffusion} by defining the masked diffusion model we employ as our base model. Then in section \ref{sec:reinforcement-learning}, we proceed by describing the central concepts in reinforcement learning ending at ELBO-based sequence-level policy optimization (ESPO) \cite{ou2025principledrldiffusionllms}, which we use as our chosen reinforcement learning algorithm. Finally, in section \ref{sec:chess terminology}, we give a brief overview of the game of chess.
+
+\subsection{Discrete Diffusion Models}
+\label{sec:discrete diffusion}
+
+Diffusion models are generative models that iteratively denoise inputs to generate items. Often, they are used in image \textcolor{red}{add references where this is done}, video or audio generation, where the samples are continuous and the model removes Gaussian noise on each denoising step. In recent years, many advances have been taken with diffusion models in discrete domains for instance with applying diffusion on continuous embeddings of the discrete data \textcolor{red}{add references where this was done, maybe \cite{li2022diffusionlmimprovescontrollabletext}, see the references in \cite{shi2025simplifiedgeneralizedmaskeddiffusion}}. However, such models in the language modelling domain for instance, mostly do not perform as well as other models. Therefore, diffusion models that truly work on discrete data by iteratively unmasking masked tokens, were developed \cite{austin2021structureddenoisingdiffusionmodels}. Although, in the field of language models, these models can perform comparatively to LLMs, they require much more compute during training to achieve the same performance \cite{nie2025scalingmaskeddiffusionmodels}. Nevertheless, masked diffusion language models might offer benefits during inference especially in efficiency \cite{nie2025scalingmaskeddiffusionmodels}.
+
+In this work, we train a masked diffusion model to generate chess puzzles. We express each chess board as a sequence of tokens, in the same way one would express natural language. We describe the exact tokenization procedure in section \ref{sec:tokenization}. For the model itself, we follow the work of \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. We describe the masked diffusion model next.
+
+
+\subsubsection{Forward process}
+
+During the forward process, the tokens of a complete chess board are iteratively converted into mask tokens $[\mathtt{MASK}]$. Similarly to \cite{shi2025simplifiedgeneralizedmaskeddiffusion}, we denote the possible tokens by one-hot vectors $e_0, \dots, e_{m - 1}$. Additionally, we denote the basis vector of the mask token by $e_m$. With this notation, we begin by examining the forward processs in discrete time. Then, we follow \cite{shi2025simplifiedgeneralizedmaskeddiffusion} to generalize and take the limit as the amount of discrete time steps approaches infinity.
+
+\paragraph{Discrete-time forward process.}
+
+To begin with, we divide the time interval $[0, 1]$ into $T$ time steps. For each time $t\in[0, 1]$ and individual token $x_t$ indexed by time, the transition from step $s(i) = (i - 1) / T$ to $t(i) = i / T$ is given by the following transition matrix:
+
+\begin{equation}
+    Q_i = (1 - \beta_i) I + \beta_i\bold{1}e_m^\top\in\mathbb{R}^{(m + 1)\cross(m + 1)},
+    \label{eq:forward process}
+\end{equation}
+where $\bold{1}\in\mathbb{R}^{m + 1}$ is the vector of ones and $\beta_i$ determines the probability that the state $x_{t(i)}$ is the mask state. Each element $(Q_i)_{jk}$ tells the probability of moving from token $j$ to token $k$ with most of the transition probabilities being zero. From \eqref{eq:forward process}, we get the distribution for the state $x_{t(i)}$ in terms of the one-hot encoded state $x_0$:
+
+\begin{equation*}
+    q(x_{t(i)} | x_0) = \text{Cat}(x_{t(i)}; \bar{Q}_i^\top x_0), \quad\bar{Q}_i = \alpha_i I + (1 - \alpha_i)\bold{1}e_m^\top \text{ and } \alpha_i = \prod_{j=1}^{i}(1 - \beta_j).
+\end{equation*}
+
+To generalize this result to the entire token sequence, we use the factorization $\mathbb{P}[x_t^\text{seq} | x_s^\text{seq}] = \prod_{n=1}^{N}\mathbb{P}[x_t^{\text{seq},(n)} | x_s^{\text{seq},(n)}]$. Using this factorization, all transitions can be treated independently for each token \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. Additionally, we choose the probabilities $\beta_i$ such that $\alpha_T\approx 0$ and $\alpha_0 = 1$. By these choices, we force the process to start from a fully unmasked state and converge to a sequence of only mask tokens.
+
+
+\paragraph{Continuous forward process.}
+
+Next, we generalize the previous notation to continuous time by taking the limit $T\rightarrow\infty$ of \eqref{eq:forward process}. We obtain the following equation \cite{austin2021structureddenoisingdiffusionmodels, shi2025simplifiedgeneralizedmaskeddiffusion}:
+
+\begin{equation*}
+    \bar{Q}(t) = \alpha_tI + (1 - \alpha_t)\bold{1}e_m^\top, \quad\text{where }\alpha_t = \exp\left( -\int_{0}^{t}\beta(s)\mathrm{d}s \right).
+\end{equation*}
+
+The function $\beta(s)$ is a continuous functions such that $\beta_i = \frac{\beta(t(i))}{T}$, and must be chosen. Equivalently, one can choose the function $\alpha_t$, which we call the masking schedule. A few common choices for the masking schedule include the linear schedule, the polynomial schedule, the geometric schedule and a cosine schedule. Although, the authors of \cite{shi2025simplifiedgeneralizedmaskeddiffusion} suggest using the linear schedule for training with a cosine grid for $t$ during inference, we opt to use the cosine schedule with a linear grid for $t$ for both training and inference, as it seemed to perform almost equivalently in their experiments. It is additionally simpler to implement as one can always sample random values of $t$ form the uniform distribution during both training and inference. The cosine schedule is is given by the equation:
+
+\begin{equation*}
+    \alpha_t = 1 - \cos(\frac{\pi}{2}(1 - t)).
+\end{equation*}
+
+One can look at equations of the mentioned masking schedules and some experiments with the masking schedules in \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. Finally, the authors of \cite{shi2025simplifiedgeneralizedmaskeddiffusion} derive an expression for the distribution of $x_t$ conditioned on a one-hot encoded state $x_s$, $s < t$. This is notably important, as it allows one to obtain analytical expressions for the reverse process. The distribution of $x_t$ is as follows:
+
+\begin{equation}
+    q(x_t | x_s) = \text{Cat}(x_t; \bar{Q}(s, t)^\top x_s), \quad\bar{Q}(s, t) = \frac{\alpha_t}{\alpha_s}I + \left(1 - \frac{\alpha_t}{\alpha_s}\right)\bold{1}e_m^\top.  % \bar{Q}(s)^{-1}\bar{Q}(t) = 
+    \label{eq:x_t dist cond x_s}
+\end{equation}
+
+
+
+\subsubsection{Reverse process}
+
+During the reverse process, we reverse the masking process and attempt to convert each masked token into the true token. Using \eqref{eq:x_t dist cond x_s}, one can derive the following expression \cite{shi2025simplifiedgeneralizedmaskeddiffusion}:
+
+\begin{align}
+    q(x_s | x_t, x_0) &= \text{Cat}(x_s; \bar{R}^{x_0}(t, s)^\top x_t), \label{eq:reverse process x_0 known}\\
+    \bar{R}^{x_0}(t, s) &= I + \frac{\alpha_s - \alpha_t}{1 - \alpha_t}e_m(x_0 - e_m)^\top \text{ and } s < t.\nonumber
+\end{align}
+
+Hence, if we know the original token sequence $x_0$ that has no masking, we can compute the distribution of a step closer to the unmasked state. However, if we want to sample new datapoints using this process, $x_0$ is unknown. To solve this problem, we introduce the denoising network $\mu_\theta(x_t)\in\Delta(V)^m$, which given a noisy state $x_t$ outputs a probability distribution over the vocabulary $V$ for each masked state. Unmasked tokens remain the same with probability $1$. Using this network and \eqref{eq:reverse process x_0 known}, we define the distribution for $x_s$ as
+
+\begin{equation}
+    p_\theta(x_s | x_t) = q(x_s | x_t, \mu_\theta(x_t)) = \text{Cat}(x_s; \bar{R}^{\mu_\theta(x_t)}(t, s)^\top x_t).
+    \label{eq:reverse process x_0 unknown}
+\end{equation}
+
+This formulation is called mean-parametrization, as the denoising network is attempting to predict the mean of $x_0$ given the noisy input $x_t$. Intuitively, \eqref{eq:reverse process x_0 unknown} can be thought of as if $x_t$ is a mask token, with probability $\frac{\alpha_s - \alpha_t}{1 - \alpha_t}$, we sample a new token from $\mu_\theta(x_t)$, otherwise we keep the token from $x_t$. This allows us to sample new sequences from the network by iteratively converting mask tokens into other tokens via sampling from \eqref{eq:reverse process x_0 unknown}. We describe the sampling procedure in more detail in section \ref{sec:sampling}.
+
+
+% \subsection{Masking schedules}
+% \label{sec:masking schedules}
+
+
+\subsubsection{Evidence lower bound}
+\label{sec:evidence lower bound}
+
+To optimize the outputs of the denoising network, an optimization objective is needed. While traditional LLMs are optimized by maximizing the likelihood function, for masked diffusion models, the computation of the likelihood is intractable in an efficient way. Hence, with diffusion models one usually optimizes for the lower bound of the log marginal likelihood called the evidence \cite{shi2025simplifiedgeneralizedmaskeddiffusion, austin2021structureddenoisingdiffusionmodels, kingma2021variationaldiffusionmodels}. If one optimizes the evidence lower bound (ELBO), the hope is that one also increases the likelihood. This usually happens in practice. Hence, this can be considered maximum likelihood optimization, although, one never explicitly optimizes the likelihood. In \cite{shi2025simplifiedgeneralizedmaskeddiffusion}, the authors prove that for masked diffusion models, the evidence lower bound can be expressed in the following form:
+
+\begin{equation}
+    \mathcal{L}_\theta(x, x_0) = \int_{0}^{1}\frac{\alpha_t'}{1 - \alpha_t}\mathbb{E}_{q(x_t | x_0)}\left[\sum_{i=1}^{L}\bold{1}[x_t^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t)^{(i)}\right] \mathrm{d}t,
+    \label{eq:ELBO}
+\end{equation}
+where $L$ is the sequence length. One may note that the ELBO is just the sum of the cross-entropy losses over the masked tokens integrated over time. This makes it easy to implement in practice.
+
+\paragraph{Monte-Carlo integration}
+
+To estimate the value of the ELBO, we employ Monte-Carlo (MC) sampling \cite{methodsofnumericalintegration} to estimate the inner expectation. For a given $t$, the expectation can be estimated by sampling $K$ different random masks, corrupting $x_0$ with them, computing the sum of the appropriate cross-entropies and finally averaging over the $K$ losses. The estimate of the expected value looks as follows:
+
+\begin{align*}
+    &\mathbb{E}_{q(x_t | x_0)}\left[\sum_{i=1}^{L}\bold{1}[(x_t^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t^{(k)})^{(i)}\right]\\
+    \approx&\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_t^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t^{(k)})^{(i)}.
+\end{align*}
+
+In practice, we employ a 1-point MC estimate for the expectation. As the variance of the expectation estimate does not affect the total variance of the ELBO estimate a lot \cite{rojas2025improvingreasoningdiffusionlanguage}, we choose to use the available video memory to either increase the batch size during supervised training or to reduce the variance of choosing the values of the variable $t$, which induces most of the variance to the ELBO estimate \cite{rojas2025improvingreasoningdiffusionlanguage}.
+
+In addition to the estimation of the expectation, during supervised training, we employ a 1-point MC estimate for the outer integral over $t$ as well. Supervised training is a lot more stable than reinforcement learning and hence the variance of the ELBO estimate does not affect the training as much. We deem it more important to use all available VRAM to increase the batch size instead of using more MC or quadrature samples. The final ELBO for supervised training has the form:
+
+\begin{equation*}
+    \mathcal{L}_\theta(x, x_0) = \frac{1}{N}\sum_{j=1}^{N}\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_{t_j}^{(k)})^{(i)},
+    \label{eq:supervised ELBO}
+\end{equation*}
+where $t_j\sim\mathcal{U}(0, 1)$ and $N = K = 1$.
+
+\paragraph{Gauss-Legendre quadrature}
+
+As mentioned previously, reinforcement learning is usually a lot less stable than supervised training. Therefore, it is essential to minimize the variance of the ELBO estimate, which is used as a surrogate for the evidence during reinforcement learning. To minimize variance, we take inspiration from \cite{rojas2025improvingreasoningdiffusionlanguage} and estimate the outer integral in \eqref{eq:ELBO} with a Gauss-Legendre quadrature \cite{methodsofnumericalintegration}. The authors of \cite{rojas2025improvingreasoningdiffusionlanguage} show that most of the variance in the ELBO MC estimate is coming from randomly sampling the value of $t$. With a quadrature, the values of $t$ are no longer random, but deterministic and more evenly spaced depending on what quadrature rule one uses. For an $n$-point Gauss-Legendre quadrature, the nodes $x_j$ are the roots of an $n$-th Legendre polynomial $P_n(x)$ normalized so that $P_n(1) = 1$. The nodes and the weights $w_j' = \frac{2}{(1 - x_j^2)P_n'(x_j)^2}$ are chosen so that the approximation is exact up to polynomials of degree $2n - 1$ \cite{methodsofnumericalintegration}. The nodes lie in the interval $[-1, 1]$ and are symmetric around 0. To integrate a function over the interval $[0, 1]$, one uses the following transformation \cite{numericalmethodsinscientificcomputing}:
+
+\begin{align*}
+    \int_{0}^{1}f(x)\mathrm{d}x \approx\sum_{j=1}^{N}\underbrace{\frac{w_j'}{2}}_{w_j} f\bigg(\underbrace{\frac{x_j}{2} + \frac{1}{2}}_{t_j}\bigg).
+\end{align*}
+
+Using this transformation, the ELBO estimate used during RL has the form:
+
+\begin{equation*}
+    \mathcal{L}_\theta(x, x_0) = \sum_{j=1}^{N}w_j\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_{t_j}^{(k)})^{(i)}.
+    \label{eq:RL ELBO}
+\end{equation*}
+
+Even with a few sample points, the bias and the variance of the ELBO estimate drop significantly compared to the equivalent MC estimate \cite{rojas2025improvingreasoningdiffusionlanguage}. This is expected, as asymptotically, the bias of the MC estimate follows $O(\frac{1}{N^2})$ and the variance follows $O(\frac{1}{NK})$, whereas, for the quadrature estimate, the bias follows $O(\frac{1}{N^4})$ and the variance $O(\frac{1}{N^2K})$, or better if additional smoothness assumptions of the integrand are made \cite{rojas2025improvingreasoningdiffusionlanguage}. Therefore, the quadrature estimate is more efficient in terms of the number of samples required to achieve a certain level of accuracy. Hence, we employ the quadrature estimate during reinforcement learning.
+
+\subsubsection{Sampling}
+\label{sec:sampling}
+
+When sampling from the masked diffusion model $\mu_\theta$, we employ the reverse process described in \eqref{eq:reverse process x_0 unknown} \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. With ancestral sampling, we iteratively sample tokens from the conditional distribution $p_\theta(x_s | x_t), s < t $. We begin by discretizing the interval $[0, 1]$ into $T$ subintervals $\{ t_i \}_{i=0}^T$, where $T$ is the number of timesteps in the diffusion process. The subintervals can be chosen in many ways, but we choose to use a uniform discretization. In each generation step, we condition the generation on the previously generated tokens and sample new tokens from a categorical distribution according to the masking schedule and the logits of the model. The sampling process is as follows \cite{shi2025simplifiedgeneralizedmaskeddiffusion}:
+
+\textcolor{red}{Talk about block diffusion if we end up sampling the fen before the move.}
+
+\begin{algorithm}[H]
+    \caption{Sampling for masked diffusion models}
+    \label{alg:ancestral sampling}
+    \begin{algorithmic}
+        \algrenewcommand{\algorithmiccomment}[1]{\textcolor{gray}{// #1}}
+        \State Initialize the time grid $\{ t(i) \}_{i=0}^T \leftarrow \mathrm{discretize}([0, 1])$.
+        \State Initialize $x_T$ by setting it to all mask tokens.
+        \For{$j = T, T-1, \dots, 1$}:
+            \State $t \leftarrow t(j)$, $s \leftarrow t(j - 1)$
+            \For{$i = 1, 2, \dots, L$}:
+                \If{$(x_t^{(i)}) = [\mathtt{MASK}]$}:
+                    % \State Sample $x_s^{(n)} \sim \mathrm{Cat}(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta^{(n)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
+                    \State $\log p_i \leftarrow \log(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta(x_t)^{(i)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
+                    \State \Comment{Sample from $\mathrm{Cat}(p_i)$ using the Gumbel-max trick.}
+                    \State $u^{(k)}\leftarrow\mathcal{U}([0, 1])$
+                    \State $x_s^{(i)} \leftarrow \mathrm{argmax}_k \left( \log p_i^{(k)} - \log(-\log u^{(k)})  \right)$
+                \Else :
+                    \State $x_s^{(i)} \leftarrow x_t^{(i)}$
+                \EndIf
+            \EndFor
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+When we sample from the categorical distribution, we employ the Gumbel-max trick \cite{kool2019stochasticbeamsandwheretofindthem}. \citeauthor{shi2025simplifiedgeneralizedmaskeddiffusion} note that using this trick yields considerably better sample quality than sampling from a categorical distribution using e.g. binary search on the cdf \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. With this trick, we consider the log probabilities of all tokens, add $\mathrm{Gumbel}(0)$ distributed noise to each log probability and take the token with the highest sum. This procedure implicitly truncates small probabilities improving the sample quality compared to other theoretically equivalent sampling procedures. 
+
+
+
+
+
+
+
+\subsection{Reinforcement Learning}
+\label{sec:reinforcement-learning}
+
+We apply reinforcement learning (RL) to enhance the capabilities of the model after supervised training. We describe our RL procedure in detail at the end of the section.
+
+In this section, we work with Markov Decision Processes, which are defined as follows \cite{SuttonAndBarto2018,lehmann2024definitiveguidepolicygradients}:
+
+\begin{definition}[Markov Decision Process]
+    A Markov decision process (MDP) is a tuple $\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, \gamma, p_0)$, where $\mathcal{S}, \mathcal{A}$ are the state and action spaces and $P:\mathcal{S}\cross\mathcal{A}\rightarrow\Delta(\mathcal{S}\cross\mathbb{R})$ is the transition function of the environment characterized by transition probabilities $P(s', r | s, a) = \mathbb{P}[S_{t + 1} = s', R_{t + 1} = r | S_t = s, A_t = a]$ for states $s', s\in\mathcal{S}$,  action $a\in\mathcal{A}$ and reward $r\in\mathbb{R}\setminus\{-\infty, \infty\}$. Moreover, $\gamma\in[0, 1]$ is a discount factor for the future rewards and $p_0\in\Delta(S)$ is the distribution over the starting states.
+\end{definition}
+
+
+Given an MDP $\mathcal{M}$, we consider an agent that explores $\mathcal{M}$. The agent takes actions according to a function $\pi:\mathcal{S}\rightarrow\Delta(\mathcal{A})$, $\pi(s, a) = \mathbb{P}[A_t = a | S_t = s]$, which is called the policy, which might be parametrized by a parameter vector $\theta$. Informally we denote this function as $\pi(a | s)$. The agent attempts to modify this policy to maximize the cumulative reward $G_t = \sum_{k=t}^{\infty} \gamma^{k - t} r_k$ over a trajectory $(s_t, a_t, r_{t+1}, s_{t+1}, a_{t+1}, r_{t+2}, \dots)$. In our setting, the trajectory always ends at a terminal state $s_T$ with a reward $r_T$. A policy can be either explicitly defined or induced by a state-value function $V(s) = \mathbb{E}[G_t | S_t = s]$ or an action-value function $Q(s, a) = \mathbb{E}[G_t | S_t = s, A_t = a]$ \cite{SuttonAndBarto2018} via taking greedy actions.
+
+
+% \begin{definition}[Trajectory]
+%     Given an MDP $\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, \gamma, p_0)$, we define a trajectory to be the sequence $(s_t, a_t, r_{t+1}, s_{t+1}, a_{t+1}, r_{t+2}, \dots)$. The last state in the trajectory is called the terminal state.
+% \end{definition}
+
+% \begin{definition}[Policy]
+%     Given an MDP $\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, \gamma, p_0)$ and an agent exploring the MDP, we define a policy to be the function $\pi:\mathcal{S}\rightarrow\Delta(\mathcal{A})$, $\pi(s, a) = \mathbb{P}[A_t = a | S_t = s]$, which defines the probability that an agent following the policy picks an action $a$ in a state $s$.
+% \end{definition}
+
+
+
+
+% The environment is characterized by transition probabilities $P(s', r | s, a) = \mathbb{P}[S_{t + 1} = s', R_{t + 1} = r\ |\ S_t = s, A_t = a]$. The agent in this environment takes actions according to a policy $\pi(s, a) = \mathbb{P}[A_t = a | S_t = s]$, which might be parametrized by a parameter vector $\theta$. A policy can be either explicitly defined or induced by a state-value function $V(s)$ or an action-value function $Q(s, a)$ \cite{SuttonAndBarto2018} via taking greedy actions. In each state $S_t = s$, the goal of the agent is to maximize the cumulative reward $G_t = \sum_{k=t}^{\infty} \gamma^{k - t} r_k$ in the environment.
+
+\subsubsection{Policy gradient theorem}
+
+In reinforcement learning, one often models the value function by function approximation, e.g. using a neural network, and uses an implicit greedy policy. In natural language processing, however, it is often more convenient to model a policy directly with function approximation, as the pretrained language model can serve as the policy\protect\footnote{In this work, we will use the terms model and policy interchangeably.}. This way, the trained policy will remain stochastic allowing sampling of completions. One can also avoid explicitly learning the value-function, which may affect the stability of the learning algorithm. We call methods, which learn the policy directly policy gradient methods. These methods rely on the policy gradient theorem, which yields gradients for the expected episodic reward \cite{lehmann2024definitiveguidepolicygradients}.
+
+\begin{definition}[Expected episodic reward]
+    For a given policy $\pi_\theta$ and a distribution of starting states $p_0$, the function $J(\theta)$ is called the expected episodic reward and is given by the following equation:
+    \begin{align*}
+        J(\theta) &= \mathbb{E}_{s_0\sim p_0,\pi_\theta}[G_0]\\
+        &= \mathbb{E}_{s_0\sim p_0}[\mathbb{E}_{\pi_\theta}[G_t | S_t = s_0]]\\
+        &= \mathbb{E}_{s_0\sim p_0}[V_{\pi_\theta}(s_0)].
+    \end{align*}
+\end{definition}
+
+This definition allows us to formulate the policy gradient theorem, as follows\cite{SuttonPolicyGradientTheorem, SuttonAndBarto2018, lehmann2024definitiveguidepolicygradients}:
+
+
+\begin{theorem}[Policy gradient theorem]
+    Let $J(\theta)$ be the expected episodic reward for a policy $\pi_\theta$ and let $Q_{\pi_\theta}$ be the action-value function for the same policy. Also let $\pi_\theta$ and $Q_{\pi_\theta}$ be differentiable with respect to $\theta$ and the gradients be bounded. Then we have
+
+    \begin{equation}
+        \nabla J(\theta)\propto\sum_s\mu(s)\sum_a Q_{\pi_\theta}(a | s)\nabla\pi_\theta(a | s) = \mathbb{E}_{s\sim\mu,a\sim\pi_\theta}[Q_{\pi_\theta}(a | s)\nabla\ln\pi_\theta(a | s)],
+    \end{equation}
+
+    where $\mu$ is the on-policy distribution under $\pi_\theta$.
+
+    \label{th:PGT}
+\end{theorem}
+
+Originally proposed by \citeauthor{Williams1992} in \cite{Williams1992}, the policy gradient method allows one to optimize the policy parameters directly using gradient based optimization algorithms, which can be efficiently implemented using modern automatic differentiation engines. One of the original methods is the so-called REINFORCE with baseline \cite{Williams1992}, which serves as inspiration for modern RL methods. In REINFORCE with baseline, one uses the following update formula \cite{SuttonAndBarto2018}:
+
+\begin{equation*}
+    \theta_{t+1} = \theta_t + \alpha(G_t - b(S_t))\nabla\ln\pi_{\theta_t}(A_t | S_t),
+\end{equation*}
+where $b(S_t)$ is the baseline function, which is free as long as it does not depend on the action $A_t$. This update has the same expected value as in theorem \ref{th:PGT}, as $\mathbb{E}[G_t | S_t, A_t] = Q_{\pi_\theta}(S_t, A_t)$ and $\mathbb{E}[\nabla b(S_t)] = 0$ \cite{SuttonAndBarto2018}. If one chooses the baseline as $b(S_t) = V_{\pi_\theta}(S_t)$, one obtains the actor-critic algorithm \cite{Actor-criticAlgorithms}, which serves as a basis for almost all modern RL algorithms used for LLMs. We describe the most common algorithms in the next section.
+
+
+
+\subsubsection{Proximal policy optimization}
+
+% TODO: connect to the last chapter and talk about what MDP we have. 
+
+Proximal policy optimization (PPO) is a variant of the actor-critic method that prioritizes stability \cite{schulman2017proximalpolicyoptimizationalgorithms}. It introduces a clipping mechanism that allows one to do many model updates for each generation while controlling for stability. In addition, PPO uses importance sampling and often a KL-divergence penalty inspired by \cite{schulman2017trustregionpolicyoptimization}. The PPO objective is defined using the importance ratio $\rho_t = \frac{\pi_\theta(A_t | S_t)}{\pi_{\theta_\text{old}}(A_t | S_t)}$ and the advantage function $\hat{A}_t = Q(S_t, A_t) - V(S_t)$, which may be estimated in many different ways. The objective is given by the following equation:
+
+\begin{equation*}
+    L(\theta) = \mathbb{E}_t[\min(\rho_t\hat{A}_t, \text{clip}(\rho_t, 1 - \epsilon, 1 + \epsilon)\hat{A}_t) - \beta\mathbb{KL}(\pi_\theta, \pi_{\theta_\text{old}})].
+\end{equation*}
+
+This objective is designed to prevent model collapse. Since the samples generated by the old policy $\theta_\text{old}$ are only accurate close to the original policy, the gradients become unreliable if the old and new policies are too different. Therefore, if the probability ratio improves the objective, the update is clipped to ensure stability. This makes the PPO objective a pessimistic bound of the previously used $\rho_t\hat{A}_t$ objective and hence more stable \cite{schulman2017proximalpolicyoptimizationalgorithms}.
+
+
+% \paragraph{GRPO}
+
+% GRPO is a variant of PPO
+
+% \paragraph{ESPO}
+\subsubsection{ELBO-based Sequence-level Policy Optimization}
+
+% TODO: Say that now we only talk about LLMs
+Thus far, we have consentrated on RL algorithms that are directly applicable to general Markov Decision Processes. These algorithms rely on ones ability to compute the log-probability of individual samples from the model. This, however, is difficult to do efficiently with diffusion models, as the log-probability requires $T$ forward passes of the network. For diffusion models in the image domain, people have experimented with this approach with promising results \cite{black2024trainingdiffusionmodelsreinforcement}, however, in language modelling, the increased memory and computation requirements make such approach unappealing. Therefore, researchers have experimented with many different variants of the traditional algorithms, which allow one to compute the RL loss in one forward pass of the denoising model \cite{rojas2025improvingreasoningdiffusionlanguage, ou2025principledrldiffusionllms, tang2026wd1weightedpolicyoptimization, zhao2025d1scalingreasoningdiffusion}. In this work, we mainly follow the approach of \cite{ou2025principledrldiffusionllms}, although with the quadrature ELBO estimate inspired by \cite{rojas2025improvingreasoningdiffusionlanguage}.
+
+In this work, we employ an algorithm called ELBO-based Sequence-level Policy Optimization (ESPO) \cite{ou2025principledrldiffusionllms}. ESPO is a reinforcement learning algorithm that is spesifically designed for discrete diffusion models. It takes inspiration of an algorithm called Group-relative Policy Optimization (GRPO) \cite{shao2024deepseekmathpushinglimitsmathematical}. In \cite{shao2024deepseekmathpushinglimitsmathematical}, the authors propose a way to estimate the advantage-function in PPO using a monte-carlo estimate of the value-function. GRPO considers an MDP with states defined to be partially completed answers and actions defined to be when a model samples a new token. For a group of answers $\{ y^{(1)}, \dots y^{(G)}\}$ to a prompt $x$ sampled from $\pi_{\theta_\text{old}}$, the GRPO loss is as follows:
+
+\begin{align*}
+    L(\theta) &= \mathbb{E}_{x\sim D, y^{(1)},\dots y^{(G)}\sim\pi_{\theta_\text{old}}(\cdot | x)}\\
+    &\left[\frac{1}{G}\sum_{i=1}^{G}\frac{1}{L}\sum_{k=1}^{L}\min(\rho^{k,(i)}\hat{A}^{(i)}, \text{clip}(\rho^{k,(i)}, 1 - \epsilon, 1 + \epsilon)\hat{A}^{(i)}) - \beta\mathbb{KL}(\pi_\theta, \pi_{\theta_\text{old}})\right],
+\end{align*}
+where $G$ is the group size, $L$ the sequence length, which is constant in our setup, $\rho^{k,(i)} = \frac{\pi_\theta(y^{k,(i)} | x, y^{<k,(i)})}{\pi_{\theta_\text{old}}(y^{k,(i)} | x, y^{<k,(i)})}$ and $\hat{A}^{(i)} = R(x, y^{(i)}) - \frac{1}{G}\sum_{j=1}^{G}R(x, y^{(j)})$.
+
+However, GRPO still does not allow us to easily generalize to diffusion models. For this reason, ESPO no longer works in an MDP with states of partially completed answers and actions of generating one new token, as this would require us to evaluate the log-probability of each token separately. ESPO considers an MDP with an initial state as the sequence with all mask tokens, and a terminal state with no mask tokens remaining\textcolor{red}{Reference "Group Sequence Policy Optimization" by Gwen team}. Each action corresponds to sampling an entire sequence from the model. Hence, each trajectory of this MDP has exactly two states, one action, and one reward. Although, even with this MDP, the exact log-probability of each action is still intractable, it is possible to use the ELBO as a surrogate of this quantity \cite{ou2025principledrldiffusionllms, rojas2025improvingreasoningdiffusionlanguage}. Even though the ELBO is not an approximation of the sequence-level likelihood, but rather a lower bound, empirically it seems that algorithms using it outperform other approximation methods \cite{ou2025principledrldiffusionllms}. The ESPO loss function is as follows:
+
+\begin{align*}
+    L(\theta) &= \mathbb{E}_{x\sim D, y^{(1)},\dots y^{(G)}\sim\pi_{\theta_\text{old}}(\cdot | x)}\\
+    &\left[\frac{1}{G}\sum_{i=1}^{G}\min(\rho^{(i)}\hat{A}^{(i)}, \text{clip}(\rho^{(i)}, 1 - \epsilon, 1 + \epsilon)\hat{A}^{(i)}) - \beta\mathbb{KL}(\pi_\theta, \pi_{\theta_\text{old}})\right],
+\end{align*}
+where $\rho^{(i)} = \frac{\exp\frac{1}{L}\mathcal{L}_\theta(y^{(i)} | x)}{\exp\frac{1}{L}\mathcal{L}_{\theta_\text{old}}(y^{(i)} | x)} = \exp(\frac{1}{L}(\mathcal{L}_\theta(y^{(i)} | x) - \mathcal{L}_{\theta_\text{old}}(y^{(i)} | x)))$.
+\textcolor{red}{Use and reference the ELBO notation from previous part}
+
+The authors of \cite{ou2025principledrldiffusionllms} note that it is important to normalize the ELBOs with the sequence length as otherwise, the exponential function might make the ratio explode or approach zero making the model unable to learn.
+
+
+% \subsubsection{Denoising diffusion policy optimization}
+
+% Denoising diffusion policy optimization (DDPO) is an RL algorithm designed for diffusion models \cite{black2024trainingdiffusionmodelsreinforcement}. In their work, \citeauthor{black2024trainingdiffusionmodelsreinforcement} define an MDP for a continuous diffusion models, which have a normal posterior distribution for each step. Although, our posterior distribution for each step is a categorical distribution, we can still take inspiration from their MDP formulation for our setup. We define the MDP for our problem as follows:
+
+% \begin{align*}
+%     &s_i = (x_{t(i)}, i), \quad a_i = x_{t(i - 1)}, \quad \pi_\theta(a_i | s_i) = p_\theta(x_{t(i - 1)} | x_{t(i)}), \\
+%     &P(s_{i - 1}, r_i | s_i, a_i) = (\delta_{x_{t(i - 1)}}, \delta_{i - 1}, \delta_{r_i}), \quad p_0 = (x_{t(n_\mathrm{steps})}, n_\mathrm{steps}),
+% \end{align*}
+
+% where $x_{t(i)}$ is the sequence of partially masked tokens and $a_i$ is the action of sampling a new sequence based on \eqref{eq:reverse process x_0 unknown}. The transition following the action is deterministic with the reward function being described in section \ref{sec:reward function}. Lastly, $p_0$ is the initial distribution of the MDP, which corresponds to the sequence with all mask tokens.
+
+% Due to the formulation of our problem, we further simplify the action probability $\pi_\theta(a_i | s_i)$. As we will use it as a part of an importance ratio in PPO, we can get the following:
+
+% \begin{align*}
+%     \pi_\theta(a_i | s_i) = p_\theta(x_{t(i - 1)} | x_{t(i)}) = p_\mathrm{unmask}^{\abs{M}}\cdot p_\mathrm{mask} ^ {\abs{K}}\prod_{j\in M} \mu_\theta(x_{t(i)})^{(j)},
+% \end{align*}
+% where $M$ is the set of indices that transform from a masked token to an unmasked one during a transition and $K$ is the set of indices that do not transform from masked to unmasked. Using this decomposition, we may note that the probabilities $p_\mathrm{mask}$ and $p_\mathrm{unmask}$ are constants for both the reference model and the trained policy on any given step $i$. This allows us to do the following simplification:
+
+% \begin{equation*}
+%     \rho_i = \frac{\pi_\theta(a_i | s_i)}{\pi_{\theta_\text{old}}(a_i | s_i)} = \frac{p_\mathrm{unmask}^{\abs{M}}\cdot p_\mathrm{mask} ^ {\abs{K}}\prod_{j\in M} \mu_\theta(x_{t(i)})^{(j)}}{p_\mathrm{unmask}^{\abs{M}}\cdot p_\mathrm{mask} ^ {\abs{K}}\prod_{j\in M} \mu_{\theta_\text{old}}(x_{t(i)})^{(j)}} = \prod_{j\in M} \frac{\mu_\theta(x_{t(i)})^{(j)}}{\mu_{\theta_\text{old}}(x_{t(i)})^{(j)}}.
+% \end{equation*}
+% Hence, we only compute the ratio of the tokens that were transformed from masked tokens to unmasked tokens.
+
+
+\subsubsection{Kullback-Leibler divergence}
+
+Kullback-Leibler (KL) divergence is an important part of most RL algorithms. In general, it is an estimate of a distance between two probability distribution. It is given exactly by the following formula:
+
+\begin{equation*}
+    \mathbb{KL}(q, p) = \sum_{x}q(x)\log\frac{q(x)}{p(x)} = \mathbb{E}_{x\sim q}\left[\log\frac{q(x)}{p(x)}\right].
+\end{equation*}
+
+KL divergence is used in LLM post-training to prevent the model from drifting too far from the pretrained reference model. Traditionally, people believe that all knowledge of an LLM is gathered during supervised training. By incorporating a KL divergence penalty during renforcement learning, the model retains more knowledge from the pre-training. Post-training is aimed to make the formatting of the answers better and to improve the reasoning capabilities of the model. KL divergence is also used to prevent reward hacking during RL. 
+
+The main problem with KL divergence in LLMs is that an exact computation of the sequence-level KL divergence is infeasible due to the sum over all possible completions to a prompt. Although, the sum of the exact token-level KL divergences is possible to compute, people rarely do so in practice, as computing the exact KL divergence would require storing a huge vector of probabilities for both the reference and the current models taking more video memory than necessary. Instead, people usually rely on Monte-Carlo estimates, which are computationally much cheaper to compute than exact values.
+
+In general, it is quite easy to estimate the KL divergence for autoregressive language models with Monte-Carlo integration. However, doing so for diffusion models is much more challenging. Computing the KL divergence for a diffusion model requires knowledge of the trajectory that was taken to obtain a given answer to some prompt. Storing the entire trajectory for all samples would require quite a lot of memory, and is therefore not often used. Instead, people often use approximations of log probabilities to compute the Monte-Carlo estimate \cite{ou2025principledrldiffusionllms, zhao2025d1scalingreasoningdiffusion}. Below, we present a few common Monte-Carlo estimates for the KL divergence.
+
+
+\paragraph{Naive $k_1$ estimate}
+
+In language modelling, the most basic estimate of the KL divergence is the so-called $k_1$ estimate \cite{schulman2020klblog}:
+
+\begin{equation*}
+    \mathbb{KL}_{k_1}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}\right].
+\end{equation*}
+
+The $k_1$ estimate is unbiased, but high in variance and hence not used as much as other estimates \cite{schulman2020klblog}. In addition, the gradient of the estimate is extremely biased \cite{tang2025pitfallskldivergencegradient}, which is especially harmful for language modelling, as gradient based optimizers are always used. In fact, the expected value of the gradient of the $k_1$ estimate zero \cite{tang2025pitfallskldivergencegradient}. In addition, the estimate can often be negative, which is not possible for the exact KL divergence. For these reasons, the naive $k_1$ estimate is not often used in practice, however, it is used to derive better estimates as shown below.
+
+
+\paragraph{Variance-reduced $k_3$ estimate}
+
+A better estimate for the KL divergence can be constructed by noting the following \cite{schulman2020klblog}:
+
+\begin{align}
+    \mathbb{E}_{y\sim \pi_\theta}[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)}] &= \int \pi_\theta(y)\frac{\pi_\text{ref}(y)}{\pi_\theta(y)}\mathrm{d}y \nonumber\\
+    &= \int \pi_\text{ref}(y)\mathrm{d}y \nonumber\\
+    &= 1.
+    \label{eq:policy_ratio_one}
+\end{align}
+Hence $\mathbb{E}_{y\sim \pi_\theta}[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)} - 1] = 0$. Schulman uses this to produce another unbiased estimate, that has lower variance compared to $k_1$. The estimate is as follows:
+
+\begin{equation*}
+    \mathbb{KL}_{k_3}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} + \frac{\pi_\text{ref}(y)}{\pi_\theta(y)} - 1\right].
+\end{equation*}
+
+The $k_3$ estimate has the benefit of being non negative and low variance \cite{schulman2020klblog}. In natural language processing, this estimate is probably the most widely used. However, similarly to $k_1$, the gradient of this estimate is not unbiased. The gradient of the $k_3$ estimate actually optimizes the reverse-KL divergence $\mathbb{KL}(\pi_\text{ref}, \pi_\theta)$ \cite{tang2025pitfallskldivergencegradient}.
+
+\paragraph{Biased $k_2$ estimate}
+
+A final common KL divergence is obtained by using \eqref{eq:policy_ratio_one} as follows:
+
+\begin{align*}
+    1 &= \mathbb{E}_{y\sim \pi_\theta}\left[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)}\right] \\
+    &= \mathbb{E}_{y\sim \pi_\theta}\left[e^{-\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}}\right] \\
+    &= \mathbb{E}_{y\sim \pi_\theta}\left[\sum_{n=0}^{\infty}\frac{(-1)^n \left( \log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} \right)^n}{n!}\right] \\
+    &\approx \mathbb{E}_{y\sim \pi_\theta}\left[1 - \log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} + 0.5\cdot\left( \log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} \right)^2\right] \\
+    &= 1 - \mathbb{E}_{y\sim \pi_\theta}\left[\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}\right] + 0.5\cdot\mathbb{E}_{y\sim \pi_\theta}\left[\left( \log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} \right)^2\right].
+\end{align*}
+Hence, we obtain the $k_2$ estimate:
+
+\begin{equation*}
+    \mathbb{KL}_{k_2}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\frac{1}{2}\left(\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}\right)^2\right].
+\end{equation*}
+
+The $k_2$ estimate is obtained by the second order Taylor series expansion of the exponential of the log ratio of the policies \cite{schulman2020klblog}. The estimate is biased, however, very low in variance, which makes it more stable than the other estimates. Another benefit of this estimate is that the gradient of $k_2$ is unbiased \cite{tang2025pitfallskldivergencegradient}. Hence, if it is optimized for during RL with gradient based methods, the final result will approach the one we expect.
+
+In this thesis, we employ $k_2$ with a one point Monte-Carlo estimate to approximate the KL divergence between the new and the reference policy. As we train diffusion models and the evidence lower bound is a biased surrogate for the log probability of the generated sequence, the estimate is biased even if we attempted to use an unbiased KL divergence estimator. Therefore, we prioritize low variance and stable gradients, and use the $k_2$ estimate.
+
+
+
+\subsection{Chess terminology}
+\label{sec:chess terminology}
+
+Although, chess is a widely known game, it is necessary to review the basic terminology of chess. Chess is a board game played on an 8x8 grid of squares. A game is played between two players, who take turns moving their pieces with a goal of checkmating the opponent's king \cite{fidechessrules}. At the start of the game, each player has 16 pieces consisting of a king, queen, two rooks, two knights, two bishops and eight pawns, with each piece having its own unique movement rules.
+
+A game of chess ends in either a win for one of the players or a draw. A win can occur if a player checkmates the opponent's king, that is, puts the king under attack such that no legal moves remain for the opponent \cite{fidechessrules}. A player can also win if the opponent resigns, which often happens before checkmate if a player is clearly losing. A draw can occur in several ways, such as with stalemate, where no legal moves remain, but the the king is not in check. A draw can also be claimed by a player if the same position is repeated three times, or if no capture or pawn move has been made in 50 consecutive moves \cite{fidechessrules}. A game is drawn automatically if a position is repeated five times or no captures or pawn moves have been made in 75 moves \cite{fidechessrules}. Lastly, a game ends in a draw if there is insufficient material to checkmate the opponent.
+
+A chess position can be compactly described with the Forsyth-Edwards Notation (FEN) \cite{fennotation}. The FEN notation stores information about the board state, the side to move, castling rights, en passant target square, halfmove counter and fullmove counter. An example of a full fen string of the initial position after e2e4 is as follows:
+
+\begin{equation*}
+    \resizebox{\textwidth}{!}{$
+        \underbrace{\text{rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR}}_{\text{board}} \underbrace{\text{b}}_{\text{side}} \underbrace{\text{KQkq}}_{\text{castling}} \underbrace{\text{e3}}_{\text{en passant}} \underbrace{0}_{\text{halfmove}} \underbrace{1}_{\text{fullmove}}
+    $}
+\end{equation*}
+Although, the FEN notation captures most of the information about a chess position, for instance a three-fold repetition is not encoded.
+
+Moves in a chess position can be represented in several ways, but in this thesis, we use the Universal Chess Interface (UCI) notation \cite{UCIchessinterface}. The UCI notation consists of the starting square, ending square and the possible promotion piece. Using this notation, we define the principal variation as the sequence of best moves for either player from a given position. This sequence can be computed with a chess engine such as Stockfish \cite{stockfish}, which is commonly considered to be the strongest chess engine.
+
+One of the main functions of chess engines is to evaluate a given position. This is usually done in the centipawn metric, which indicates the amount of material or tactical advantage a player has in terms of the value of a pawn. For instance, if white is down a pawn, which typically results in a baseline evaluation of $-100$ centipawns, but has a forced sequence threatening checkmate compelling black to give up a queen to avoid losing, the engine will look past the immediate material deficit and evaluate the position at roughly $+800$ centipawns. The probability of winning can be defined in many ways, but in this thesis, we use the definition of Lichess \cite{Lichessaccuracymetric}, which applies the logistic function to the centipawn evaluation as follows:
+
+% \begin{equation}
+%     \mathbb{P}(\text{win}) = 50 + 50\cdot\left(\frac{2}{1 + \exp(-0.00368208\cdot\text{centipawns})} - 1\right).
+%     \label{eq:prob_win}
+% \end{equation}
+\begin{equation}
+    \mathbb{P}[\text{win} | a, s] = \frac{1}{1 + \exp(-0.00368208\cdot\text{eval}(a | s))},
+    \label{eq:prob_win}
+\end{equation}
+where $s$ is the board state and $a$ is the move to be made. $\text{eval}(a | s)$ is the centipawn evaluation of the position after the move $a$ has been made. The evaluation is relative to the side to move meaning that if the side who makes the move $a$ is winning, the evaluation is positive. Otherwise, the evaluation is negative.
+
+Generally, the knight and bishop are considered 3 times as valuable as a pawn, with rooks being valued at 5 times a pawn and queens at 9 times a pawn \cite{piecevalues}. The king is considered infinitely valuable as its loss results in a loss of the game. The exact relative values of the pieces can, however, vary depending on the position.
+
+Lastly, chess positions are either tactical or positional. A tactical position is one, where the game is decided by a sequence of forcing moves, such as checkmate or winning material, whereas, a positional position is decided with more nuanced strategic advantages. A tactical position is solved with a tactic, which is a sequence of moves that leads to a win. Common tactics include e.g. forks, pins, skewers, discovered attacks, sacrifices and zugzwangs \cite{tactics}. In this thesis, we focus on puzzles, which are usually solved using tactics.

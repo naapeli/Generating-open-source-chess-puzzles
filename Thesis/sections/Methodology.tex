@@ -1,0 +1,117 @@
+\section{Methodology}
+\label{sec:methodology}
+
+In this section, we describe the methodology of our work. We begin by describing how we represent the chess positions as token sequences in section \ref{sec:tokenization}. Then, in section \ref{sec:defining chess puzzles}, we describe how we define the chess puzzles we generate. Finally, in sections \ref{sec:supervised training} and \ref{sec:Reinforcement learning algorithm}, we describe the algorithms we use to train our models.
+
+\subsection{Tokenization}
+\label{sec:tokenization}
+
+To generate new chess positions with deep learning models, one has to transform each puzzle into a format the model can understand. This is done in a process called tokenization. To achieve this, we take inspiration from \cite{ruoss2024amortizedplanninglargescaletransformers, feng2025generatingcreativechesspuzzles} and use the convenient fen notation to represent the board state. We discussed the basics of the fen notation in section \ref{sec:chess terminology}.
+
+% A fen string contains most of the information that is needed to reconstruct a chess position (e.g. three-fold repetition is not directly encoded).  It contains information about the board state, the player whose turn it is to move, castling rights, a possible en passant target square, a halfmove counter and a fullmove counter. A full fen string of the initial position after 1. e4 looks as follows:
+
+% \textcolor{red}{Remove this as I already have this in the previous part}
+
+% \begin{equation*}
+%     \resizebox{\textwidth}{!}{$
+%         \underbrace{\text{rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR}}_{\text{board}} \underbrace{\text{b}}_{\text{side}} \underbrace{\text{KQkq}}_{\text{castling}} \underbrace{\text{e3}}_{\text{en passant}} \underbrace{0}_{\text{halfmove}} \underbrace{1}_{\text{fullmove}}
+%     $}
+% \end{equation*}
+
+We tokenize this fen string by padding the representation to a fixed length of 76 tokens. The board consists of 64 tokens, each representing a square on the board. The remaining 12 tokens are used to represent the side to move (1 token), the castling rights (4 tokens), the en passant target square (2 tokens), the halfmove counter (2 tokens) and the fullmove counter (3 tokens). The example fen presented in section \ref{sec:chess terminology} in a tokenized form looks as follows:
+
+\begin{equation*}
+    \resizebox{\textwidth}{!}{$
+        \underbrace{
+            \begin{array}{l}
+                10, 8, 9, 11, 12, 9, 8, 10, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, \\
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, \\
+                0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 4, 2, 3, 5, 6, 3, 2, 4
+            \end{array}
+        }_{\text{board}}, \underbrace{14}_{\text{side}}, \underbrace{16, 17, 18, 19}_{\text{castling}}, \underbrace{33, 23}_{\text{en passant}}, \underbrace{37, 38}_{\text{halfmove}}, \underbrace{37, 37, 39}_{\text{fullmove}}
+    $}
+\end{equation*}
+
+In total, we use a vocabulary of 52 tokens, where 13 tokens represent different pieces and an empty square and are only used for the board representation. The remaining token vocabulary is used to represent the side to move with two tokens, the castling rights with four tokens and one no castling token, the en passant target square with eight file, eight rank and one no en passant token. Finally, the counters are represented with ten tokens for the numbers and an additional padding token.
+
+In addition to the fen, we experiment with concatenating the best move to the fen tokens. For this, we use the uci notation to represent the move, as discussed in section \ref{sec:chess terminology}. However, we need five additional tokens to represent different promotions and a no promotion. 
+
+In addition to the 52 normal tokens, we have a mask token, which is used to represent an unknown token.
+
+
+\subsection{Defining chess puzzles}
+\label{sec:defining chess puzzles}
+To be able to generate chess puzzles, and train the model with reinforcement learning, it is necessary to define which positions classify as puzzles. We follow the work of \citeauthor{feng2025generatingcreativechesspuzzles} and define puzzles as positions, which have a unique solution and that are sufficiently counter-intuitive. Additionally, a position must be realistic, i.e. one that could reasonably arise during a real game of chess. In sections \ref{sec:legality}, \ref{sec:uniqueness} and \ref{sec:counter-intuitiveness}, we describe each criteria in more detail. In addition, we also describe the exact reinforcement learning reward function in section \ref{sec:reward function}.
+
+
+\subsubsection{Legality}
+\label{sec:legality}
+
+For a chess position to be a valid puzzle, as a prerequisite, it must be legal. However, it is nontrivial to define what it means for a chess position to be legal. One possible definition of legality in chess is that a position is considered legal, if it can be reached from the initial position by a sequence of legal moves. This condition, however, is infeasible to check for general positions, the number of possible continuations from the initial position grows exponentially (discussion in \cite{howtodetectanillegalposition}).
+
+Instead of the previously described approach, in this work, we settle for a more heuristic definition of legality. We consider a position to be legal if it passes the following conditions: exactly 1 king for both colors, less than or equal to 16 pieces and 8 pawns for both colors, no pawns on the first or the eight rank, possible castling rights, possible en passant square, moving player is not giving check, maximum two checking pieces and possible double check configuration. To check these conditions, we use the python-chess library \cite{python-chess}. Although, these conditions do not guarantee that a position is reachable from the initial position, they guarantee that there is nothing obviously wrong with the position. In addition, they are very efficient to check, as they do not require any search of the game tree.
+
+\subsubsection{Uniqueness}
+\label{sec:uniqueness}
+
+A second condition that a puzzle must satisfy is that it must have a unique solution. Following the work of \citeauthor{feng2025generatingcreativechesspuzzles}, inspired by the Lichess puzzler project \cite{lichesspuzzler}, we check the uniqueness by recursively comparing the best and the second best moves found by Stockfish on the principal variation. If the winning chances $\mathbb{P}[\text{win} | a, s]$ from \eqref{eq:prob_win} of the player to move after the best move are significantly higher than the winning chances of the player to move after the second best move, we consider the position to have a unique solution.
+
+
+\begin{algorithm}[H]
+    \caption{Uniqueness check}
+    \label{alg:uniqueness check}
+    \begin{algorithmic}
+        \algrenewcommand{\algorithmiccomment}[1]{\textcolor{gray}{// #1}}
+        \State \textbf{Input:} Position $s$, Engine e, Threshold $\tau_{uni}$
+        \State $player1\leftarrow \text{side_to_move}(s)$
+        \State $PV \leftarrow [\;]$
+        \While{$s$ is not terminal}
+            \State $a_{best}, a_{second} \leftarrow \text{e.analyze}(s)$
+            \If{side to move in $s = player1$}
+                \If{$\mathbb{P}[\text{win} | a_{best}, s] - \mathbb{P}[\text{win} | a_{second}, s] \le \tau_{uni}$}
+                    \State \textbf{break} \Comment{Uniqueness fails, stop collecting PV}
+                \EndIf
+            \EndIf
+            \State $PV\text{.append}((a_{best}, a_{second}))$
+            \State $s \leftarrow \text{apply\_move}(s, a_{best})$
+        \EndWhile
+        \While{$|PV| \pmod 2 = 0$ \textbf{or} $PV[-1].a_{second}$ is empty}
+            \State $PV \leftarrow PV[:-1]$ \Comment{Puzzle must end on $w$'s move with alternatives}
+        \EndWhile
+        \If{$|PV| > 1$}
+            \State \textbf{return} True, $PV$
+        \Else
+            \State \textbf{return} False, $\emptyset$
+        \EndIf
+    \end{algorithmic}
+\end{algorithm}
+
+
+
+\subsubsection{Counter-intuitiveness}
+\label{sec:counter-intuitiveness}
+
+% \subsubsection{Themes}
+% \label{sec:themes}
+
+% \subsubsection{Difficulty ratings}
+
+\subsubsection{Reward function}
+\label{sec:reward function}
+
+\paragraph{Realism}
+
+\paragraph{Diversity-filtering}
+
+% \paragraph{Piece count regularization}
+
+% \paragraph{Intra- and inter-batch distance regularization}
+
+
+
+\subsection{Supervised training}
+\label{sec:supervised training}
+
+
+\subsection{Reinforcement learning algorithm}
+\label{sec:Reinforcement learning algorithm}
