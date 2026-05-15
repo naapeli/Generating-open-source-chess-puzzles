@@ -381,17 +381,13 @@ Although, the FEN notation captures most of the information about a chess positi
 
 Moves in a chess position can be represented in several ways, but in this thesis, we use the Universal Chess Interface (UCI) notation \cite{UCIchessinterface}. The UCI notation consists of the starting square, ending square and the possible promotion piece. Using this notation, we define the principal variation as the sequence of best moves for either player from a given position. This sequence can be computed with a chess engine such as Stockfish \cite{stockfish}, which is commonly considered to be the strongest chess engine.
 
-One of the main functions of chess engines is to evaluate a given position. This is usually done in the centipawn metric, which indicates the amount of material or tactical advantage a player has in terms of the value of a pawn. For instance, if white is down a pawn, which typically results in a baseline evaluation of $-100$ centipawns, but has a forced sequence threatening checkmate compelling black to give up a queen to avoid losing, the engine will look past the immediate material deficit and evaluate the position at roughly $+800$ centipawns. The probability of winning can be defined in many ways, but in this thesis, we use the definition of Lichess \cite{Lichessaccuracymetric}, which applies the logistic function to the centipawn evaluation as follows:
+One of the main functions of chess engines is to evaluate a given position. This is usually done in the centipawn metric, which indicates the amount of material or tactical advantage a player has in terms of the value of a pawn. For instance, if white is down a pawn, which typically results in a baseline evaluation of $-100$ centipawns, but has a forced sequence threatening checkmate compelling black to give up a queen to avoid losing, the engine will look past the immediate material deficit and evaluate the position at roughly $+800$ centipawns. The chances of winning can be defined in many ways, but in this thesis, we use the definition of Lichess \cite{Lichessaccuracymetric}, which applies the logistic function to the centipawn evaluation as follows:
 
-% \begin{equation}
-%     \mathbb{P}(\text{win}) = 50 + 50\cdot\left(\frac{2}{1 + \exp(-0.00368208\cdot\text{centipawns})} - 1\right).
-%     \label{eq:prob_win}
-% \end{equation}
 \begin{equation}
-    \mathbb{P}[\text{win} | a, s] = \frac{1}{1 + \exp(-0.00368208\cdot\text{eval}(a | s))},
+    w(a | s) = \frac{2}{1 + \exp(-0.00368208\cdot\text{eval}(a | s))} - 1,
     \label{eq:prob_win}
 \end{equation}
-where $s$ is the board state and $a$ is the move to be made. $\text{eval}(a | s)$ is the centipawn evaluation of the position after the move $a$ has been made. The evaluation is relative to the side to move meaning that if the side who makes the move $a$ is winning, the evaluation is positive. Otherwise, the evaluation is negative.
+where $s$ is the board state and $a$ is the move to be made. $\text{eval}(a | s)$ is the centipawn evaluation of the position after the move $a$ has been made. The evaluation is relative to the side to move meaning that if the side who makes the move $a$ is winning, the evaluation is positive. Otherwise, the evaluation is negative. This makes $w(a |s)\in[-1, 1]$. A positive value means that the side making the move has the advantage and a negative value means the side making the move has a disadvantage. If the action leads to a forced checkmate, the winning chances are 1 if the side making a move wins and -1 if the side making a move loses.
 
 Generally, the knight and bishop are considered 3 times as valuable as a pawn, with rooks being valued at 5 times a pawn and queens at 9 times a pawn \cite{piecevalues}. The king is considered infinitely valuable as its loss results in a loss of the game. The exact relative values of the pieces can, however, vary depending on the position.
 
