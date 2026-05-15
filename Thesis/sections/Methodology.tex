@@ -54,30 +54,45 @@ Instead of the previously described approach, in this work, we settle for a more
 \subsubsection{Uniqueness}
 \label{sec:uniqueness}
 
-A second condition that a puzzle must satisfy is that it must have a unique solution. Following the work of \citeauthor{feng2025generatingcreativechesspuzzles}, inspired by the Lichess puzzler project \cite{lichesspuzzler}, we check the uniqueness by recursively comparing the best and the second best moves found by Stockfish on the principal variation. If the winning chances $\mathbb{P}[\text{win} | a, s]$ from \eqref{eq:prob_win} of the player to move after the best move are significantly higher than the winning chances of the player to move after the second best move, we consider the position to have a unique solution.
+A second condition that a puzzle must satisfy is that it must have a unique solution. Following the work of \citeauthor{feng2025generatingcreativechesspuzzles}, inspired by the Lichess puzzler project \cite{lichesspuzzler}, we check the uniqueness by recursively comparing the best and the second best moves found by Stockfish on the principal variation. Although, the real uniqueness check has more details as described in algorithm \ref{alg:uniqueness check}, the general idea is as follows: if the winning chances $w(a | s)$ from \eqref{eq:prob_win} of the player to move after the best move are significantly higher than the winning chances of the player to move after the second best move, we consider the position to have a unique solution.
 
 
 \begin{algorithm}[H]
-    \caption{Uniqueness check}
+    \caption{Uniqueness metric}
     \label{alg:uniqueness check}
     \begin{algorithmic}
         \algrenewcommand{\algorithmiccomment}[1]{\textcolor{gray}{// #1}}
-        \State \textbf{Input:} Position $s$, Engine e, Threshold $\tau_{uni}$
-        \State $player1\leftarrow \text{side_to_move}(s)$
+        \Require Position $s$, Stockfish engine, Threshold $\tau_{uni}$
+        \State $side\leftarrow \text{sideToMove}(s)$
         \State $PV \leftarrow [\;]$
+        \State $isMate \leftarrow \text{engine.analyze}(s).a_{\text{best}}.\text{isMateScore}$
         \While{$s$ is not terminal}
-            \State $a_{best}, a_{second} \leftarrow \text{e.analyze}(s)$
-            \If{side to move in $s = player1$}
-                \If{$\mathbb{P}[\text{win} | a_{best}, s] - \mathbb{P}[\text{win} | a_{second}, s] \le \tau_{uni}$}
-                    \State \textbf{break} \Comment{Uniqueness fails, stop collecting PV}
+            \State $a_{\text{best}}, a_{\text{second}} \leftarrow \text{engine.analyze}(s)$
+            \If{$\text{sideToMove}(s) = side$}
+                \State $unique \leftarrow w(a_{\text{best}} | s) - w(a_{\text{second}} | s) > \tau_{uni}$
+                \If{$a_{\text{best}} \text{ is mate-in-1 and } w(a_{\text{bestNonMate}} | s) < 0.6$}
+                    % \State \Comment{If multiple mates in one are possible, $a_{\text{best}}$ can be accepted if the best non-mating move is not too good.}
+                    \State $unique \leftarrow \text{True}$ 
+                \EndIf
+                \If{\textbf{not} $unique$}
+                    \If{$isMate$}
+                        \State \textbf{return} False, $\emptyset$
+                    \Else
+                        \State \textbf{break}
+                    \EndIf
+                \EndIf
+                \If{\textbf{not} $isMate$ \textbf{and} $\text{eval}(a_{\text{best}} | s) < 200$}
+                    \State \textbf{return} False, $\emptyset$ \Comment{The player must be clearly winning after best move}
                 \EndIf
             \EndIf
-            \State $PV\text{.append}((a_{best}, a_{second}))$
-            \State $s \leftarrow \text{apply\_move}(s, a_{best})$
+            \State $PV\text{.append}(a_{\text{best}})$
+            \State $s \leftarrow \text{applyMove}(s, a_{\text{best}})$
         \EndWhile
-        \While{$|PV| \pmod 2 = 0$ \textbf{or} $PV[-1].a_{second}$ is empty}
-            \State $PV \leftarrow PV[:-1]$ \Comment{Puzzle must end on $w$'s move with alternatives}
-        \EndWhile
+        \If{\textbf{not} $isMate$}
+            \While{$|PV| \pmod 2 = 0$}
+                \State $PV \leftarrow PV[:-1]$
+            \EndWhile
+        \EndIf
         \If{$|PV| > 1$}
             \State \textbf{return} True, $PV$
         \Else
@@ -90,6 +105,23 @@ A second condition that a puzzle must satisfy is that it must have a unique solu
 
 \subsubsection{Counter-intuitiveness}
 \label{sec:counter-intuitiveness}
+
+Although, legality and uniqueness are necessary conditions for puzzles, they are not sufficient. Many trivial positions, which can not be considered puzzles, satisfy the legality and uniqueness criteria. For instance, a checkmate in a material deficit or a recapture of a hanging piece, which was traded on the previous move both satisfy these conditions, but are clearly too easy to be considered puzzles. We address this in the same manner as \citeauthor{feng2025generatingcreativechesspuzzles} and introduce a counter-intuitiveness metric, which quantifies difficulty of a puzzle. We use the following definition:
+
+\begin{equation}
+    \label{eq:counter intuitive}
+    \mathbb{I}_{\text{counter-intuitive}}(s) = 0.8 \cdot \frac{d_{\text{cp}} - 1}{d_{\text{max}}} - 0.1 \cdot \frac{v_{\text{capturedMaterial}}}{9} > \tau_{\text{cnt}} ,
+\end{equation}
+where $d_{\text{cp}}$ is the critical depth of the Stockfish's search, i.e. the lowest depth, after which the best move no longer changes. $d_{\text{max}}$ is the maximum depth of the search and $v_{\text{capturedMaterial}}$ is the value of the material captured on the best move. The material values of the pieces are described in section \ref{sec:chess terminology}.
+
+% Intuitively, the probability of passing the counter-intuitiveness criterion increases, if the best move is found later in the search. On the other hand, it decreases, if the best move is to capture a piece with a high material value. Although, the value of the captured piece matters a bit, the critical depth has a much larger effect on passing the counter-intuitiveness metric.
+
+% In general, the counter-intuitiveness metric and the uniqueness metric are inversely correlated. This is because if a position has only one good move and passes the uniqueness criteria, an engine like Stockfish usually finds the best move very fast, whereas if a position has multiple potential moves, the engine is often more unsure of which move is the best.
+
+Intuitively, the counter-intuitiveness metric is designed to penalize obvious decisions while rewarding deeper tactics. The material penalty ensures that moves capturing high-value pieces, such as taking a hanging queen, receive lower scores as these are typically the first candidate moves a human player would consider. On the other hand, a high critical depth indicates that the engine had to search extensively before settling on the best move, which often correlates with "quiet" positional moves or unintuitive sacrifices. Since the critical depth carries a significantly larger weight than the material penalty, it is the primary driver of the metric.
+
+However, the counter-intuitiveness and uniqueness metrics are generally inversely correlated, which makes generating positions that satisfy both criteria difficult. When a position possesses a single, strong continuation that satisfies the uniqueness criterion, Stockfish typically finds the best move with a shallow search, resulting in a low counter-intuitiveness score. Conversely, positions that yield a high critical depth usually feature multiple candidate moves that the engine must evaluate, which often causes the position to fail the strict uniqueness threshold. This opposing dynamic makes generating high-quality puzzles challenging, as positions that simultaneously satisfy both criteria are rare.
+
 
 % \subsubsection{Themes}
 % \label{sec:themes}
