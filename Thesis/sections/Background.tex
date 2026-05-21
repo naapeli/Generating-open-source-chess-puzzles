@@ -17,19 +17,19 @@ During the forward process, the tokens of a complete chess board are iteratively
 
 \paragraph{Discrete-time forward process.}
 
-To begin with, we divide the time interval $[0, 1]$ into $T$ time steps. For each time $t\in[0, 1]$ and individual token $x_t$ indexed by time, the transition from step $s(i) = (i - 1) / T$ to $t(i) = i / T$ is given by the following transition matrix:
+To begin with, we divide the time interval $[0, 1]$ into $T$ time steps. For each time $t\in[0, 1]$ and individual token $y_t$ indexed by time, the transition from step $s(i) = (i - 1) / T$ to $t(i) = i / T$ is given by the following transition matrix:
 
 \begin{equation}
     Q_i = (1 - \beta_i) I + \beta_i\bold{1}e_m^\top\in\mathbb{R}^{(m + 1)\cross(m + 1)},
     \label{eq:forward process}
 \end{equation}
-where $\bold{1}\in\mathbb{R}^{m + 1}$ is the vector of ones and $\beta_i$ determines the probability that the state $x_{t(i)}$ is the mask state. Each element $(Q_i)_{jk}$ tells the probability of moving from token $j$ to token $k$ with most of the transition probabilities being zero. From \eqref{eq:forward process}, we get the distribution for the state $x_{t(i)}$ in terms of the one-hot encoded state $x_0$:
+where $\bold{1}\in\mathbb{R}^{m + 1}$ is the vector of ones and $\beta_i$ determines the probability that the state $y_{t(i)}$ is the mask state. Each element $(Q_i)_{jk}$ tells the probability of moving from token $j$ to token $k$ with most of the transition probabilities being zero. From \eqref{eq:forward process}, we get the distribution for the state $y_{t(i)}$ in terms of the one-hot encoded state $y$:
 
 \begin{equation*}
-    q(x_{t(i)} | x_0) = \text{Cat}(x_{t(i)}; \bar{Q}_i^\top x_0), \quad\bar{Q}_i = \alpha_i I + (1 - \alpha_i)\bold{1}e_m^\top \text{ and } \alpha_i = \prod_{j=1}^{i}(1 - \beta_j).
+    q(y_{t(i)} | y) = \text{Cat}(y_{t(i)}; \bar{Q}_i^\top y), \quad\bar{Q}_i = \alpha_i I + (1 - \alpha_i)\bold{1}e_m^\top \text{ and } \alpha_i = \prod_{j=1}^{i}(1 - \beta_j).
 \end{equation*}
 
-To generalize this result to the entire token sequence, we use the factorization $\mathbb{P}[x_t^\text{seq} | x_s^\text{seq}] = \prod_{n=1}^{N}\mathbb{P}[x_t^{\text{seq},(n)} | x_s^{\text{seq},(n)}]$. Using this factorization, all transitions can be treated independently for each token \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. Additionally, we choose the probabilities $\beta_i$ such that $\alpha_T\approx 0$ and $\alpha_0 = 1$. By these choices, we force the process to start from a fully unmasked state and converge to a sequence of only mask tokens.
+To generalize this result to the entire token sequence, we use the factorization $\mathbb{P}[y_t^\text{seq} | y_s^\text{seq}] = \prod_{n=1}^{N}\mathbb{P}[y_t^{\text{seq},(n)} | y_s^{\text{seq},(n)}]$. Using this factorization, all transitions can be treated independently for each token \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. Additionally, we choose the probabilities $\beta_i$ such that $\alpha_T\approx 0$ and $\alpha_0 = 1$. By these choices, we force the process to start from a fully unmasked state and converge to a sequence of only mask tokens.
 
 
 \paragraph{Continuous forward process.}
@@ -40,38 +40,38 @@ Next, we generalize the previous notation to continuous time by taking the limit
     \bar{Q}(t) = \alpha_tI + (1 - \alpha_t)\bold{1}e_m^\top, \quad\text{where }\alpha_t = \exp\left( -\int_{0}^{t}\beta(s)\mathrm{d}s \right).
 \end{equation*}
 
-The function $\beta(s)$ is a continuous functions such that $\beta_i = \frac{\beta(t(i))}{T}$, and must be chosen. Equivalently, one can choose the function $\alpha_t$, which we call the masking schedule. A few common choices for the masking schedule include the linear schedule, the polynomial schedule, the geometric schedule and a cosine schedule. Although, the authors of \cite{shi2025simplifiedgeneralizedmaskeddiffusion} suggest using the linear schedule for training with a cosine grid for $t$ during inference, we opt to use the cosine schedule with a linear grid for $t$ for both training and inference, as it seemed to perform almost equivalently in their experiments. It is additionally simpler to implement as one can always sample random values of $t$ form the uniform distribution during both training and inference. The cosine schedule is is given by the equation:
+The function $\beta(s)$ is a continuous functions such that $\beta_i = \frac{\beta(t(i))}{T}$, and must be chosen. Equivalently, one can choose the function $\alpha_t$, which we call the masking schedule. A few common choices for the masking schedule include the linear schedule, the polynomial schedule, the geometric schedule and a cosine schedule. Although, the authors of \cite{shi2025simplifiedgeneralizedmaskeddiffusion} suggest using the linear schedule for training with a cosine grid for $t$ during inference, we opt to use the cosine schedule with a linear grid for $t$ for both training and inference, as it seemed to perform almost equivalently in their experiments. \textcolor{red}{We actually use the linear schedule now} It is additionally simpler to implement as one can always sample random values of $t$ form the uniform distribution during both training and inference. The cosine schedule is is given by the equation:
 
 \begin{equation*}
     \alpha_t = 1 - \cos(\frac{\pi}{2}(1 - t)).
 \end{equation*}
 
-One can look at equations of the mentioned masking schedules and some experiments with the masking schedules in \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. Finally, the authors of \cite{shi2025simplifiedgeneralizedmaskeddiffusion} derive an expression for the distribution of $x_t$ conditioned on a one-hot encoded state $x_s$, $s < t$. This is notably important, as it allows one to obtain analytical expressions for the reverse process. The distribution of $x_t$ is as follows:
+One can look at equations of the mentioned masking schedules and some experiments with the masking schedules in \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. Finally, the authors of \cite{shi2025simplifiedgeneralizedmaskeddiffusion} derive an expression for the distribution of $y_t$ conditioned on a one-hot encoded state $y_s$, $s < t$. This is notably important, as it allows one to obtain analytical expressions for the reverse process. The distribution of $y_t$ is as follows:
 
 \begin{equation}
-    q(x_t | x_s) = \text{Cat}(x_t; \bar{Q}(s, t)^\top x_s), \quad\bar{Q}(s, t) = \frac{\alpha_t}{\alpha_s}I + \left(1 - \frac{\alpha_t}{\alpha_s}\right)\bold{1}e_m^\top.  % \bar{Q}(s)^{-1}\bar{Q}(t) = 
-    \label{eq:x_t dist cond x_s}
+    q(y_t | y_s) = \text{Cat}(y_t; \bar{Q}(s, t)^\top y_s), \quad\bar{Q}(s, t) = \frac{\alpha_t}{\alpha_s}I + \left(1 - \frac{\alpha_t}{\alpha_s}\right)\bold{1}e_m^\top.  % \bar{Q}(s)^{-1}\bar{Q}(t) = 
+    \label{eq:y_t dist cond y_s}
 \end{equation}
 
 
 
 \subsubsection{Reverse process}
 
-During the reverse process, we reverse the masking process and attempt to convert each masked token into the true token. Using \eqref{eq:x_t dist cond x_s}, one can derive the following expression \cite{shi2025simplifiedgeneralizedmaskeddiffusion}:
+During the reverse process, we reverse the masking process and attempt to convert each masked token into the true token. Using \eqref{eq:y_t dist cond y_s}, one can derive the following expression \cite{shi2025simplifiedgeneralizedmaskeddiffusion}:
 
 \begin{align}
-    q(x_s | x_t, x_0) &= \text{Cat}(x_s; \bar{R}^{x_0}(t, s)^\top x_t), \label{eq:reverse process x_0 known}\\
-    \bar{R}^{x_0}(t, s) &= I + \frac{\alpha_s - \alpha_t}{1 - \alpha_t}e_m(x_0 - e_m)^\top \text{ and } s < t.\nonumber
+    q(y_s | y_t, y) &= \text{Cat}(y_s; \bar{R}^{y}(t, s)^\top y_t), \label{eq:reverse process y known}\\
+    \bar{R}^{y}(t, s) &= I + \frac{\alpha_s - \alpha_t}{1 - \alpha_t}e_m(y - e_m)^\top \text{ and } s < t.\nonumber
 \end{align}
 
-Hence, if we know the original token sequence $x_0$ that has no masking, we can compute the distribution of a step closer to the unmasked state. However, if we want to sample new datapoints using this process, $x_0$ is unknown. To solve this problem, we introduce the denoising network $\mu_\theta(x_t)\in\Delta(V)^m$, which given a noisy state $x_t$ outputs a probability distribution over the vocabulary $V$ for each masked state. Unmasked tokens remain the same with probability $1$. Using this network and \eqref{eq:reverse process x_0 known}, we define the distribution for $x_s$ as
+Hence, if we know the original token sequence $y$ that has no masking, we can compute the distribution of a step closer to the unmasked state. However, if we want to sample new datapoints using this process, $y$ is unknown. To solve this problem, we introduce the denoising network $\mu_\theta(y_t, x)\in\Delta(V)^m$, which given a noisy state $y_t$ and a prompt $x$, outputs a probability distribution over the vocabulary $V$ for each masked state. Unmasked tokens remain the same with probability $1$. Using this network and \eqref{eq:reverse process y known}, we define the distribution for $y_s$ as
 
 \begin{equation}
-    p_\theta(x_s | x_t) = q(x_s | x_t, \mu_\theta(x_t)) = \text{Cat}(x_s; \bar{R}^{\mu_\theta(x_t)}(t, s)^\top x_t).
-    \label{eq:reverse process x_0 unknown}
+    p_\theta(y_s | y_t, x) = q(y_s | y_t, \mu_\theta(y_t, x)) = \text{Cat}(y_s; \bar{R}^{\mu_\theta(y_t, x)}(t, s)^\top y_t).
+    \label{eq:reverse process y unknown}
 \end{equation}
 
-This formulation is called mean-parametrization, as the denoising network is attempting to predict the mean of $x_0$ given the noisy input $x_t$. Intuitively, \eqref{eq:reverse process x_0 unknown} can be thought of as if $x_t$ is a mask token, with probability $\frac{\alpha_s - \alpha_t}{1 - \alpha_t}$, we sample a new token from $\mu_\theta(x_t)$, otherwise we keep the token from $x_t$. This allows us to sample new sequences from the network by iteratively converting mask tokens into other tokens via sampling from \eqref{eq:reverse process x_0 unknown}. We describe the sampling procedure in more detail in section \ref{sec:sampling}.
+This formulation is called mean-parametrization, as the denoising network is attempting to predict the mean of $y$ given the noisy input $y_t$ and prompt $x$. Intuitively, \eqref{eq:reverse process y unknown} can be thought of as if $y_t$ is a mask token, with probability $\frac{\alpha_s - \alpha_t}{1 - \alpha_t}$, we sample a new token from $\mu_\theta(y_t, x)$, otherwise we keep the token from $y_t$. This allows us to sample new sequences from the network by iteratively converting mask tokens into other tokens via sampling from \eqref{eq:reverse process y unknown}. We describe the sampling procedure in more detail in section \ref{sec:sampling}.
 
 
 % \subsection{Masking schedules}
@@ -83,29 +83,30 @@ This formulation is called mean-parametrization, as the denoising network is att
 
 To optimize the outputs of the denoising network, an optimization objective is needed. While traditional LLMs are optimized by maximizing the likelihood function, for masked diffusion models, the computation of the likelihood is intractable in an efficient way. Hence, with diffusion models one usually optimizes for the lower bound of the log marginal likelihood called the evidence \cite{shi2025simplifiedgeneralizedmaskeddiffusion, austin2021structureddenoisingdiffusionmodels, kingma2021variationaldiffusionmodels}. If one optimizes the evidence lower bound (ELBO), the hope is that one also increases the likelihood. This usually happens in practice. Hence, this can be considered maximum likelihood optimization, although, one never explicitly optimizes the likelihood. In \cite{shi2025simplifiedgeneralizedmaskeddiffusion}, the authors prove that for masked diffusion models, the evidence lower bound can be expressed in the following form:
 
-\begin{equation}
-    \mathcal{L}_\theta(x, x_0) = \int_{0}^{1}\frac{\alpha_t'}{1 - \alpha_t}\mathbb{E}_{q(x_t | x_0)}\left[\sum_{i=1}^{L}\bold{1}[x_t^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t)^{(i)}\right] \mathrm{d}t,
+\begin{align}
+    \log p_\theta(y | x) &\ge \mathcal{L}_\theta(y | x) \nonumber\\
+    &= -\int_{0}^{1}\frac{\alpha_t'}{1 - \alpha_t}\mathbb{E}_{q(y_t | y)}\left[\sum_{i=1}^{L}\bold{1}[y_t^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_t, x)^{(i)}\right] \mathrm{d}t,
     \label{eq:ELBO}
-\end{equation}
-where $L$ is the sequence length. One may note that the ELBO is just the sum of the cross-entropy losses over the masked tokens integrated over time. This makes it easy to implement in practice.
+\end{align}
+where $L$ is the sequence length, $y$ is answer to the prompt $x$ and $y_t$ is the same answer with some tokens masked according to the masking schedule. One may note that the ELBO is just the weighted sum of the cross-entropy losses over the masked tokens integrated over time. This makes it easy to implement in practice.
 
 \paragraph{Monte-Carlo integration}
 
-To estimate the value of the ELBO, we employ Monte-Carlo (MC) sampling \cite{methodsofnumericalintegration} to estimate the inner expectation. For a given $t$, the expectation can be estimated by sampling $K$ different random masks, corrupting $x_0$ with them, computing the sum of the appropriate cross-entropies and finally averaging over the $K$ losses. The estimate of the expected value looks as follows:
+To estimate the value of the ELBO, we employ Monte-Carlo (MC) sampling \cite{methodsofnumericalintegration} to estimate the inner expectation. For a given $t$, the expectation can be estimated by sampling $K$ different random masks, corrupting $y$ with them, computing the sum of the appropriate cross-entropies and finally averaging over the $K$ losses. The estimate of the expected value looks as follows:
 
 \begin{align*}
-    &\mathbb{E}_{q(x_t | x_0)}\left[\sum_{i=1}^{L}\bold{1}[(x_t^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t^{(k)})^{(i)}\right]\\
-    \approx&\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_t^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_t^{(k)})^{(i)}.
+    &\mathbb{E}_{q(y_t | y)}\left[\sum_{i=1}^{L}\bold{1}[(y_t^{(k)})^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_t^{(k)}, x)^{(i)}\right]\\
+    \approx&\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(y_t^{(k)})^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_t^{(k)}, x)^{(i)}.
 \end{align*}
 
 In practice, we employ a 1-point MC estimate for the expectation. As the variance of the expectation estimate does not affect the total variance of the ELBO estimate a lot \cite{rojas2025improvingreasoningdiffusionlanguage}, we choose to use the available video memory to either increase the batch size during supervised training or to reduce the variance of choosing the values of the variable $t$, which induces most of the variance to the ELBO estimate \cite{rojas2025improvingreasoningdiffusionlanguage}.
 
 In addition to the estimation of the expectation, during supervised training, we employ a 1-point MC estimate for the outer integral over $t$ as well. Supervised training is a lot more stable than reinforcement learning and hence the variance of the ELBO estimate does not affect the training as much. We deem it more important to use all available VRAM to increase the batch size instead of using more MC or quadrature samples. The final ELBO for supervised training has the form:
 
-\begin{equation*}
-    \mathcal{L}_\theta(x, x_0) = \frac{1}{N}\sum_{j=1}^{N}\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_{t_j}^{(k)})^{(i)},
+\begin{equation}
+    \mathcal{L}_\theta(y | x) = -\frac{1}{N}\sum_{j=1}^{N}\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(y_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_{t_j}^{(k)}, x)^{(i)},
     \label{eq:supervised ELBO}
-\end{equation*}
+\end{equation}
 where $t_j\sim\mathcal{U}(0, 1)$ and $N = K = 1$.
 
 \paragraph{Gauss-Legendre quadrature}
@@ -115,20 +116,19 @@ As mentioned previously, reinforcement learning is usually a lot less stable tha
 \begin{align*}
     \int_{0}^{1}f(x)\mathrm{d}x \approx\sum_{j=1}^{N}\underbrace{\frac{w_j'}{2}}_{w_j} f\bigg(\underbrace{\frac{x_j}{2} + \frac{1}{2}}_{t_j}\bigg).
 \end{align*}
-
 Using this transformation, the ELBO estimate used during RL has the form:
 
-\begin{equation*}
-    \mathcal{L}_\theta(x, x_0) = \sum_{j=1}^{N}w_j\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(x_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](x_0^{(i)})^\top\log\mu_\theta(x_{t_j}^{(k)})^{(i)}.
+\begin{equation}
+    \mathcal{L}_\theta(y | x) = -\sum_{j=1}^{N}w_j\frac{\alpha_{t_j}'}{1 - \alpha_{t_j}}\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(y_{t_j}^{(k)})^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_{t_j}^{(k)}, x)^{(i)}.
     \label{eq:RL ELBO}
-\end{equation*}
+\end{equation}
 
 Even with a few sample points, the bias and the variance of the ELBO estimate drop significantly compared to the equivalent MC estimate \cite{rojas2025improvingreasoningdiffusionlanguage}. This is expected, as asymptotically, the bias of the MC estimate follows $O(\frac{1}{N^2})$ and the variance follows $O(\frac{1}{NK})$, whereas, for the quadrature estimate, the bias follows $O(\frac{1}{N^4})$ and the variance $O(\frac{1}{N^2K})$, or better if additional smoothness assumptions of the integrand are made \cite{rojas2025improvingreasoningdiffusionlanguage}. Therefore, the quadrature estimate is more efficient in terms of the number of samples required to achieve a certain level of accuracy. Hence, we employ the quadrature estimate during reinforcement learning.
 
 \subsubsection{Sampling}
 \label{sec:sampling}
 
-When sampling from the masked diffusion model $\mu_\theta$, we employ the reverse process described in \eqref{eq:reverse process x_0 unknown} \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. With ancestral sampling, we iteratively sample tokens from the conditional distribution $p_\theta(x_s | x_t), s < t $. We begin by discretizing the interval $[0, 1]$ into $T$ subintervals $\{ t_i \}_{i=0}^T$, where $T$ is the number of timesteps in the diffusion process. The subintervals can be chosen in many ways, but we choose to use a uniform discretization. In each generation step, we condition the generation on the previously generated tokens and sample new tokens from a categorical distribution according to the masking schedule and the logits of the model. The sampling process is as follows \cite{shi2025simplifiedgeneralizedmaskeddiffusion}:
+When sampling from the masked diffusion model $\mu_\theta$, we employ the reverse process described in \eqref{eq:reverse process y unknown} \cite{shi2025simplifiedgeneralizedmaskeddiffusion}. With ancestral sampling, we iteratively sample tokens from the conditional distribution $p_\theta(y_s | y_t, x), s < t $. We begin by discretizing the interval $[0, 1]$ into $T$ subintervals $\{ t_i \}_{i=0}^T$, where $T$ is the number of timesteps in the diffusion process. The subintervals can be chosen in many ways, but we choose to use a uniform discretization. In each generation step, we condition the generation on the previously generated tokens and sample new tokens from a categorical distribution according to the masking schedule and the logits of the model. The sampling process is as follows \cite{shi2025simplifiedgeneralizedmaskeddiffusion}:
 
 \textcolor{red}{Talk about block diffusion if we end up sampling the fen before the move.}
 
@@ -138,18 +138,18 @@ When sampling from the masked diffusion model $\mu_\theta$, we employ the revers
     \begin{algorithmic}
         \algrenewcommand{\algorithmiccomment}[1]{\textcolor{gray}{// #1}}
         \State Initialize the time grid $\{ t(i) \}_{i=0}^T \leftarrow \mathrm{discretize}([0, 1])$.
-        \State Initialize $x_T$ by setting it to all mask tokens.
+        \State Initialize $y_T$ by setting it to all mask tokens.
         \For{$j = T, T-1, \dots, 1$}:
             \State $t \leftarrow t(j)$, $s \leftarrow t(j - 1)$
             \For{$i = 1, 2, \dots, L$}:
-                \If{$(x_t^{(i)}) = [\mathtt{MASK}]$}:
-                    % \State Sample $x_s^{(n)} \sim \mathrm{Cat}(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta^{(n)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
-                    \State $\log p_i \leftarrow \log(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta(x_t)^{(i)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
+                \If{$(y_t^{(i)}) = [\mathtt{MASK}]$}:
+                    % \State Sample $y_s^{(n)} \sim \mathrm{Cat}(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta^{(n)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
+                    \State $\log p_i \leftarrow \log(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta(y_t, x)^{(i)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
                     \State \Comment{Sample from $\mathrm{Cat}(p_i)$ using the Gumbel-max trick.}
                     \State $u^{(k)}\leftarrow\mathcal{U}([0, 1])$
-                    \State $x_s^{(i)} \leftarrow \mathrm{argmax}_k \left( \log p_i^{(k)} - \log(-\log u^{(k)})  \right)$
+                    \State $y_s^{(i)} \leftarrow \mathrm{argmax}_k \left( \log p_i^{(k)} - \log(-\log u^{(k)})  \right)$
                 \Else :
-                    \State $x_s^{(i)} \leftarrow x_t^{(i)}$
+                    \State $y_s^{(i)} \leftarrow y_t^{(i)}$
                 \EndIf
             \EndFor
         \EndFor
@@ -215,7 +215,7 @@ This definition allows us to formulate the policy gradient theorem, as follows\c
         \nabla J(\theta)\propto\sum_s\mu(s)\sum_a Q_{\pi_\theta}(a | s)\nabla\pi_\theta(a | s) = \mathbb{E}_{s\sim\mu,a\sim\pi_\theta}[Q_{\pi_\theta}(a | s)\nabla\ln\pi_\theta(a | s)],
     \end{equation}
 
-    where $\mu$ is the on-policy distribution under $\pi_\theta$.
+    where $\mu$ is the on-policy (stationary) distribution under $\pi_\theta$.
 
     \label{th:PGT}
 \end{theorem}
@@ -242,17 +242,13 @@ Proximal policy optimization (PPO) is a variant of the actor-critic method that 
 This objective is designed to prevent model collapse. Since the samples generated by the old policy $\theta_\text{old}$ are only accurate close to the original policy, the gradients become unreliable if the old and new policies are too different. Therefore, if the probability ratio improves the objective, the update is clipped to ensure stability. This makes the PPO objective a pessimistic bound of the previously used $\rho_t\hat{A}_t$ objective and hence more stable \cite{schulman2017proximalpolicyoptimizationalgorithms}.
 
 
-% \paragraph{GRPO}
-
-% GRPO is a variant of PPO
-
-% \paragraph{ESPO}
 \subsubsection{ELBO-based Sequence-level Policy Optimization}
+\label{sec:ESPO}
 
 % TODO: Say that now we only talk about LLMs
-Thus far, we have consentrated on RL algorithms that are directly applicable to general Markov Decision Processes. These algorithms rely on ones ability to compute the log-probability of individual samples from the model. This, however, is difficult to do efficiently with diffusion models, as the log-probability requires $T$ forward passes of the network. For diffusion models in the image domain, people have experimented with this approach with promising results \cite{black2024trainingdiffusionmodelsreinforcement}, however, in language modelling, the increased memory and computation requirements make such approach unappealing. Therefore, researchers have experimented with many different variants of the traditional algorithms, which allow one to compute the RL loss in one forward pass of the denoising model \cite{rojas2025improvingreasoningdiffusionlanguage, ou2025principledrldiffusionllms, tang2026wd1weightedpolicyoptimization, zhao2025d1scalingreasoningdiffusion}. In this work, we mainly follow the approach of \cite{ou2025principledrldiffusionllms}, although with the quadrature ELBO estimate inspired by \cite{rojas2025improvingreasoningdiffusionlanguage}.
+Thus far, we have consentrated on RL algorithms that are directly applicable to general Markov Decision Processes. These algorithms rely on ones ability to compute the log-probability of individual samples from the model. This, however, is difficult to do efficiently with diffusion models, as the log-probability requires $T$ forward passes of the network. For diffusion models in the image domain, people have experimented with this approach with promising results \cite{black2024trainingdiffusionmodelsreinforcement}, however, in language modelling, the increased memory and computation requirements make such approach unappealing. Therefore, researchers have experimented with many different variants of the traditional algorithms, which allow one to compute the RL objective in one forward pass of the denoising model \cite{rojas2025improvingreasoningdiffusionlanguage, ou2025principledrldiffusionllms, tang2026wd1weightedpolicyoptimization, zhao2025d1scalingreasoningdiffusion}. In this work, we mainly follow the approach of \cite{ou2025principledrldiffusionllms}, although with the quadrature ELBO estimate inspired by \cite{rojas2025improvingreasoningdiffusionlanguage}.
 
-In this work, we employ an algorithm called ELBO-based Sequence-level Policy Optimization (ESPO) \cite{ou2025principledrldiffusionllms}. ESPO is a reinforcement learning algorithm that is spesifically designed for discrete diffusion models. It takes inspiration of an algorithm called Group-relative Policy Optimization (GRPO) \cite{shao2024deepseekmathpushinglimitsmathematical}. In \cite{shao2024deepseekmathpushinglimitsmathematical}, the authors propose a way to estimate the advantage-function in PPO using a monte-carlo estimate of the value-function. GRPO considers an MDP with states defined to be partially completed answers and actions defined to be when a model samples a new token. For a group of answers $\{ y^{(1)}, \dots y^{(G)}\}$ to a prompt $x$ sampled from $\pi_{\theta_\text{old}}$, the GRPO loss is as follows:
+In this work, we employ an algorithm called ELBO-based Sequence-level Policy Optimization (ESPO) \cite{ou2025principledrldiffusionllms}. ESPO is a reinforcement learning algorithm that is spesifically designed for discrete diffusion models. It takes inspiration of an algorithm called Group-relative Policy Optimization (GRPO) \cite{shao2024deepseekmathpushinglimitsmathematical}. In \cite{shao2024deepseekmathpushinglimitsmathematical}, the authors propose a way to estimate the advantage-function in PPO using a monte-carlo estimate of the value-function. GRPO considers an MDP with states defined to be partially completed answers and actions defined to be when a model samples a new token. For a group of answers $\{ y^{(1)}, \dots y^{(G)}\}$ to a prompt $x$ sampled from $\pi_{\theta_\text{old}}$, the GRPO objective is as follows:
 
 \begin{align*}
     L(\theta) &= \mathbb{E}_{x\sim D, y^{(1)},\dots y^{(G)}\sim\pi_{\theta_\text{old}}(\cdot | x)}\\
@@ -260,14 +256,14 @@ In this work, we employ an algorithm called ELBO-based Sequence-level Policy Opt
 \end{align*}
 where $G$ is the group size, $L$ the sequence length, which is constant in our setup, $\rho^{k,(i)} = \frac{\pi_\theta(y^{k,(i)} | x, y^{<k,(i)})}{\pi_{\theta_\text{old}}(y^{k,(i)} | x, y^{<k,(i)})}$ and $\hat{A}^{(i)} = R(x, y^{(i)}) - \frac{1}{G}\sum_{j=1}^{G}R(x, y^{(j)})$.
 
-However, GRPO still does not allow us to easily generalize to diffusion models. For this reason, ESPO no longer works in an MDP with states of partially completed answers and actions of generating one new token, as this would require us to evaluate the log-probability of each token separately. ESPO considers an MDP with an initial state as the sequence with all mask tokens, and a terminal state with no mask tokens remaining\textcolor{red}{Reference "Group Sequence Policy Optimization" by Gwen team}. Each action corresponds to sampling an entire sequence from the model. Hence, each trajectory of this MDP has exactly two states, one action, and one reward. Although, even with this MDP, the exact log-probability of each action is still intractable, it is possible to use the ELBO as a surrogate of this quantity \cite{ou2025principledrldiffusionllms, rojas2025improvingreasoningdiffusionlanguage}. Even though the ELBO is not an approximation of the sequence-level likelihood, but rather a lower bound, empirically it seems that algorithms using it outperform other approximation methods \cite{ou2025principledrldiffusionllms}. The ESPO loss function is as follows:
+However, GRPO still does not allow us to easily generalize to diffusion models. For this reason, ESPO no longer works in an MDP with states of partially completed answers and actions of generating one new token, as this would require us to evaluate the log-probability of each token separately. ESPO considers an MDP with an initial state as the sequence with all mask tokens, and a terminal state with no mask tokens remaining (see \cite{zheng2025groupsequencepolicyoptimization} for an autoregressive variant). Each action corresponds to sampling an entire sequence from the model. Hence, each trajectory of this MDP has exactly two states, one action, and one reward. Although, even with this MDP, the exact log-probability of each action is still intractable, it is possible to use the ELBO as a surrogate of this quantity \cite{ou2025principledrldiffusionllms, rojas2025improvingreasoningdiffusionlanguage}. Even though the ELBO is not an approximation of the sequence-level likelihood, but rather a lower bound, empirically it seems that algorithms using it outperform other approximation methods \cite{ou2025principledrldiffusionllms}. The ESPO objective function is as follows:
 
-\begin{align*}
-    L(\theta) &= \mathbb{E}_{x\sim D, y^{(1)},\dots y^{(G)}\sim\pi_{\theta_\text{old}}(\cdot | x)}\\
+\begin{align}
+    L(\theta) &= \mathbb{E}_{x\sim D, y^{(1)},\dots y^{(G)}\sim\pi_{\theta_\text{old}}(\cdot | x)}\nonumber\\
     &\left[\frac{1}{G}\sum_{i=1}^{G}\min(\rho^{(i)}\hat{A}^{(i)}, \text{clip}(\rho^{(i)}, 1 - \epsilon, 1 + \epsilon)\hat{A}^{(i)}) - \beta\mathbb{KL}(\pi_\theta, \pi_{\theta_\text{old}})\right],
-\end{align*}
+    \label{eq:espo objective}
+\end{align}
 where $\rho^{(i)} = \frac{\exp\frac{1}{L}\mathcal{L}_\theta(y^{(i)} | x)}{\exp\frac{1}{L}\mathcal{L}_{\theta_\text{old}}(y^{(i)} | x)} = \exp(\frac{1}{L}(\mathcal{L}_\theta(y^{(i)} | x) - \mathcal{L}_{\theta_\text{old}}(y^{(i)} | x)))$.
-\textcolor{red}{Use and reference the ELBO notation from previous part}
 
 The authors of \cite{ou2025principledrldiffusionllms} note that it is important to normalize the ELBOs with the sequence length as otherwise, the exponential function might make the ratio explode or approach zero making the model unable to learn.
 
@@ -297,6 +293,7 @@ The authors of \cite{ou2025principledrldiffusionllms} note that it is important 
 
 
 \subsubsection{Kullback-Leibler divergence}
+\label{sec:kldivergence}
 
 Kullback-Leibler (KL) divergence is an important part of most RL algorithms. In general, it is an estimate of a distance between two probability distribution. It is given exactly by the following formula:
 
@@ -315,10 +312,12 @@ In general, it is quite easy to estimate the KL divergence for autoregressive la
 
 In language modelling, the most basic estimate of the KL divergence is the so-called $k_1$ estimate \cite{schulman2020klblog}:
 
-\begin{equation*}
-    \mathbb{KL}_{k_1}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}\right].
-\end{equation*}
+\begin{align*}
+    \mathbb{KL}_{k_1}(\pi_\theta, \pi_\text{ref}) &= \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)}\right] \\
+    &\approx \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\mathcal{L}_\theta(y | x) - \mathcal{L}_{\text{ref}}(y | x)\right].
+\end{align*}
 
+\textcolor{red}{Talk about the elbos}
 The $k_1$ estimate is unbiased, but high in variance and hence not used as much as other estimates \cite{schulman2020klblog}. In addition, the gradient of the estimate is extremely biased \cite{tang2025pitfallskldivergencegradient}, which is especially harmful for language modelling, as gradient based optimizers are always used. In fact, the expected value of the gradient of the $k_1$ estimate zero \cite{tang2025pitfallskldivergencegradient}. In addition, the estimate can often be negative, which is not possible for the exact KL divergence. For these reasons, the naive $k_1$ estimate is not often used in practice, however, it is used to derive better estimates as shown below.
 
 
@@ -327,16 +326,22 @@ The $k_1$ estimate is unbiased, but high in variance and hence not used as much 
 A better estimate for the KL divergence can be constructed by noting the following \cite{schulman2020klblog}:
 
 \begin{align}
-    \mathbb{E}_{y\sim \pi_\theta}[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)}] &= \int \pi_\theta(y)\frac{\pi_\text{ref}(y)}{\pi_\theta(y)}\mathrm{d}y \nonumber\\
-    &= \int \pi_\text{ref}(y)\mathrm{d}y \nonumber\\
+    \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\frac{\pi_\text{ref}(y | x)}{\pi_\theta(y | x)}\right] &= \int \pi_\theta(y | x)\frac{\pi_\text{ref}(y | x)}{\pi_\theta(y | x)}\mathrm{d}y \nonumber\\
+    &= \int \pi_\text{ref}(y | x)\mathrm{d}y \nonumber\\
     &= 1.
     \label{eq:policy_ratio_one}
 \end{align}
-Hence $\mathbb{E}_{y\sim \pi_\theta}[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)} - 1] = 0$. Schulman uses this to produce another unbiased estimate, that has lower variance compared to $k_1$. The estimate is as follows:
+Hence $\mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\frac{\pi_\text{ref}(y | x)}{\pi_\theta(y | x)} - 1\right] = 0$. Schulman uses this to produce another unbiased estimate, that has lower variance compared to $k_1$. The estimate is as follows:
 
-\begin{equation*}
-    \mathbb{KL}_{k_3}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} + \frac{\pi_\text{ref}(y)}{\pi_\theta(y)} - 1\right].
-\end{equation*}
+% \begin{equation*}
+%     \mathbb{KL}_{k_3}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)} + \frac{\pi_\text{ref}(y | x)}{\pi_\theta(y | x)} - 1\right].
+% \end{equation*}
+\begin{align*}
+    \mathbb{KL}_{k_3}(\pi_\theta, \pi_\text{ref}) &= \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)} + \frac{\pi_\text{ref}(y | x)}{\pi_\theta(y | x)} - 1\right]\\
+    &\approx\mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\mathcal{L}_\theta(y | x) - \mathcal{L}_{\text{ref}}(y | x) + \exp(\mathcal{L}_\text{ref}(y | x) - \mathcal{L}_\theta(y | x)) - 1\right]
+\end{align*}
+
+\textcolor{red}{Talk about ELBO use}
 
 The $k_3$ estimate has the benefit of being non negative and low variance \cite{schulman2020klblog}. In natural language processing, this estimate is probably the most widely used. However, similarly to $k_1$, the gradient of this estimate is not unbiased. The gradient of the $k_3$ estimate actually optimizes the reverse-KL divergence $\mathbb{KL}(\pi_\text{ref}, \pi_\theta)$ \cite{tang2025pitfallskldivergencegradient}.
 
@@ -345,17 +350,19 @@ The $k_3$ estimate has the benefit of being non negative and low variance \cite{
 A final common KL divergence is obtained by using \eqref{eq:policy_ratio_one} as follows:
 
 \begin{align*}
-    1 &= \mathbb{E}_{y\sim \pi_\theta}\left[\frac{\pi_\text{ref}(y)}{\pi_\theta(y)}\right] \\
-    &= \mathbb{E}_{y\sim \pi_\theta}\left[e^{-\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}}\right] \\
-    &= \mathbb{E}_{y\sim \pi_\theta}\left[\sum_{n=0}^{\infty}\frac{(-1)^n \left( \log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} \right)^n}{n!}\right] \\
-    &\approx \mathbb{E}_{y\sim \pi_\theta}\left[1 - \log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} + 0.5\cdot\left( \log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} \right)^2\right] \\
-    &= 1 - \mathbb{E}_{y\sim \pi_\theta}\left[\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}\right] + 0.5\cdot\mathbb{E}_{y\sim \pi_\theta}\left[\left( \log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)} \right)^2\right].
+    1 &= \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\frac{\pi_\text{ref}(y | x)}{\pi_\theta(y | x)}\right] \\
+    &= \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[e^{-\log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)}}\right] \\
+    &= \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\sum_{n=0}^{\infty}\frac{(-1)^n \left( \log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)} \right)^n}{n!}\right] \\
+    &\approx \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[1 - \log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)} + 0.5\cdot\left( \log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)} \right)^2\right] \\
+    &= 1 - \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)}\right] + 0.5\cdot\mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\left( \log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)} \right)^2\right].
 \end{align*}
 Hence, we obtain the $k_2$ estimate:
 
-\begin{equation*}
-    \mathbb{KL}_{k_2}(\pi_\theta, \pi_\text{ref}) = \mathbb{E}_{y\sim \pi_\theta}\left[\frac{1}{2}\left(\log\frac{\pi_\theta(y)}{\pi_\text{ref}(y)}\right)^2\right].
-\end{equation*}
+\begin{align}
+    \mathbb{KL}_{k_2}(\pi_\theta, \pi_\text{ref}) &= \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\frac{1}{2}\left(\log\frac{\pi_\theta(y | x)}{\pi_\text{ref}(y | x)}\right)^2\right] \nonumber\\
+    &\approx \mathbb{E}_{y\sim \pi_\theta(\cdot | x)}\left[\frac{1}{2}\left(\mathcal{L}_\theta(y | x) - \mathcal{L}_{\text{ref}}(y | x)\right)^2\right].
+    \label{eq:k2 kl divergence}
+\end{align}
 
 The $k_2$ estimate is obtained by the second order Taylor series expansion of the exponential of the log ratio of the policies \cite{schulman2020klblog}. The estimate is biased, however, very low in variance, which makes it more stable than the other estimates. Another benefit of this estimate is that the gradient of $k_2$ is unbiased \cite{tang2025pitfallskldivergencegradient}. Hence, if it is optimized for during RL with gradient based methods, the final result will approach the one we expect.
 
