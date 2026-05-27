@@ -76,18 +76,24 @@ def counter_intuitive(fen, engine: SimpleEngine):
                 best_move = info["pv"][0]
                 history.append((move_depth, best_move))
 
-    critical_point = counter_intuitive_limit.depth
-    
+    # critical_point = counter_intuitive_limit.depth
+    # final_best_move = history[-1][1]
+    # max_depth = history[-1][0]
+    # for move_depth, move in history:
+    #     if move == final_best_move:
+    #         critical_point = move_depth
+    #         break
     final_best_move = history[-1][1]
     max_depth = history[-1][0]
-    for move_depth, move in history:
-        if move == final_best_move:
-            critical_point = move_depth
+    critical_point = max_depth
+    for move_depth, move in reversed(history):
+        if move != final_best_move:
             break
+        critical_point = move_depth
+    # v_critical_point = (critical_point - 1)
+    # v_critical_point = (critical_point - 1) / max_depth
+    v_critical_point = (critical_point - 1) / counter_intuitive_limit.depth
 
-    # v_critical_point = critical_point - 1
-    v_critical_point = (critical_point - 1) / max_depth  # proportion from the full search. If this is over 0.125, the puzzle is counter intuitive
-    # v_critical_point = (critical_point - 1) / 50  # if critical point is at depth 7 or later, the puzzle is counter intuitive
 
     v_capture_material = 0
     if board.is_capture(final_best_move):

@@ -207,6 +207,7 @@ where $\mathbb{I}_{\text{diversity}}(s) = \mathbb{I}_{\text{intra}, \text{fen}}(
 
 
 \subsubsection{Model evaluation criteria}
+\label{sec:evaluation criteria}
 
 To evaluate the generative models, we rely on the same criteria that define our reward function. Our primary performance metric is the \textit{puzzle rate}, which is defined as:
 
@@ -278,6 +279,20 @@ A primary objective of this work is to enhance the creativity and qualitative at
 
 To ensure the generated positions remain realistic and novel, we rely on the reward shaping techniques discussed previously, including diversity-filtering and piece-count penalties. Furthermore, as described in Section \ref{sec:kldivergence}, we incorporate a KL divergence penalty within the ESPO objective to prevent the model from drifting too far from the Lichess-trained supervised policy. However, we found that relying solely on these constraints often led to training instability or failed learning entirely. To improve the process, we take inspiration from \citeauthor{feng2025generatingcreativechesspuzzles} and introduce off-policy data from a replay buffer. Unlike their approach, which directly concatenates buffer samples into the active batch, we compute an additional supervised loss (the negative ELBO from \eqref{eq:RL ELBO}) on the buffered data and add it to our objective. We believe this is more principled as PPO is an on-policy algorithm. This approach mimics the Pre-Training Extension (PTX) loss utilized in InstructGPT models, which combines pretraining and PPO gradients to mitigate catastrophic forgetting \cite{ouyang2022traininglanguagemodelstofollowinstructionswithhumanfeedback}. By introducing this supervised penalty, we are able to lower the KL divergence coefficient, granting the model more freedom to explore creative solutions without sacrificing training stability.
 
+% Modern actor-critic algorithms, like PPO and ESPO require one to estimate the advantage function with a critic network. For PPO, one uses a separate value network for the advantage estimation, however, for language modelling, as described in section \ref{sec:ESPO} people usually employ Monte Carlo value estimates instead. Therefore, as proposed by \citeauthor{kool2019unbiasedbaseline}, to compute the advantages $\hat{A}^{(i)}$, we employ the following unbiased Monte Carlo estimator:
+% \begin{equation}
+%     \hat{A}^{(i)} = R(x, y^{(i)}) - \frac{1}{G - 1}\sum_{j \neq i}R(x, y^{(j)}),
+%     \label{eq:advantage estimation}
+% \end{equation}
+% where $G$ represents the group size. By comparing the reward of a specific generation $y^{(i)}$ against the average reward of the remaining $G - 1$ samples in the batch, we naturally avoid the biased estimator, which is based on the mean of the rewards shown in section \ref{sec:ESPO}. This means the advantage is positive only if a generation performs better than the batch average, effectively pushing the model to favor the highest-quality outputs. A major benefit of this estimator is that it significantly reduces the variance of the policy gradient without the computational and memory overhead of training a separate value network, which is often unstable in language modeling tasks.
+
+Modern actor-critic algorithms traditionally rely on a separate critic network to estimate the advantage function. However, for language modelling, as described in section \ref{sec:ESPO} people usually employ Monte Carlo value estimates instead. Therefore, as proposed by \citeauthor{kool2019unbiasedbaseline}, to compute the advantages $\hat{A}^{(i)}$, we employ the following unbiased Monte Carlo estimator:
+\begin{equation}
+    \hat{A}^{(i)} = R(x, y^{(i)}) - \frac{1}{G - 1}\sum_{j \neq i}R(x, y^{(j)}),
+    \label{eq:advantage estimation}
+\end{equation}
+where $G$ is the group size and $R$ the reward function \cite{kool2019unbiasedbaseline}. By evaluating a generation $y^{(i)}$ against the average reward of the remaining $G - 1$ samples in the batch, the estimator naturally centers the advantages with an unbiased baseline. Consequently, the model is rewarded for generations that outperform the batch average and penalized for those that perform worse.
+
 Our complete reinforcement learning procedure iterates over a predetermined number of training steps. In each step, we sample a batch of $n_{\text{batch}}$ themes and difficulty ratings $x$, and generate corresponding positions $y$ using algorithm \ref{alg:ancestral sampling}. We then compute the rewards $r$ for these generations using \eqref{eq:reward function}, and evaluate the old and reference ELBOs, $\mathcal{L}_{\text{old}}(y | x)$ and $\mathcal{L}_{\text{ref}}(y | x)$. Simultaneously, we sample $n_{\text{buffer}}$ positions $(x', y')$ from the replay buffer to compute the reference SFT loss $\mathcal{L}_{\theta}(y' | x')$. Over $\mu$ inner optimization iterations, we compute the ESPO objective $L(\theta)$ via \eqref{eq:espo objective}. Within this objective, the KL divergence penalty \eqref{eq:k2 kl divergence} is evaluated over the generated samples. We then update the model parameters by taking a gradient step in the direction of $-\nabla_{\theta} L(\theta) + \gamma \nabla_{\theta} \mathcal{L}_{\theta}(y' | x')$. Finally, we record the relevant metrics for the current step. The full procedure is formalized in Algorithm \ref{alg:Reinforcement learning algorithm}.
 
 
@@ -289,7 +304,7 @@ Our complete reinforcement learning procedure iterates over a predetermined numb
         \For{$i = 1 \dots n_{\text{steps}}$}
             \State Sample $n_{\text{batch}}$ random themes and ratings $x$ from the dataset.
             \State Sample $n_{\text{batch}}$ positions $y$ from the model with algorithm \ref{alg:ancestral sampling}.
-            \State Compute rewards $r$ for $y$ with \ref{eq:reward function}.
+            \State Compute rewards $r$ for $y$ with \ref{eq:reward function} and estimate the advantage using \eqref{eq:advantage estimation}.
             \State Save the rewards and other metrics for monitoring.
             \State \textcolor{red}{Sample artificial puzzles and themes from the replay buffer and concatenate them into $x$ and $y$ with reward 1.0.}
             \State Compute old $\mathcal{L}_{\text{old}}(y | x)$ and reference $\mathcal{L}_{\text{ref}}(y | x)$ ELBOs with \eqref{eq:RL ELBO}.
