@@ -259,7 +259,7 @@ where $G$ is the group size, $L$ the sequence length, which is constant in our s
 However, GRPO still does not allow us to easily generalize to diffusion models. For this reason, ESPO no longer works in an MDP with states of partially completed answers and actions of generating one new token, as this would require us to evaluate the log-probability of each token separately. ESPO considers an MDP with an initial state as the sequence with all mask tokens, and a terminal state with no mask tokens remaining (see \cite{zheng2025groupsequencepolicyoptimization} for an autoregressive variant). Each action corresponds to sampling an entire sequence from the model. Hence, each trajectory of this MDP has exactly two states, one action, and one reward. Although, even with this MDP, the exact log-probability of each action is still intractable, it is possible to use the ELBO as a surrogate of this quantity \cite{ou2025principledrldiffusionllms, rojas2025improvingreasoningdiffusionlanguage}. Even though the ELBO is not an approximation of the sequence-level likelihood, but rather a lower bound, empirically it seems that algorithms using it outperform other approximation methods \cite{ou2025principledrldiffusionllms}. The ESPO objective function is as follows:
 
 \begin{align}
-    L(\theta) &= \mathbb{E}_{x\sim D, y^{(1)},\dots y^{(G)}\sim\pi_{\theta_\text{old}}(\cdot | x)}\nonumber\\
+    dvan &= \mathbb{E}_{x\sim D, y^{(1)},\dots y^{(G)}\sim\pi_{\theta_\text{old}}(\cdot | x)}\nonumber\\
     &\left[\frac{1}{G}\sum_{i=1}^{G}\min(\rho^{(i)}\hat{A}^{(i)}, \text{clip}(\rho^{(i)}, 1 - \epsilon, 1 + \epsilon)\hat{A}^{(i)}) - \beta\mathbb{KL}(\pi_\theta, \pi_{\theta_\text{old}})\right],
     \label{eq:espo objective}
 \end{align}
