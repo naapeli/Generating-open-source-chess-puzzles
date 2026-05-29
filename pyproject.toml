@@ -12,6 +12,7 @@ dependencies = [
     "optuna>=4.8.0",
     "pandas>=2.3.3",
     "rapidfuzz>=3.14.3",
+    "scienceplots>=2.2.1",
     "scikit-learn>=1.8.0",
     "seaborn>=0.13.2",
     "tensorboard>=2.20.0",
