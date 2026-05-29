@@ -7,16 +7,8 @@ In this section, we present the main results of our model training and inference
 \subsection{Supervised results}
 \label{sec:supervised results}
 
-After training our model with the setup described in section \ref{sec:supervised training}, we obtain the loss curve shown in Figure \ref{fig:training_loss}. We see that clearly the model learns the data, as the test loss decreases. At around 1,000,000 training steps, however, we observe that the model starts to overfit slightly, as the test loss starts to increase once again. We store checkpoints of our model at intervals of 100,000 steps, and therefore, we choose the model trained for 1,000,000 steps. During some training runs, we observed instability and model collapse, however, we managed to solve this by incorporating clipping to the weights in the evidence lower bound \eqref{eq:ELBO} as done by \citeauthor{shi2025simplifiedgeneralizedmaskeddiffusion}. In the latest training run, we observed no instability. Comparing Figure \ref{fig:training_loss} to Figure \ref{fig:supervised_training_metrics}, we observe that the loss corresponds quite well with the real metrics we are interested in.
+After training our model with the setup described in section \ref{sec:supervised training}, we obtain the loss curve shown in Figure \ref{fig:training_loss}. We see that the model learns the data well, as the test loss decreases steadily over the course of training. At around 1,000,000 training steps, however, we observe that the model starts to overfit slightly, as the test loss starts to increase once again. The lowest test loss is observed at 930,000 training steps. Because we store checkpoints of our model at intervals of 100,000 steps, we choose the model trained for 1,000,000 steps. While this latest training run exhibited no instability, we had observed instability and model collapse during some earlier training runs. We managed to solve this by incorporating clipping to the cross-entropy weights in the evidence lower bound \eqref{eq:ELBO} as done by \citeauthor{shi2025simplifiedgeneralizedmaskeddiffusion} in their implementation. Lastly, comparing Figure \ref{fig:training_loss} to Figure \ref{fig:supervised_training_metrics}, we observe that the loss corresponds quite well with the real metrics we are interested in.
 
-\textcolor{red}{TODO: Write a paragraph analyzing the loss curve. Some suggestions on what to include:
-\begin{itemize}
-    \item \textbf{Overall trend:} Describe the initial rapid decrease in the negative evidence lower bound and the subsequent plateau.
-    \item \textbf{Overfitting point:} Explicitly point out the divergence at 1,000,000 steps mentioned in the caption, where overfitting begins (e.g. validation loss increasing or plateauing while training loss decreases).
-    \item \textbf{Checkpoint selection:} State which checkpoint was ultimately chosen for the next phases (e.g. early stopping right before 1M steps) based on this curve.
-    \item \textbf{Stability:} Mention if the training was stable or if there were any notable spikes/anomalies in the loss.
-    \item \textbf{Connection to performance:} Briefly relate how the loss stabilization corresponds to the model learning the basic rules of chess (which might explain the rapid initial drop).
-\end{itemize}}
 \begin{figure}[h]
     \includegraphics[width=\textwidth]{./sections/figures/supervised_training_progress/Training_loss.pdf}
     \caption{The negative evidence lower bound as a function of the training steps. After around 1,000,000, we observe clear overfitting.}
