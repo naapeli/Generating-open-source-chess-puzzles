@@ -1,0 +1,26 @@
+Loading generated dataset from src/Generate_positions/final_model/supervised/v3/test_context_move_last.csv...
+Loaded 10240 rows.
+Filtered to 3573 puzzles (is_puzzle == True).
+Loading Lichess dataset from src/dataset/dataset.csv...
+Loaded 200000 rows from Lichess.
+Prepared 3573 generated samples.
+Prepared 40000 Lichess samples.
+
+==================================================
+STARTING DISTANCE COMPUTATIONS
+==================================================
+Computing generated dataset self-distances (sample size=3573)...
+Done in 0.87s.
+  -> Generated Self-Distance (Board): 6.1383
+  -> Generated Self-Distance (PV):    0.6988
+--------------------------------------------------
+Computing Lichess dataset self-distances (sample size=40000)...
+Done in 75.89s.
+  -> Lichess Self-Distance (Board): 11.8827
+  -> Lichess Self-Distance (PV):    0.9496
+--------------------------------------------------
+Computing Novelty distances (Generated w.r.t Lichess, gen_size=3573, lic_size=40000)...
+Done in 7.14s.
+  -> Novelty/Lichess-Distance (Board): 7.6138
+  -> Novelty/Lichess-Distance (PV):    0.8509
+--------------------------------------------------

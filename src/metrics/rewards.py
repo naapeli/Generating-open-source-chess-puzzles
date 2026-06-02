@@ -17,28 +17,24 @@ def good_piece_counts(fen):
 
 def inter_batch_distances(fen, pv, sampled_fens, sampled_pvs):
     min_board_dist = float('inf')
-    min_pv_dist = float('inf')
+    best_pv = None
     for sampled_fen, sampled_pv in zip(sampled_fens, sampled_pvs):
         bd = get_board_distance(fen, sampled_fen)
         if bd < min_board_dist:
             min_board_dist = bd
-        if pv and sampled_pv:
-            pd = get_pv_distance(sampled_pv, pv)
-            if pd < min_pv_dist:
-                min_pv_dist = pd
-    return min_board_dist if min_board_dist != float('inf') else 0, min_pv_dist if min_pv_dist != float('inf') else 0
+            best_pv = sampled_pv
+    min_pv_dist = get_pv_distance(pv, best_pv) if (pv and best_pv) else 0
+    return min_board_dist if min_board_dist != float('inf') else 0, min_pv_dist
 
 def intra_batch_distances(fen, pv, fens, pvs, i):
     min_board_dist = float('inf')
-    min_pv_dist = float('inf')
+    best_pv = None
     for index, (other_fen, other_pv) in enumerate(zip(fens, pvs)):
         if other_fen is None or index == i:
             continue
         bd = get_board_distance(fen, other_fen)
         if bd < min_board_dist:
             min_board_dist = bd
-        if pv and other_pv:
-            pd = get_pv_distance(pv, other_pv)
-            if pd < min_pv_dist:
-                min_pv_dist = pd
-    return min_board_dist if min_board_dist != float('inf') else 0, min_pv_dist if min_pv_dist != float('inf') else 0
+            best_pv = other_pv
+    min_pv_dist = get_pv_distance(pv, best_pv) if (pv and best_pv) else 0
+    return min_board_dist if min_board_dist != float('inf') else 0, min_pv_dist

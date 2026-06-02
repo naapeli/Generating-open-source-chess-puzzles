@@ -1,55 +1,72 @@
+import math
+from abc import ABC
 import torch
 
-from abc import ABC
 
+class MaskingSchedule(ABC): 
+    def __init__(self, eps=1e-4):
+        self.eps = eps
 
-class MaskingSchedule(ABC):    
-    def __call__(self, t):
+    def _alpha(self, t):
         raise NotImplementedError()
+
+    def _dalpha(self, t):
+        raise NotImplementedError()
+
+    def alpha(self, t):
+        return (1.0 - 2 * self.eps) * self._alpha(t) + self.eps
+
+    def dalpha(self, t):
+        return (1.0 - 2 * self.eps) * self._dalpha(t)
+
+    def __call__(self, t):
+        return self.alpha(t)
         
     def get_weight(self, t):
-        raise NotImplementedError()
+        return self.dalpha(t) / (1.0 - self.alpha(t))
 
 
 class LinearSchedule(MaskingSchedule):        
-    def __call__(self, t):
-        return 1 - t
+    def _alpha(self, t):
+        return 1.0 - t
     
-    def get_weight(self, t):
-        return -1 / t
+    def _dalpha(self, t):
+        return -1.0
 
 
 class PolynomialSchedule(MaskingSchedule):
-    def __init__(self, exponent):
+    def __init__(self, exponent, **kwargs):
+        super().__init__(**kwargs)
         self.exponent = exponent
 
-    def __call__(self, t):
-        return 1 - t ** self.exponent
+    def _alpha(self, t):
+        return 1.0 - t ** self.exponent
     
-    def get_weight(self, t):
-        return -self.exponent / t
+    def _dalpha(self, t):
+        return -self.exponent * t ** (self.exponent - 1.0)
 
 
 class GeometricSchedule(MaskingSchedule):
-    def __init__(self, beta_min, beta_max):
+    def __init__(self, beta_min, beta_max, **kwargs):
+        super().__init__(**kwargs)
         self.beta_min = beta_min
         self.beta_max = beta_max
 
-    def __call__(self, t):
-        return torch.exp(-self.beta_min ** (1 - t) * self.beta_max ** t)
+    def _alpha(self, t):
+        return torch.exp(-self.beta_min ** (1.0 - t) * self.beta_max ** t)
     
-    def get_weight(self, t):
-        inner = self.beta_min ** (1 - t) * self.beta_max ** t
+    def _dalpha(self, t):
+        inner = self.beta_min ** (1.0 - t) * self.beta_max ** t
         forward = torch.exp(-inner)
-        return -forward / (1 - forward) * inner * torch.log(self.beta_min / self.beta_max)  # the paper might have accidentally put sigma_min instead of beta_min I think
+        return -forward * inner * math.log(self.beta_min / self.beta_max)
 
 
 class CosineSchedule(MaskingSchedule):
-    def __call__(self, t):
-        return 1 - torch.cos(torch.pi / 2 * (1 - t))
+    def _alpha(self, t):
+        return 1.0 - torch.cos(torch.pi / 2.0 * (1.0 - t))
     
-    def get_weight(self, t):
-        return -torch.pi / 2 * torch.tan(torch.pi / 2 * (1 - t))
+    def _dalpha(self, t):
+        return -torch.pi / 2.0 * torch.sin(torch.pi / 2.0 * (1.0 - t))
 
 
 def string_to_schedule(string, **kwargs):

@@ -6,7 +6,7 @@ from tokenization.tokenization import FENTokens
 
 @dataclass
 class Config:
-    schedule: str = "cosine"
+    schedule: str = "linear"
     masking_schedule = string_to_schedule(schedule)
 
     # tokenization
@@ -27,7 +27,7 @@ class Config:
     embed_dim: int = 1024
 
     # optimizer and training
-    lr: float = 1e-4
+    lr: float = 3e-4
     weight_decay: float = 1e-4
     batch_size: int = 1024
     n_steps: int = 100_000

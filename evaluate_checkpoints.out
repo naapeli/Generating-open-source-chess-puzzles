@@ -1,0 +1,243 @@
+Found 20 checkpoints to evaluate in order:
+ - model_0100000.pt
+ - model_0200000.pt
+ - model_0300000.pt
+ - model_0400000.pt
+ - model_0500000.pt
+ - model_0600000.pt
+ - model_0700000.pt
+ - model_0800000.pt
+ - model_0900000.pt
+ - model_1000000.pt
+ - model_1100000.pt
+ - model_1200000.pt
+ - model_1300000.pt
+ - model_1400000.pt
+ - model_1500000.pt
+ - model_1600000.pt
+ - model_1700000.pt
+ - model_1800000.pt
+ - model_1900000.pt
+ - model_2000000.pt
+
+=== Evaluating checkpoint: model_0100000.pt ===
+Batch 1/2
+Sampling time: 346.0281555922702
+Processing time: 210.2815385349095
+Total time: 556.3098171870224
+Batch 2/2
+Sampling time: 309.066542992834
+Processing time: 215.1964126713574
+Total time: 524.2630736758001
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_0100000.csv
+
+=== Evaluating checkpoint: model_0200000.pt ===
+Batch 1/2
+Sampling time: 309.24874531291425
+Processing time: 207.21798762399703
+Total time: 516.4668449671008
+Batch 2/2
+Sampling time: 309.07084972271696
+Processing time: 215.1614498659037
+Total time: 524.232461031992
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_0200000.csv
+
+=== Evaluating checkpoint: model_0300000.pt ===
+Batch 1/2
+Sampling time: 309.28901918930933
+Processing time: 214.03793890913948
+Total time: 523.3270768909715
+Batch 2/2
+Sampling time: 309.38114307262003
+Processing time: 212.32034339290112
+Total time: 521.7015918428078
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_0300000.csv
+
+=== Evaluating checkpoint: model_0400000.pt ===
+Batch 1/2
+Sampling time: 309.2870038677938
+Processing time: 212.68445511395112
+Total time: 521.9715607529506
+Batch 2/2
+Sampling time: 312.74991649994627
+Processing time: 211.14244688116014
+Total time: 523.9971999153495
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_0400000.csv
+
+=== Evaluating checkpoint: model_0500000.pt ===
+Batch 1/2
+Sampling time: 309.5078740478493
+Processing time: 209.84826627606526
+Total time: 519.3562462916598
+Batch 2/2
+Sampling time: 312.4419717597775
+Processing time: 211.61986365076154
+Total time: 524.1726226550527
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_0500000.csv
+
+=== Evaluating checkpoint: model_0600000.pt ===
+Batch 1/2
+Sampling time: 309.33731582714245
+Processing time: 212.17026806809008
+Total time: 521.507692719344
+Batch 2/2
+Sampling time: 309.22055736510083
+Processing time: 219.5623009139672
+Total time: 528.7829879419878
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_0600000.csv
+
+=== Evaluating checkpoint: model_0700000.pt ===
+Batch 1/2
+Sampling time: 309.357487116009
+Processing time: 220.19092407170683
+Total time: 529.5485182204284
+Batch 2/2
+Sampling time: 310.6384819666855
+Processing time: 215.52637450722978
+Total time: 526.1649828706868
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_0700000.csv
+
+=== Evaluating checkpoint: model_0800000.pt ===
+Batch 1/2
+Sampling time: 309.28375103184953
+Processing time: 219.0585554749705
+Total time: 528.3424427830614
+Batch 2/2
+Sampling time: 309.30274513410404
+Processing time: 220.56872707325965
+Total time: 529.8715967298485
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_0800000.csv
+
+=== Evaluating checkpoint: model_0900000.pt ===
+Batch 1/2
+Sampling time: 310.8676901869476
+Processing time: 232.08253074996173
+Total time: 543.0574486898258
+Batch 2/2
+Sampling time: 309.39284890610725
+Processing time: 224.2494878070429
+Total time: 533.6424496448599
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_0900000.csv
+
+=== Evaluating checkpoint: model_1000000.pt ===
+Batch 1/2
+Sampling time: 309.0578977977857
+Processing time: 225.61875213729218
+Total time: 534.6767545207404
+Batch 2/2
+Sampling time: 309.222421457991
+Processing time: 218.63331370195374
+Total time: 527.8558498760685
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1000000.csv
+
+=== Evaluating checkpoint: model_1100000.pt ===
+Batch 1/2
+Sampling time: 310.70732354931533
+Processing time: 220.72907872637734
+Total time: 531.4365079533309
+Batch 2/2
+Sampling time: 310.43596470635384
+Processing time: 219.3577360440977
+Total time: 529.8401468214579
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1100000.csv
+
+=== Evaluating checkpoint: model_1200000.pt ===
+Batch 1/2
+Sampling time: 309.03681548219174
+Processing time: 225.2705985410139
+Total time: 534.3075180267915
+Batch 2/2
+Sampling time: 309.22379293618724
+Processing time: 216.7868451308459
+Total time: 526.0108096692711
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1200000.csv
+
+=== Evaluating checkpoint: model_1300000.pt ===
+Batch 1/2
+Sampling time: 310.64591964287683
+Processing time: 222.23113535391167
+Total time: 532.9331551012583
+Batch 2/2
+Sampling time: 309.92385621601716
+Processing time: 219.66417935676873
+Total time: 529.588170746807
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1300000.csv
+
+=== Evaluating checkpoint: model_1400000.pt ===
+Batch 1/2
+Sampling time: 309.05942820431665
+Processing time: 213.65725305862725
+Total time: 522.7167928223498
+Batch 2/2
+Sampling time: 309.1474540811032
+Processing time: 223.9630413488485
+Total time: 533.1106175989844
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1400000.csv
+
+=== Evaluating checkpoint: model_1500000.pt ===
+Batch 1/2
+Sampling time: 309.799582014326
+Processing time: 219.70901035983115
+Total time: 529.602064339444
+Batch 2/2
+Sampling time: 311.22966516623273
+Processing time: 223.2235642229207
+Total time: 534.4940053359605
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1500000.csv
+
+=== Evaluating checkpoint: model_1600000.pt ===
+Batch 1/2
+Sampling time: 309.37180634588003
+Processing time: 222.75598187092692
+Total time: 532.1279054172337
+Batch 2/2
+Sampling time: 309.4249720009975
+Processing time: 223.78571317298338
+Total time: 533.2108663436957
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1600000.csv
+
+=== Evaluating checkpoint: model_1700000.pt ===
+Batch 1/2
+Sampling time: 309.1975158760324
+Processing time: 222.99673487013206
+Total time: 532.1943569649011
+Batch 2/2
+Sampling time: 309.3773056389764
+Processing time: 224.06220410997048
+Total time: 533.43964022398
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1700000.csv
+
+=== Evaluating checkpoint: model_1800000.pt ===
+Batch 1/2
+Sampling time: 309.3919295188971
+Processing time: 220.27246853383258
+Total time: 529.6645091511309
+Batch 2/2
+Sampling time: 309.8085523992777
+Processing time: 236.2794919880107
+Total time: 546.0910127959214
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1800000.csv
+
+=== Evaluating checkpoint: model_1900000.pt ===
+Batch 1/2
+Sampling time: 310.5193983078934
+Processing time: 235.18038117606193
+Total time: 545.7654972416349
+Batch 2/2
+Sampling time: 309.3654952151701
+Processing time: 226.74409033171833
+Total time: 536.1097143790685
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_1900000.csv
+
+=== Evaluating checkpoint: model_2000000.pt ===
+Batch 1/2
+Sampling time: 309.4288373119198
+Processing time: 223.87777432333678
+Total time: 533.3067283849232
+Batch 2/2
+Sampling time: 309.4708315669559
+Processing time: 224.5665756529197
+Total time: 534.0375408497639
+Saved results to src/Generate_positions/supervised/training_progress/test_no_move_last/model_2000000.csv
+Shutting down Stockfish pool...
+Done.

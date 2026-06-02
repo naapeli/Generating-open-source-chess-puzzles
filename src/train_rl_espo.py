@@ -13,7 +13,7 @@ import numpy as np
 
 from pathlib import Path
 import argparse
-from joblib import Parallel, delayed
+from concurrent.futures import ThreadPoolExecutor
 import os
 import random
 
@@ -21,15 +21,15 @@ from torch.nn.parallel import DistributedDataParallel
 from torch.distributed import init_process_group, destroy_process_group, all_reduce, ReduceOp, gather, scatter
 
 from MaskedDiffusion.model import MaskedDiffusion
-from tokenization.tokenization import tokens_to_fen, tokens_to_move, tokenize_fen, tokenize_move
+from tokenization.tokenization import theme_preprocessor, scale_ratings, unscale_ratings, tokens_to_fen, tokens_to_move, tokenize_fen, tokenize_move
 from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
 from metrics.diversity_filtering import ReplayBuffer
 from metrics.rewards import good_piece_counts, inter_batch_distances, intra_batch_distances
 from MaskingSchedule.MaskingSchedule import string_to_schedule
 
-from rl.espo import compute_elbo, kl_estimate, entropy
+from rl.espo import compute_elbo, compute_elbo_basic, kl_estimate, entropy, generate_random_themes
 
-def log_metrics(total_loss, grad_norm, kl_divergence, clips, step, lr, reward=None):
+def log_metrics(total_loss, grad_norm, kl_divergence, clips, step, lr, reward=None, entropy=None):
     if writer is None: return
     writer.add_scalar("Loss/Total Loss", total_loss, step)
     writer.add_scalar("Loss/RL Grad Norm", grad_norm, step)
@@ -38,11 +38,14 @@ def log_metrics(total_loss, grad_norm, kl_divergence, clips, step, lr, reward=No
     writer.add_scalar("Loss/learning_rate", lr, step)
     if reward is not None:
         writer.add_scalar("Reward", reward, step)
+    if entropy is not None:
+        writer.add_scalar("Loss/Entropy", entropy, step)
 
 def get_stockfish_data(fen, model_move):
-    if fen is None: return None, None, None, None
-    if not legal(fen): return None, None, None, None
+    if fen is None: return None, None, None, None, False, 0.0
+    if not legal(fen): return None, None, None, None, False, 0.0
     with SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish") as stockfish:
+        stockfish.configure({"Threads": 1, "Hash": 32})
         board = chess.Board(fen)
         limit = Limit(depth=15, time=10, nodes=8_000_000)
         
@@ -72,35 +75,40 @@ def get_stockfish_data(fen, model_move):
             except:
                 pass
 
-        if best_move is None:
-            return puzzle, None, cp_loss, pv_string
-    return puzzle, best_move.uci(), cp_loss, pv_string
+        stockfish.configure({"Clear Hash": None})
+        ci_sol, ci_val = counter_intuitive(fen, stockfish, return_value=True)
 
-def save_board(fen, tag, step):
+        if best_move is None:
+            return puzzle, None, cp_loss, pv_string, ci_sol, ci_val
+    return puzzle, best_move.uci(), cp_loss, pv_string, ci_sol, ci_val
+
+def save_board(fen, tag, step, themes=None, rating=None):
     if writer is None: return
     try:
         board = chess.Board(fen)
         svg_data = svg.board(board, size=300)
         png_data = cairosvg.svg2png(bytestring=svg_data.encode("utf-8"))
         board_img = Image.open(io.BytesIO(png_data)).convert("RGB")
-        text_height = 50
+        text_height = 80
         info_pane = Image.new("RGB", (board_img.width, text_height), (255, 255, 255))
         draw = ImageDraw.Draw(info_pane)
-        draw.text((10, 10), fen, fill=(0, 0, 0))
+        text_content = f"{rating}\n{themes}\n{fen}" if themes is not None else fen
+        draw.text((10, 10), text_content, fill=(0, 0, 0))
         combined_img = np.vstack((np.array(board_img), np.array(info_pane)))
         
         writer.add_image(tag, combined_img, step, dataformats="HWC")
-        writer.add_text(f"{tag}/fen", fen, step)
+        writer.add_text(f"{tag}/fen", text_content, step)
     except Exception:
         pass
 
-def get_reward(x_t, entropy_vals, config, step):
+def get_reward(x_t, entropy_vals, config, step, themes_tokens=None, ratings=None):
     x_t_cpu = x_t.cpu()
     batch_size = len(x_t_cpu)
 
     legal_position = torch.zeros(batch_size, dtype=bool)
     unique_solution = torch.zeros(batch_size, dtype=bool)
     counter_intuitive_solution = torch.zeros(batch_size, dtype=bool)
+    counter_intuitive_values = torch.zeros(batch_size, dtype=torch.float32)
     piece_counts = torch.zeros(batch_size, dtype=bool)
     inter_batch_fen_dist = torch.zeros(batch_size, dtype=torch.float32)
     intra_batch_fen_dist = torch.zeros(batch_size, dtype=torch.float32)
@@ -108,6 +116,16 @@ def get_reward(x_t, entropy_vals, config, step):
     intra_batch_pv_dist = torch.zeros(batch_size, dtype=torch.float32)
     move_matches = torch.zeros(batch_size, dtype=bool)
     cp_losses = torch.full((batch_size,), float("nan"), dtype=torch.float32)
+
+    if config.use_context and themes_tokens is not None:
+        themes = theme_preprocessor.inverse_transform(themes_tokens.cpu().numpy())
+    else:
+        themes = [None] * batch_size
+    
+    if config.use_context and ratings is not None:
+        true_ratings = ratings.cpu().tolist()
+    else:
+        true_ratings = [None] * batch_size
 
     generations = []
     for tokens in x_t:
@@ -117,7 +135,8 @@ def get_reward(x_t, entropy_vals, config, step):
             generations.append((None, None))
     
     try:
-        results = list(Parallel(n_jobs=cpu_count)(delayed(get_stockfish_data)(fen, move) for fen, move in generations))
+        with ThreadPoolExecutor(max_workers=cpu_count) as executor:
+            results = list(executor.map(lambda p: get_stockfish_data(p[0], p[1]), generations))
     except Exception as e:
         print(e)
         return torch.zeros(batch_size, dtype=torch.float32, device=x_t.device)
@@ -126,6 +145,8 @@ def get_reward(x_t, entropy_vals, config, step):
     best_moves = [r[1] for r in results]
     found_cp_losses = [r[2] for r in results]
     pvs = [r[3] for r in results]
+    ci_solutions = [r[4] for r in results]
+    ci_values = [r[5] for r in results]
     
     valid_indices = []
 
@@ -145,8 +166,8 @@ def get_reward(x_t, entropy_vals, config, step):
         if found_cp_losses[i] is not None:
             cp_losses[i] = found_cp_losses[i]
 
-        with SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish") as engine:
-            counter_intuitive_solution[i] = counter_intuitive(fen, engine)
+        counter_intuitive_solution[i] = ci_solutions[i]
+        counter_intuitive_values[i] = ci_values[i]
         
         pv = pvs[i]
         intra_batch_fen_dist[i], intra_batch_pv_dist[i] = intra_batch_distances(fen, pv, batch_fens, batch_pvs, i)
@@ -160,7 +181,9 @@ def get_reward(x_t, entropy_vals, config, step):
         # if the position returns a high reward, add it to the buffer
         good_distances = (intra_batch_fen_dist[i] >= 6) and (intra_batch_pv_dist[i] >= 1) and (inter_batch_fen_dist[i] >= 6)
         if unique_solution[i] and counter_intuitive_solution[i] and piece_counts[i] and good_distances:
-            buffer.add(fen, pv, [], -1)
+            buffer_themes = themes[i] if themes[i] is not None else []
+            buffer_rating = true_ratings[i] if true_ratings[i] is not None else -1
+            buffer.add(fen, pv, buffer_themes, buffer_rating)
 
         valid_indices.append(i)
 
@@ -178,15 +201,17 @@ def get_reward(x_t, entropy_vals, config, step):
     inter_distances = good_inter_fen & good_inter_pv
     all_distances = intra_distances & inter_distances
 
-    pass_diversity_filtering = good_intra_fen & good_inter_fen & good_intra_pv & piece_counts   # & (entropy_vals > 0.6)
+    pass_diversity_filtering = good_intra_fen & good_inter_fen & good_intra_pv & piece_counts  #  & (entropy_vals > 0.6)
+    # pass_diversity_filtering = torch.ones_like(good_intra_fen)
 
     components = {
         "legal_rate": legal_position.float().mean().item(),
         "uniqueness_rate": unique_solution.float().mean().item(),
         "counter_intuitive_rate": counter_intuitive_solution.float().mean().item(),
+        "counter_intuitive_values": counter_intuitive_values.mean().item(),
+        "counter_intuitive_values_given_unique": counter_intuitive_values[is_valid].mean().item() if is_valid.any() else 0,
         "counter_intuitive_rate_given_unique": counter_intuitive_solution[is_valid].float().mean().item() if is_valid.any() else 0,
         "unique_and_counter_intuitive": unique_and_counter_intuitive.float().mean().item(),
-        "entropy": entropy_vals.float().mean().item(),
         "piece_counts": piece_counts[legal_position].float().mean().item() if legal_position.any() else 0,
         "dist_inter_fen": inter_batch_fen_dist[legal_position].float().mean().item() if legal_position.any() else 0,
         "dist_intra_fen": intra_batch_fen_dist[legal_position].float().mean().item() if legal_position.any() else 0,
@@ -201,10 +226,10 @@ def get_reward(x_t, entropy_vals, config, step):
     }
 
     rewards = torch.zeros(batch_size, dtype=torch.float32)
-    rewards = torch.where(legal_position & pass_diversity_filtering & unique_solution, 0.1, rewards)
-    rewards = torch.where(legal_position & pass_diversity_filtering & unique_and_counter_intuitive, 1.0, rewards)
+    # rewards = torch.where(legal_position & pass_diversity_filtering & unique_and_counter_intuitive, 1.0, rewards)
+    rewards = torch.where(legal_position & unique_solution, counter_intuitive_values, rewards)
+    rewards = torch.where(legal_position & unique_and_counter_intuitive, 1.0, rewards)
     rewards = torch.where(~legal_position, -2.0, rewards)
-
     rewards = rewards.to(torch.float32)
 
     if writer is not None:
@@ -212,23 +237,49 @@ def get_reward(x_t, entropy_vals, config, step):
             writer.add_scalar(f"Components/{key}", value, step)
     log_rewards = rewards.clone()
     index = torch.argmax(log_rewards).item()
-    save_board(batch_fens[index], "Generations", step)
+    save_board(batch_fens[index], "Generations", step, themes[index], true_ratings[index])
+    index = torch.argmin(log_rewards).item()
+    save_board(batch_fens[index], "Worst_Generations", step, themes[index], true_ratings[index])
+    index = torch.randint(0, batch_size, (1,)).item()
+    save_board(batch_fens[index], "Random_Generations", step, themes[index], true_ratings[index])
     for index, reward in enumerate(log_rewards):
         if not (unique_solution[index] & counter_intuitive_solution[index] & pass_diversity_filtering[index]):
             continue
-        save_board(batch_fens[index], "Puzzles", step)
+        save_board(batch_fens[index], "Puzzles", step, themes[index], true_ratings[index])
     
     return rewards.to(x_t.device, dtype=torch.float32)
 
 def train_espo(model, reference_model, optimizer, scheduler, config, device, args, step, master_process, distributed, world_size, local_batch_size, local_n_arteficial):
     model.eval()
     
+    if config.use_context:
+        themes, ratings = generate_random_themes(local_batch_size, lichess_distribution=args.lichess_distribution)
+        ratings = ratings.to(device=device, dtype=torch.float32)
+        themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
+        scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
+        
+        # Repeat interleave for group_size
+        themes_one_hot = themes_one_hot.repeat_interleave(args.group_size, dim=0)
+        scaled_ratings = scaled_ratings.repeat_interleave(args.group_size, dim=0)
+        ratings = ratings.repeat_interleave(args.group_size, dim=0)
+    else:
+        themes, ratings = None, None
+        themes_one_hot, scaled_ratings = None, None
+
     with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
         sample_model = model.module if distributed else model
-        step_fens = sample_model.sample(None, None, steps=args.steps, batch_size=local_batch_size, temperature=args.temperature, generate_move_last=False)
+        step_fens, total_kl, total_entropy = sample_model.sample(themes_one_hot, scaled_ratings, steps=args.steps, batch_size=local_batch_size * args.group_size, temperature=args.temperature, generate_move_last=False, compute_kl=True, compute_entropy=True, ref_model=reference_model)
     
+    local_exact_kl = total_kl.mean()
+    local_exact_entropy = total_entropy.mean()
+    if distributed:
+        all_reduce(local_exact_kl, op=ReduceOp.AVG)
+        all_reduce(local_exact_entropy, op=ReduceOp.AVG)
+    exact_kl_val = local_exact_kl.item()
+    exact_entropy_val = local_exact_entropy.item()
+
     if local_n_arteficial > 0:
-        sampled_fens, sampled_pvs, _, _ = buffer.sample(local_n_arteficial)
+        sampled_fens, sampled_pvs, sampled_themes, sampled_ratings = buffer.sample(local_n_arteficial)
         x_0_art_list = []
         for fen, pv in zip(sampled_fens, sampled_pvs):
             fen_tokens = tokenize_fen(fen)
@@ -237,105 +288,106 @@ def train_espo(model, reference_model, optimizer, scheduler, config, device, arg
             x_0_art_list.append(fen_tokens + move_tokens)
         x_0_art = torch.tensor(x_0_art_list, dtype=torch.long, device=device)
         
-        combined_fens = torch.cat([step_fens, x_0_art], dim=0)
-    else:
-        combined_fens = step_fens
+        art_themes_one_hot = None
+        art_scaled_ratings = None
+        if config.use_context:
+            art_themes_one_hot = torch.from_numpy(theme_preprocessor.transform(sampled_themes)).to(device=device, dtype=torch.float32)
+            art_scaled_ratings = scale_ratings(sampled_ratings).to(device=device, dtype=torch.float32)
 
     with torch.no_grad():
-        reference_elbo, mask, t = compute_elbo(reference_model, combined_fens, themes=None, ratings=None, return_mask=True)
-        old_elbo = compute_elbo(model, combined_fens, themes=None, ratings=None, mask=mask)
+        # reference_elbo, mask, t = compute_elbo(reference_model, step_fens, themes=themes_one_hot, ratings=scaled_ratings, return_mask=True)
+        # old_elbo = compute_elbo(model, step_fens, themes=themes_one_hot, ratings=scaled_ratings, mask=mask)
+        old_elbo, mask, t = compute_elbo(model, step_fens, themes=themes_one_hot, ratings=scaled_ratings, return_mask=True)
 
-    old_elbo_gen = old_elbo[:local_batch_size]
-    entropy_vals = entropy(old_elbo_gen, step_fens.shape[1])
+    # entropy_vals = entropy(old_elbo, step_fens.shape[1])
     
     if distributed:
         gather_fens = [torch.zeros_like(step_fens) for _ in range(world_size)] if master_process else None
-        gather_entropies = [torch.zeros_like(entropy_vals) for _ in range(world_size)] if master_process else None
+        gather_entropies = [torch.zeros_like(total_entropy) for _ in range(world_size)] if master_process else None
         
         gather(step_fens, gather_list=gather_fens, dst=0)
-        gather(entropy_vals, gather_list=gather_entropies, dst=0)
+        gather(total_entropy, gather_list=gather_entropies, dst=0)
+
+        if config.use_context:
+            gather_themes = [torch.zeros_like(themes_one_hot) for _ in range(world_size)] if master_process else None
+            gather_ratings = [torch.zeros_like(ratings) for _ in range(world_size)] if master_process else None
+            gather(themes_one_hot, gather_list=gather_themes, dst=0)
+            gather(ratings, gather_list=gather_ratings, dst=0)
 
         if master_process:
             global_fens = torch.cat(gather_fens)
             global_entropies = torch.cat(gather_entropies)
-            global_rewards = get_reward(global_fens, global_entropies.cpu(), config, step)
+            global_themes = torch.cat(gather_themes) if config.use_context else None
+            global_ratings = torch.cat(gather_ratings) if config.use_context else None
+            global_rewards = get_reward(global_fens, global_entropies.cpu(), config, step, themes_tokens=global_themes, ratings=global_ratings)
             reward_chunks = list(global_rewards.chunk(world_size, dim=0))
         rewards_gen = torch.zeros(len(step_fens), device=device, dtype=torch.float32)
         scatter(rewards_gen, scatter_list=reward_chunks if master_process else None, src=0)
     else:
-        rewards_gen = get_reward(step_fens, entropy_vals.cpu(), config, step)
-
-    if local_n_arteficial > 0:
-        rewards_art = torch.full((local_n_arteficial,), 1.0, device=device)
-        rewards = torch.cat([rewards_gen, rewards_art], dim=0)
-    else:
-        rewards = rewards_gen
+        rewards_gen = get_reward(step_fens, total_entropy.cpu(), config, step, themes_tokens=themes_one_hot, ratings=ratings)
+    
+    rewards_gen = rewards_gen - args.beta * total_kl + args.entropy_coef * total_entropy
 
     model.train()
     total_loss = 0
     total_norm = 0
-    total_kl = 0
     total_clips = 0
 
     for substep in range(args.n_gradient_updates_per_generation):
         optimizer.zero_grad()
         
-        elbo = compute_elbo(model, combined_fens, themes=None, ratings=None, mask=mask, return_mask=False)
-        
-        sequence_length = combined_fens.shape[1]
-        elbo_scaled = elbo / sequence_length
-        reference_elbos_scaled = reference_elbo / sequence_length
-        old_elbos_scaled = old_elbo / sequence_length
+        elbo_gen = compute_elbo(model, step_fens, themes=themes_one_hot, ratings=scaled_ratings, mask=mask, return_mask=False)
+        if local_n_arteficial > 0:
+            elbo_art = compute_elbo_basic(model, x_0_art, themes=art_themes_one_hot, ratings=art_scaled_ratings, n_mc=1)
+            loss_sft = -elbo_art.mean() / step_fens.shape[1]
+        else:
+            loss_sft = torch.tensor(0.0, device=device)
+            
+        sequence_length = step_fens.shape[1]
 
-        # kl = sequence_length * kl_estimate(elbo_scaled, reference_elbos_scaled)
-        kl = kl_estimate(elbo, reference_elbo)
+        # kl = kl_estimate(elbo_gen, reference_elbo).mean() / sequence_length
 
-        # rewards = rewards - args.beta * kl
-        rewards = rewards.detach()
-        # kl = kl.mean()
-        kl = kl.mean() / sequence_length  # TODO
+        r_gen = rewards_gen.detach()
         
-        rho = torch.exp(elbo_scaled - old_elbos_scaled)
+        r_gen_grouped = r_gen.reshape(local_batch_size, args.group_size)
+        if args.group_size > 1:
+            mean_other_rewards = (r_gen_grouped.sum(dim=1, keepdim=True) - r_gen_grouped) / (args.group_size - 1)
+        else:
+            mean_other_rewards = torch.zeros_like(r_gen_grouped)
+        advantages_grouped = r_gen_grouped - mean_other_rewards
+        advantages = advantages_grouped.reshape(-1).to(device)
         
-        N = rewards.shape[0]
-        # mean_other_rewards = (rewards.sum() - rewards) / (N - 1)
-        # advantages = (rewards - mean_other_rewards).to(device)
-        advantages = ((rewards - rewards.mean()) / (rewards.std() + 1e-6)).to(device)  # TODO
-        
+        rho = torch.exp((elbo_gen - old_elbo) / sequence_length)
         coef_1 = rho * advantages
         coef_2 = torch.clamp(rho, 1 - args.eps, 1 + args.eps) * advantages
-        loss = -torch.minimum(coef_1, coef_2).mean()
+        loss_ppo = -torch.minimum(coef_1, coef_2).mean()
         
         is_clipped = (coef_2 < coef_1).flatten()
         
-        loss = loss + args.beta * kl
+        loss = loss_ppo + args.gamma * loss_sft  #  + args.beta * kl
         
         loss.backward()
-        norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 0.2)
+        norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 0.8)
         optimizer.step()
         scheduler.step()
         
         total_loss += loss.item()
         total_norm += norm.item()
-        total_kl += kl.item()
         total_clips += is_clipped.float().mean().item()
 
     if distributed:
         t_total_loss = torch.tensor(total_loss, device=device)
         t_total_norm = torch.tensor(total_norm, device=device)
-        t_total_kl = torch.tensor(total_kl, device=device)
         t_total_clips = torch.tensor(total_clips, device=device)
         t_rewards_mean = torch.tensor(rewards_gen.float().mean().item(), device=device)
 
         all_reduce(t_total_loss, op=ReduceOp.AVG)
         all_reduce(t_total_norm, op=ReduceOp.AVG)
-        all_reduce(t_total_kl, op=ReduceOp.AVG)
         all_reduce(t_total_clips, op=ReduceOp.AVG)
         all_reduce(t_rewards_mean, op=ReduceOp.AVG)
 
         total_loss = t_total_loss.item()
         total_norm = t_total_norm.item()
-        total_kl = t_total_kl.item()
         total_clips = t_total_clips.item()
         rewards_mean = t_rewards_mean.item()
     else:
@@ -345,11 +397,12 @@ def train_espo(model, reference_model, optimizer, scheduler, config, device, arg
         log_metrics(
             total_loss / args.n_gradient_updates_per_generation,
             total_norm / args.n_gradient_updates_per_generation,
-            total_kl / args.n_gradient_updates_per_generation,
+            exact_kl_val,
             total_clips / args.n_gradient_updates_per_generation,
             step,
             optimizer.param_groups[0]["lr"],
-            rewards_mean
+            reward=rewards_mean,
+            entropy=exact_entropy_val
         )
 
 
@@ -367,12 +420,16 @@ if __name__ == "__main__":
     parser.add_argument("--steps", type=int, default=256)
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=0.03)
+    parser.add_argument("--entropy_coef", type=float, default=0.03)
     parser.add_argument("--eps", type=float, default=0.2)
-    parser.add_argument("--distributed", action="store_true")
+    parser.add_argument("--lichess_distribution", type=bool, default=True)
+    parser.add_argument("--gamma", type=float, default=1.0)
+    parser.add_argument("--group_size", type=int, default=4)
     args = parser.parse_args()
-
-    distributed = args.distributed
-
+    
+    distributed = int(os.environ.get("SLURM_GPUS")) > 1
+    assert int(os.environ.get("SLURM_GPUS")) == int(os.environ.get("SLURM_NTASKS")), "there must be as many tasks as gpus"
+    
     if distributed:
         assert torch.cuda.is_available()
         local_rank = int(os.environ["SLURM_PROCID"])
@@ -410,9 +467,6 @@ if __name__ == "__main__":
     else:
         writer = None
 
-    capacity = 200_000
-    buffer = ReplayBuffer(capacity, base_path / "dataset" / "rl")
-
     continue_from_checkpoint = args.checkpoint_model is not None
     reference_checkpoint = torch.load(args.reference_path, map_location="cpu", weights_only=False)
     if continue_from_checkpoint:
@@ -421,21 +475,30 @@ if __name__ == "__main__":
         checkpoint = reference_checkpoint
 
     config = checkpoint["config"]
+
+    capacity = 200_000
+    buffer_folder = "rl_themes" if config.use_context else "rl"
+    buffer = ReplayBuffer(capacity, base_path / "dataset" / buffer_folder)
+
     config.schedule = "linear"
     config.masking_schedule = string_to_schedule(config.schedule)
+    
     model = MaskedDiffusion(config)
     model.load_state_dict(checkpoint["model"])
     model.to(device=device)
     if distributed:
         model = DistributedDataParallel(model, device_ids=[local_rank])
     
-    reference_model = MaskedDiffusion(reference_checkpoint["config"])
+    reference_config = reference_checkpoint["config"]
+    reference_config.schedule = "linear"  # make the masking schedule of the reference model match the training masking schedule
+    reference_config.masking_schedule = string_to_schedule(reference_config.schedule)
+    reference_model = MaskedDiffusion(reference_config)
     reference_model.load_state_dict(reference_checkpoint["model"])
     reference_model.to(device=device)
     reference_model.eval()
     reference_model.requires_grad_(False)
 
-    optimizer = AdamW(model.parameters(), lr=args.lr, betas=(0.9, 0.99), weight_decay=0.1)
+    optimizer = AdamW(model.parameters(), lr=args.lr, betas=(0.9, 0.99), weight_decay=0.01)
     if continue_from_checkpoint:
         optimizer.load_state_dict(checkpoint["optimizer"])
 
