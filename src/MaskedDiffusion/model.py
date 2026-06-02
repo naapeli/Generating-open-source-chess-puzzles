@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.checkpoint import checkpoint
 
 
 class SwiGLU(nn.Module):
@@ -54,7 +55,7 @@ class MaskedDiffusion(nn.Module):
 
         self.config = config
 
-    def forward(self, tokens, theme_tokens=None, ratings=None):
+    def forward(self, tokens, theme_tokens=None, ratings=None, checkpoint_activations=False):
         pos = torch.arange(0, self.seq_length, dtype=torch.long, device=tokens.device)
         x = self.positional_embedding(pos) + self.FEN_embedding(tokens)
 
@@ -66,7 +67,10 @@ class MaskedDiffusion(nn.Module):
             context = None
 
         for block in self.blocks:
-            x = block(x, context)
+            if checkpoint_activations and self.training:
+                x = checkpoint(block, x, context, use_reentrant=False)
+            else:
+                x = block(x, context)
 
         logits = self.classifier(x)
         return logits
@@ -80,7 +84,7 @@ class MaskedDiffusion(nn.Module):
     
     @torch.compile
     @torch.no_grad()
-    def sample(self, theme_tokens=None, ratings=None, batch_size=1, steps=256, temperature=1.0, generate_move_last=True):
+    def sample(self, theme_tokens=None, ratings=None, batch_size=1, steps=256, temperature=1.0, generate_move_last=True, compute_kl=False, compute_entropy=False, ref_model=None):
         if theme_tokens is not None:
             batch_size = len(theme_tokens)
             device = theme_tokens.device
@@ -88,6 +92,12 @@ class MaskedDiffusion(nn.Module):
             device = next(self.parameters()).device
             
         mask_token = self.config.mask_token
+
+        if compute_kl:
+            assert ref_model is not None, "ref_model must be provided if compute_kl is True"
+            total_kl_divergence = torch.zeros(batch_size, device=device)
+        if compute_entropy:
+            total_entropy = torch.zeros(batch_size, device=device)
         
         tokens = torch.full((batch_size, self.seq_length), mask_token, device=device, dtype=torch.long)
         T_grid = torch.linspace(0, 1, steps + 1, device=device).to(device)
@@ -105,6 +115,8 @@ class MaskedDiffusion(nn.Module):
                 s = T_grid[i - 1]
                 alpha_t = self.config.masking_schedule(t)
                 alpha_s = self.config.masking_schedule(s)
+                if s == 0.0:
+                    alpha_s = torch.ones_like(alpha_s)
                 
                 logits = self(tokens, theme_tokens, ratings) 
                 probs = F.softmax(logits / temperature, dim=2)
@@ -125,6 +137,30 @@ class MaskedDiffusion(nn.Module):
                 in_window[:, start_idx:end_idx] = True
                 is_updatable = is_masked & in_window
 
+                if compute_kl or compute_entropy:
+                    model_log_probs = F.log_softmax(logits / temperature, dim=2)
+                    mask = is_updatable.float()
+                    
+                    if compute_kl:
+                        ref_logits = ref_model(tokens, theme_tokens, ratings)
+                        ref_log_probs = F.log_softmax(ref_logits / temperature, dim=2)
+                        kl_div_vocab = F.kl_div(input=ref_log_probs, target=model_log_probs, log_target=True, reduction="none").sum(dim=2)
+                        step_kl = (kl_div_vocab * mask * p_unmask).sum(dim=1)
+                        total_kl_divergence = total_kl_divergence + step_kl
+                    
+                    if compute_entropy:
+                        entropy_vocab = -(torch.exp(model_log_probs) * model_log_probs).sum(dim=2)
+                        step_entropy = (entropy_vocab * mask * p_unmask).sum(dim=1) / self.seq_length
+                        total_entropy = total_entropy + step_entropy
+
                 tokens = torch.where(is_updatable, new_samples, tokens)
                 
-        return tokens
+        returns = [tokens]
+        if compute_kl:
+            returns.append(total_kl_divergence)
+        if compute_entropy:
+            returns.append(total_entropy)
+
+        if len(returns) == 1:
+            return tokens
+        return tuple(returns)

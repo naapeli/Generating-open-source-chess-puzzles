@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torch.optim import AdamW, Muon
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import SequentialLR, LinearLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
@@ -17,12 +17,18 @@ from MaskedDiffusion.model import MaskedDiffusion
 from Config import Config
 from tokenization.tokenization import tokens_to_fen, tokens_to_move, scale_ratings
 
+import queue
+from joblib import Parallel, delayed
+from chess.engine import SimpleEngine
+from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--distributed", action="store_true")
     parser.add_argument("--checkpoint_name", type=str, default=None)
     parser.add_argument("--run_name", type=str, default=None)
+    parser.add_argument("--n_evaluation_positions", type=int, default=20000)
     args = parser.parse_args()
     distributed = args.distributed
     continue_from_checkpoint = args.checkpoint_name != None
@@ -63,6 +69,7 @@ def main():
     # ====================== CONFIG ======================
     if continue_from_checkpoint:
         config = checkpoint["config"]
+        config.n_steps = 2_000_000
     else:
         config = Config(train_logging_interval=10, validation_interval=10_000, n_steps=1_000_000, save_interval=100_000, batch_size=1024)
         
@@ -229,11 +236,109 @@ def main():
         }
         torch.save(checkpoint, checkpoint_path)
 
+    def evaluate_puzzles(step):
+        model.eval()
+        local_n = args.n_evaluation_positions // world_size
+        if rank == 0:
+            local_n += args.n_evaluation_positions % world_size
+        
+        n_jobs = int(os.environ.get("SLURM_CPUS_PER_GPU", 1))
+        stockfish_path = base_path / ".." / "Stockfish" / "src" / "stockfish"
+        engine_pool = queue.Queue()
+        for _ in range(n_jobs):
+            engine_pool.put(SimpleEngine.popen_uci(stockfish_path))
+
+        def process_position(fen_tokens):
+            engine = engine_pool.get()
+            try:
+                fen = tokens_to_fen(fen_tokens.cpu())
+                if not legal(fen):
+                    return False, False, False
+                puzzle = get_unique_puzzle_from_fen(fen, engine)
+                is_unique = (puzzle is not None)
+                is_counter_intuitive = counter_intuitive(fen, engine)
+                return True, is_unique, (is_unique and is_counter_intuitive)
+            except Exception:
+                return False, False, False
+            finally:
+                engine_pool.put(engine)
+
+        generated_count = 0
+        local_legal = 0
+        local_unique = 0
+        local_counter_intuitive_unique = 0
+        
+        unwrapped_model = model.module if distributed else model
+        batch_size = 1024
+        
+        while generated_count < local_n:
+            b = min(batch_size, local_n - generated_count)
+            
+            if config.use_context:
+                indices = torch.randint(0, len(testset), (b,)).tolist()
+                sampled_items = [testset[idx] for idx in indices]
+                themes_one_hot = torch.stack([torch.as_tensor(item[2]) for item in sampled_items]).to(device=device, dtype=torch.float32)
+                scaled_ratings = torch.stack([torch.as_tensor(item[3]) for item in sampled_items]).to(device=device, dtype=torch.float32)
+            else:
+                themes_one_hot = None
+                scaled_ratings = None
+                
+            with torch.no_grad():
+                with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
+                    tokens = unwrapped_model.sample(themes_one_hot, scaled_ratings, batch_size=b, steps=512)
+            
+            if config.predict_moves:
+                fen_tokens = tokens[:, :config.fen_length]
+            else:
+                fen_tokens = tokens
+                
+            batch_results = Parallel(n_jobs=n_jobs, backend="threading")(
+                delayed(process_position)(fen_tokens[i]) for i in range(b)
+            )
+            
+            for is_legal, is_unique, is_ci_unique in batch_results:
+                if is_legal:
+                    local_legal += 1
+                if is_unique:
+                    local_unique += 1
+                if is_ci_unique:
+                    local_counter_intuitive_unique += 1
+                    
+            generated_count += b
+
+        while not engine_pool.empty():
+            engine = engine_pool.get()
+            engine.quit()
+
+        counts = torch.tensor([local_n, local_legal, local_unique, local_counter_intuitive_unique], dtype=torch.float32, device=device)
+        if distributed:
+            all_reduce(counts, op=ReduceOp.SUM)
+            
+        if master_process:
+            total_gen = counts[0].item()
+            total_legal = counts[1].item()
+            total_unique = counts[2].item()
+            total_ci_unique = counts[3].item()
+            
+            legal_rate = total_legal / total_gen if total_gen > 0 else 0.0
+            uniqueness_rate = total_unique / total_gen if total_gen > 0 else 0.0
+            counter_intuitiveness_rate = total_ci_unique / total_unique if total_unique > 0 else 0.0
+            puzzle_rate = total_ci_unique / total_gen if total_gen > 0 else 0.0
+            
+            validation_writer.add_scalar("Metrics/legal_rate", legal_rate, step)
+            validation_writer.add_scalar("Metrics/uniqueness_rate", uniqueness_rate, step)
+            validation_writer.add_scalar("Metrics/counter_intuitiveness_rate_given_unique", counter_intuitiveness_rate, step)
+            validation_writer.add_scalar("Metrics/puzzle_rate", puzzle_rate, step)
+            
+        model.train()
+
     # ====================== TRAINING LOOP ======================
     step = 0
     epoch = 0
     if continue_from_checkpoint: step = checkpoint["step"]
     if continue_from_checkpoint: epoch = checkpoint["epoch"]
+
+    if not continue_from_checkpoint: evaluate_puzzles(step)
     ended = False
     total = torch.zeros(3, dtype=torch.float32, device=device)
     while not ended:
@@ -280,8 +385,10 @@ def main():
                 model.train()
             
             # create a checkpoint
-            if step % config.save_interval == 0 and master_process:
-                save_state()
+            if step % config.save_interval == 0:
+                evaluate_puzzles(step)
+                if master_process:
+                    save_state()
 
             # are we finished?
             if step >= config.n_steps:

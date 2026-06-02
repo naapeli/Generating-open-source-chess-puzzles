@@ -65,9 +65,15 @@ def get_unique_puzzle_from_fen(fen, engine: SimpleEngine):
 
         return Puzzle(game, score)
 
-def counter_intuitive(fen, engine: SimpleEngine):
+def counter_intuitive(fen, engine: SimpleEngine, return_value=False):
+    score = counter_intuitive_value(fen, engine)
+    if return_value:
+        return score > TAU_CNT, score
+    return score > TAU_CNT
+
+def counter_intuitive_value(fen, engine: SimpleEngine):
     board = chess.Board(fen)
-    if board.is_game_over(): return False  # NOTE: just check that the model has not generated a position that is checkmate already
+    if board.is_game_over(): return 0  # NOTE: just check that the model has not generated a position that is checkmate already
     history = []        
     with engine.analysis(board, counter_intuitive_limit) as analysis:
         for info in analysis:
@@ -77,18 +83,23 @@ def counter_intuitive(fen, engine: SimpleEngine):
                 history.append((move_depth, best_move))
 
     critical_point = counter_intuitive_limit.depth
-    
     final_best_move = history[-1][1]
     max_depth = history[-1][0]
     for move_depth, move in history:
         if move == final_best_move:
             critical_point = move_depth
             break
-
-    # v_critical_point = critical_point - 1
-    v_critical_point = (critical_point - 1) / max_depth  # proportion from the full search. If this is over 0.125, the puzzle is counter intuitive
-    # v_critical_point = (critical_point - 1) / 50  # if critical point is at depth 7 or later, the puzzle is counter intuitive
-
+    # final_best_move = history[-1][1]
+    # max_depth = history[-1][0]
+    # critical_point = max_depth
+    # for move_depth, move in reversed(history):
+    #     if move != final_best_move:
+    #         break
+    #     critical_point = move_depth
+    # v_critical_point = (critical_point - 1)
+    # v_critical_point = (critical_point - 1) / max_depth
+    v_critical_point = (critical_point - 1) / counter_intuitive_limit.depth
+    
     v_capture_material = 0
     if board.is_capture(final_best_move):
         if board.is_en_passant(final_best_move):
@@ -101,7 +112,7 @@ def counter_intuitive(fen, engine: SimpleEngine):
         v_capture_material = -captured_value / 9
 
     score = (0.8 * v_critical_point) + (0.1 * v_capture_material)
-    return score > TAU_CNT
+    return score
 
 def is_valid_attack(pair: NextMovePair, engine: SimpleEngine) -> bool:
     return (

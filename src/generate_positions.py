@@ -4,7 +4,9 @@ import torch
 from pathlib import Path
 import pandas as pd
 from chess.engine import SimpleEngine
-from joblib import Parallel, delayed
+from concurrent.futures import ThreadPoolExecutor
+from time import perf_counter
+import os
 
 from MaskedDiffusion.model import MaskedDiffusion
 from RatingModel.model import RatingModel
@@ -12,6 +14,7 @@ from rl.espo import generate_random_themes, theme_reward
 from tokenization.tokenization import theme_preprocessor, scale_ratings, tokens_to_fen, tokens_to_move, unscale_ratings
 from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
 from metrics.cook import cook
+from MaskingSchedule.MaskingSchedule import string_to_schedule
 
 
 torch.set_float32_matmul_precision("high")
@@ -23,6 +26,9 @@ parser.add_argument("--run_name", type=str, default=None)
 parser.add_argument("--temperature", type=float, default=1.0)
 parser.add_argument("--steps", type=int, default=512)
 parser.add_argument("--output_file", type=str, required=True)
+parser.add_argument("--context_dataset", choices=["train", "test"], default="test")
+parser.add_argument("--generate_move_last", action="store_true")
+parser.add_argument("--n_fens", type=int, default=10_000)
 args = parser.parse_args()
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -30,36 +36,35 @@ base_path = Path("./src")
 checkpoint = torch.load(base_path / "runs" / args.run_type / args.run_name / args.checkpoint_name, map_location="cpu", weights_only=False)
 
 config = checkpoint["config"]
+# config.schedule = "linear"
+# config.masking_schedule = string_to_schedule(config.schedule)
 model = MaskedDiffusion(config)
 model.load_state_dict(checkpoint["model"])
 model.to(device=device)
 
-rating_model_checkpoint = torch.load(base_path / "runs" / "rating_model" / "v1" / "model_0063000.pt", map_location="cpu", weights_only=False)
-rating_model = RatingModel(rating_model_checkpoint["config"])
-rating_model.load_state_dict(rating_model_checkpoint["model"])
-rating_model.to(device=device)
-
 results_list = []
 
-n = 10_000
+n = args.n_fens
 batch_size = 1024  # 8192
 
 
-n_jobs = 16
+n_jobs = int(os.getenv("SLURM_CPUS_PER_GPU")) - 2
 stockfish_path = base_path / ".." / "Stockfish" / "src" / "stockfish"
 
 engine_pool = queue.Queue()
 for _ in range(n_jobs):
-    engine_pool.put(SimpleEngine.popen_uci(stockfish_path))
+    engine = SimpleEngine.popen_uci(stockfish_path)
+    engine.configure({"Threads": 1, "Hash": 32})
+    engine_pool.put(engine)
 
-random_themes_and_ratings = True
-if not random_themes_and_ratings:
-    dataset = pd.read_csv(base_path / "dataset" / "dataset.csv", nrows=1000 * n)
-    dataset_themes = dataset["Themes"].str.split().tolist()
-    dataset_ratings = torch.from_numpy(dataset["Rating"].to_numpy())
+if config.use_context:
+    dataset_name = "trainset.pt" if args.context_dataset == "train" else "testset.pt"
+    dataset = torch.load(base_path / "dataset" / "with_best_move" / dataset_name, weights_only=False, map_location="cpu")
+else:
+    dataset = None
 
-def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device, rating_model):
-    entry = {"target_themes": base_theme, "target_rating": base_rating, "fen": None, "best_move": None, "is_legal": False, "is_puzzle": False, "counter_intuitive": None, "actual_themes": None, "predicted_rating": None, "themes_match": None, "main_line": None, "best_move_matches": None}
+def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device):
+    entry = {"target_themes": base_theme, "target_rating": base_rating, "fen": None, "best_move": None, "is_legal": False, "is_puzzle": False, "counter_intuitive": None, "actual_themes": None, "themes_match": None, "main_line": None}
 
     engine = engine_pool.get()
 
@@ -78,23 +83,17 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device, rat
         
         entry["is_legal"] = True
         
-        puzzle = get_unique_puzzle_from_fen(fen, engine)
+        engine.configure({"Clear Hash": None})
         entry["counter_intuitive"] = counter_intuitive(fen, engine)
+        puzzle = get_unique_puzzle_from_fen(fen, engine)
         
         if puzzle is not None:
             entry["is_puzzle"] = True
             entry["main_line"] = " ".join([move.uci() for move in puzzle.mainline])
-            if move_tokens is not None:
-                entry["best_move_matches"] = move == puzzle.mainline[0].uci()
             existing_themes = cook(puzzle, engine)
             entry["actual_themes"] = existing_themes
             
             existing_themes_one_hot = torch.from_numpy(theme_preprocessor.transform([existing_themes])).to(device=device, dtype=torch.float32)
-            
-            with torch.no_grad():
-                puzzle_rating = rating_model(fen_tokens.unsqueeze(0), existing_themes_one_hot)
-            
-            entry["predicted_rating"] = unscale_ratings(puzzle_rating).item()
             
             if config.use_context:
                 entry["themes_match"] = theme_reward(base_theme, existing_themes)
@@ -105,26 +104,29 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device, rat
         engine_pool.put(engine)
 
 
-for iteration in range(n // batch_size):
-    print(iteration + 1, n // batch_size, flush=True)
+for iteration in range(n // batch_size + 1):
+    print(iteration + 1, n // batch_size + 1, flush=True)
     if config.use_context:
-        if random_themes_and_ratings:
-            base_themes, base_ratings = generate_random_themes(batch_size)
-        else:
-            indices = torch.randint(0, len(dataset_ratings), (batch_size,))
-            base_ratings = dataset_ratings[indices]
-            base_themes = [dataset_themes[index] for index in indices]
-    
-    if config.use_context:
-        base_ratings = base_ratings.to(device=device, dtype=torch.float32)
-        themes_one_hot = torch.from_numpy(theme_preprocessor.transform(base_themes)).to(device=device, dtype=torch.float32)
-        scaled_ratings = scale_ratings(base_ratings).to(device=device, dtype=torch.float32)
+        indices = torch.randint(0, len(dataset), (batch_size,)).tolist()
+        sampled_items = [dataset[idx] for idx in indices]
+        
+        themes_one_hot = torch.stack([torch.as_tensor(item[2]) for item in sampled_items]).to(device=device, dtype=torch.float32)
+        scaled_ratings = torch.stack([torch.as_tensor(item[3]) for item in sampled_items]).to(device=device, dtype=torch.float32)
+        
+        base_themes = theme_preprocessor.inverse_transform(themes_one_hot.cpu().numpy())
+        base_ratings = unscale_ratings(scaled_ratings).tolist()
     else:
         themes_one_hot = None
         scaled_ratings = None
+        base_themes = None
+        base_ratings = None
 
     module = model.module if hasattr(model, "module") else model
-    tokens = module.sample(themes_one_hot, scaled_ratings, batch_size=batch_size, steps=args.steps, temperature=args.temperature)
+    start = perf_counter()
+    with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
+        tokens = module.sample(themes_one_hot, scaled_ratings, batch_size=batch_size, steps=args.steps, temperature=args.temperature, generate_move_last=args.generate_move_last)
+    print("Sampling time:", perf_counter() - start, flush=True)
+    
     if config.predict_moves:
         fen_tokens = tokens[:, :config.fen_length]
         move_tokens = tokens[:, config.fen_length:]
@@ -132,9 +134,20 @@ for iteration in range(n // batch_size):
         fen_tokens = tokens
         move_tokens = None
 
-    batch_results = Parallel(n_jobs=n_jobs, backend="threading")(
-        delayed(process_puzzle)(fen_tokens[i], move_tokens[i] if move_tokens is not None else None, base_themes[i] if themes_one_hot is not None else None, base_ratings[i] if scaled_ratings is not None else None, device, rating_model) for i in range(batch_size)
-    )
+    start2 = perf_counter()
+    with ThreadPoolExecutor(max_workers=n_jobs) as executor:
+        args_list = [
+            (
+                fen_tokens[i],
+                move_tokens[i] if move_tokens is not None else None,
+                base_themes[i] if themes_one_hot is not None else None,
+                base_ratings[i] if scaled_ratings is not None else None,
+                device
+            ) for i in range(batch_size)
+        ]
+        batch_results = list(executor.map(lambda p: process_puzzle(*p), args_list))
+    print("Processing time:", perf_counter() - start2, flush=True)
+    print("Total time:", perf_counter() - start, flush=True)
     
     results_list.extend(batch_results)
 
