@@ -141,12 +141,12 @@ lengths = ("oneMove", "short", "long", "veryLong")
 winnings = ("crushing", "advantage")
 other = ("hangingPiece", "fork", "interference", "kingsideAttack", "zugzwang", "exposedKing", "skewer", "pin", "quietMove", "discoveredAttack", "sacrifice", "deflection", "advancedPawn", "attraction", "promotion", "queensideAttack", "defensiveMove", "attackingF2F7", "clearance", "intermezzo", "equality", "trappedPiece", "xRayAttack", "capturingDefender", "doubleCheck", "enPassant", "castling", "underPromotion")
 
-dataset = pd.read_csv("./src/dataset/dataset.csv")  # , nrows=100_000
-# dataset = dataset[dataset["Themes"].str.split(" ").apply(lambda themes: "sacrifice" in themes)]  # TODO: remove this when not interested in sacrifices anymore
-# dataset = dataset[dataset["Themes"].str.split(" ").apply(lambda themes: "doubleCheck" in themes)]  # TODO: remove this when not interested in double checks anymore
-
+dataset = None
 def generate_random_themes(batch_size, lichess_distribution=False):
+    global dataset
     if lichess_distribution:
+        if dataset is None:
+            dataset = pd.read_csv("./src/dataset/dataset.csv")  # , nrows=100_000
         rows = dataset.sample(n=batch_size)
         themes = rows["Themes"].str.split(" ").to_list()
         ratings = torch.from_numpy(rows["Rating"].to_numpy())
@@ -159,9 +159,6 @@ def generate_random_themes(batch_size, lichess_distribution=False):
 
             if state_of_game == "endgame":
                 position_themes.append(random.choice(endgames))
-            
-            # position_themes.append("sacrifice")  # TODO: remove when not interested in only sacrifices
-            # position_themes.append("doubleCheck")  # TODO: remove when not interested in only double checks
             
             if torch.rand(1) < 0.1:
                 position_themes.append(is_mate)

@@ -1,5 +1,78 @@
 \section{Introduction}
 \label{sec:introduction}
 
+% In recent years, large language models have grown hugely in popularity. After the release of GPT3 in 2020 \cite{GPT3}, language models have exponentially improved in benchmarks and real world use. Nowadays, agentic artificial intelligence (AI) has taken over the world. However, language models still struggle structured outputs and tight constraints. Traditionally, the idea of machine intelligence has intrigued people for decades \cite{turing1950computingmachineryandintelligence}. Creativity is often thought of as a measure of intelligence \cite{colton2012computationalcreativity}.
+% 
+% Simultaneously to autoregressive language models, diffusion models have been adapted to language modelling tasks. Specifically, masked diffusion models \cite{austin2021structureddenoisingdiffusionmodels} have been found to be comparable in performance to traditional autoregressive language models.
+% 
+% With language models, soft attributes, such as creativity, are considered \dots
+% 
+% Research goals:
+% \begin{itemize}
+%     \item Demonstrate the effectiveness of masked diffusion models for structured outputs in chess puzzle generation
+%     \item Demonstrate that puzzle generation can be conditioned on specific themes
+%     \item Demonstrate that the performance of masked diffusion models can be improved by reinforcement learning despite the difficult application
+%     \item Demonstrate that thinking about puzzle-adjacent things, such as the best move can improve puzzle generation.
+% \end{itemize}
+
+The idea of machine intelligence has intrigued people for decades \cite{turing1950computingmachineryandintelligence}. With the ideas of Alan Turing on the 20th century, people have started developing machines capable of doing indistinguishable things from human work. In recent years, this pursuit has culminated in the massive growth and popularity of Large Language Models (LLMs), which are already capable of passing the Turing test \cite{jones2026largelanguagemodelspassastandardthreepartyturingtest}. Following the release of GPT-3 in 2020 \cite{GPT3}, language models have shown exponential improvements across benchmarks and real-world applications. Today, the frontier of this technology has expanded even further, with agentic artificial intelligence (AI) systems beginning to automate complex workflows across various domains. In this work, we aim to push this boundary by improving the language model's ability to generate structured outputs in the field of chess puzzle generation.
+
+When measuring the success of these systems, creativity is often thought of as a key component of intelligence \cite{colton2012computationalcreativity}. Although, modern language models are capable of creative work, such as creating art, writing stories or making lyrics, they struggle with coming up with truly new and unique items \cite{wenger2026llmsarehomogenouslycreative}. Some limitations also remain in generating structured outputs. Research suggests that LLMs struggle especially with rare formats \cite{yang2026structeval} and that imposing formatting constraints can occasionally lead to a decreased reasoning performance \cite{yuan2026quantifyingtheimpactofstructuredoutputformatonllms}. These difficulties may cause problems in tasks that need the structure to be perfect, such as rendering html etc. In this study, chess puzzles serve as a playground, which requires both following the format of the problem exactly, while reasoning about the position.
+
+Simultaneously to the rise of autoregressive language models, diffusion models have been successfully adapted to discrete sequences and language modelling tasks. Lately, discrete diffusion models that transform random vocabulary tokens into text have become popular \cite{diffusiongemma}, as they offer some advantages compared to autoregressive models. Such models perform worse than autoregressive models thus far, however, another discrete diffusion paradigm, masked diffusion \cite{austin2021structureddenoisingdiffusionmodels, austin2021structureddenoisingdiffusionmodels} offers comparable performance. Unlike autoregressive generation, which builds sequences token-by-token from left to right, diffusion models iteratively refine the entire sequence globally. Masked diffusion models transform a sequence of unknown mask tokens into structured text by iteratively unmasking the token sequence. This non-directional generation process offers a promising alternative for tasks that demand following strict constraints. We select a masked diffusion model for our task.
+
+We use chess puzzle generation as a framework for improving the capabilities of language models. This domain requires the models to generate balance between creativity, reasoning and structure, as chess puzzles are generally very rare and delicate. Changing even one piece on the board may entirely change the puzzle to something completely different. We take inspiration from \citeauthor{feng2025generatingcreativechesspuzzles} and define puzzles as chess positions, which have a unique best solution, as well as are sufficiently counter-intuitive. With this definition, we observe that a notably low proportion of positions are puzzle even in the Lichess dataset. Around $1.29\%$ of the positions pass these conditions in the Lichess dataset. 
+
+To train our model for this task, we first employ supervised training on the Lichess puzzles dataset \cite{lichesspuzzledatabase}. Our model takes a list of themes as an input and is able to generate positions, which match the given theme. After supervised training, we observe that around $0.18\%$ of the positions generated by our model are valid puzzles. To improve this further, we employ reinforcement learning, as we are able to use the puzzle criteria as the reward function. We are able to improve our model to generate puzzles around $0.37\%$ of the time.
+
+We have four main contributions from this research. Firstly, we wish to demonstrate the effectiveness of masked diffusion models for generating structured outputs, specifically in the context of chess puzzle generation. Secondly, we demonstrate that puzzle generation can be conditioned on specific tactical themes. Thirdly, we demonstrate that the performance of masked diffusion models can be improved through reinforcement learning, despite the difficulty of the task. Lastly, we demonstrate that auxiliary tasks, such as best move generation, can further improve puzzle generation quality. With these contributions, we hope that they generalize to other natural language processing (NLP) tasks. As a result from the research, we also present example puzzles generated by our model. In figure \ref{fig:example_puzzles}, we see three different puzzles with unique themes. For each puzzle, the solution and the themes we used to condition the generation on are in the footnote. These puzzles are filtered and hand-picked so that the uniqueness and counter intuitiveness checks passed, and the actual themes present in the puzzle matched the requested ones.
 
 
+\begin{figure}[h]
+    \centering
+    % === PUZZLE A ===
+    \begin{subfigure}[t]{0.31\textwidth}
+        \centering
+        \chessboard[
+            setfen=3r2k1/ppp3pp/5rb1/3p4/3Np3/2Q3P1/PPP2qPK/R3R3 w - - 2 31,
+            showmover=false,
+            boardfontsize=14pt
+        ]
+        \caption{middlegame, advantage, trapped piece, short\footnotemark[1]}
+        \label{fig:puzzle1}
+    \end{subfigure}
+    \hfill
+    % === PUZZLE B ===
+    \begin{subfigure}[t]{0.31\textwidth}
+        \centering
+        \chessboard[
+            setfen=k6r/ppR1pqp1/N7/1P6/3p2nn/6Q1/P4p2/5R1K w - - 0 37, 
+            showmover=false,
+            boardfontsize=14pt
+        ]
+        \caption{middlegame, mate-in-3, mate, smothered mate, sacrifice, clearance, queenside attack, long\footnotemark[2]}
+        \label{fig:puzzle2}
+    \end{subfigure}
+    \hfill
+    % === PUZZLE C ===
+    \begin{subfigure}[t]{0.31\textwidth}
+        \centering
+        \chessboard[
+            setfen=5bk1/pp6/7p/4B3/5R2/r1P3P1/6KP/8 w - - 0 31, 
+            showmover=false,
+            boardfontsize=14pt
+        ]
+        \caption{endgame, advantage, attraction, sacrifice, fork, exposed king, long\footnotemark[3]}
+        \label{fig:puzzle3}
+    \end{subfigure}
+
+    \caption{Three example puzzles from our model. In the caption, we see the themes that are present in the puzzles. All puzzles are from whites perspective.}
+    \label{fig:example_puzzles}
+\end{figure}
+
+\footnotetext[1]{Principal variation: e1e2 f2e2 d4e2, conditioning themes: middlegame, advantage, short, trapped piece}
+\footnotetext[2]{Principal variation: c7c8 h8c8 g3b8 c8b8 a6c7, conditioning themes: long, middlegame, mate, sacrifice, attraction, mateIn3}
+\footnotetext[3]{Principal variation: f4f8 g8f8 e5d6 f8g7 d6a3, conditioning themes: long, advantage, endgame, fork, exposed king, sacrifice, attraction}
+
+
+The following outlines the structure of this thesis. In section \ref{sec:literature review}, we go through some important references in both chess and masked diffusion models. We describe how other people have previously generated chess puzzles, as well as present the technical algorithms we will use. In section \ref{sec:background}, we present the basic theory of masked diffusion models. Specifically, we describe how the forward and reverse processes are formulated and how one samples from a masked diffusion model. Additionally, we present the basics of reinforcement learning (RL) and the algorithms we use to eventually improve the model from a theoretical perspective. Lastly, we go through the basic chess terminology that is required to understand the premise of this work. In section \ref{sec:methodology}, we present the actual implementation of the tokenization procedure, supervised training, the RL reward function, and the RL implementation. Finally in section \ref{sec:results}, we describe how our model performs after supervised training and reinforcement learning. In the appendices, we give some additional detail for the algorithms, present additional results from the supervised and RL training phases and talk about the implementation details, such as the Stockfish version we use and where to obtain the source code of the work.

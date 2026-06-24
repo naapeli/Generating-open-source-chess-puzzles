@@ -16,3 +16,5 @@ Stockfish/
 
 # tensorboard logs
 src/runs/
+
+*.csv

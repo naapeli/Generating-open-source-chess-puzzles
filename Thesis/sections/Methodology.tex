@@ -32,11 +32,9 @@ We tokenize this fen string by padding the representation to a fixed length of 7
     $}
 \end{equation*}
 
-In total, we use a vocabulary of 52 tokens, where 13 tokens represent different pieces and an empty square and are only used for the board representation. The remaining token vocabulary is used to represent the side to move with two tokens, the castling rights with four tokens and one no castling token, the en passant target square with eight file, eight rank and one no en passant token. Finally, the counters are represented with ten tokens for the numbers and an additional padding token.
+In total, we use a vocabulary of 52 tokens, where 13 tokens represent different pieces and an empty square and are only used for the board representation. The remaining token vocabulary is used to represent the side to move with two tokens, the castling rights with four tokens and one no castling token, the en passant target square with eight file, eight rank and one no en passant token. Finally, the counters are represented with ten tokens for the numbers and an additional padding token. In addition to the fen, we concatenate the tokenized version of the best move to the token sequence. For this, we use the UCI notation \cite{UCIchessinterface} to represent the move, as discussed in section \ref{sec:chess terminology}. To represent the promotion, four last tokens are needed in the vocabulary. For the sequence length, we need five additional tokens to represent all possible moves, including promotions.
 
-In addition to the fen, we experiment with concatenating the best move to the fen tokens. For this, we use the uci notation to represent the move, as discussed in section \ref{sec:chess terminology}. However, we need five additional tokens to represent different promotions and a no promotion. 
-
-In addition to the 52 normal tokens, we have a mask token, which is used to represent an unknown token.
+In addition to the 52 standard tokens, the vocabulary includes a special mask token $[\mathtt{MASK}]$. As described in section \ref{sec:discrete diffusion}, this token is used throughout the diffusion process to represent an unknown state.
 
 
 \subsection{Defining chess puzzles}
@@ -49,61 +47,33 @@ To be able to generate chess puzzles, and train the model with reinforcement lea
 
 For a chess position to be a valid puzzle, as a prerequisite, it must be legal. However, it is nontrivial to define what it means for a chess position to be legal. One possible definition of legality in chess is that a position is considered legal, if it can be reached from the initial position by a sequence of legal moves. This condition, however, is infeasible to check for general positions, the number of possible continuations from the initial position grows exponentially (discussion in \cite{howtodetectanillegalposition}).
 
-Instead of the previously described approach, in this work, we settle for a more heuristic definition of legality. We consider a position to be legal if it passes the following conditions: exactly 1 king for both colors, less than or equal to 16 pieces and 8 pawns for both colors, no pawns on the first or the eight rank, possible castling rights, possible en passant square, moving player is not giving check, maximum two checking pieces and possible double check configuration. We denote the legality condition as $\mathbb{I}_{\text{legal}}(s)$. To check these conditions, we use the python-chess library \cite{python-chess}. Although, these conditions do not guarantee that a position is reachable from the initial position, they guarantee that there is nothing obviously wrong with the position. In addition, they are very efficient to check, as they do not require any search of the game tree.
+Instead of the previously described approach, in this work, we settle for a more heuristic definition of legality. We consider a position to be legal if it passes the following conditions: exactly one king for both colors, less than or equal to 16 pieces of which a maximum of 8 are pawns for both colors, no pawns on the first or the eight rank, possible castling rights, possible en passant square, moving player is not giving check, maximum two checking pieces and possible double check configuration. We denote the legality condition as $\mathbb{I}_{\text{legal}}(s)$. To check these conditions, we use the python-chess library \cite{python-chess}. Although, these conditions do not guarantee that a position is reachable from the initial position, they guarantee that there is nothing obviously wrong with the position. In addition, they are very efficient to check, as they do not require any search of the game tree.
 
 \subsubsection{Uniqueness}
 \label{sec:uniqueness}
 
-A second condition that a puzzle must satisfy is that it must have a unique solution. Following the work of \citeauthor{feng2025generatingcreativechesspuzzles}, inspired by the Lichess puzzler project \cite{lichesspuzzler}, we check the uniqueness by recursively comparing the best and the second best moves found by Stockfish on the principal variation. Although, the real uniqueness check has more details as described in algorithm \ref{alg:uniqueness check}, the general idea is as follows: if the winning chances $w(a | s)$ from \eqref{eq:prob_win} of the player to move after the best move are significantly higher than the winning chances of the player to move after the second best move, we consider the position to have a unique solution. The uniqueness condition is formally denoted by $\mathbb{I}_{\text{unique}}(s)$.
-
+A second condition that a puzzle must satisfy is that it must have a unique solution. Following the work of \citeauthor{feng2025generatingcreativechesspuzzles}, inspired by the Lichess puzzler project \cite{lichesspuzzler}, we check the uniqueness by recursively comparing the best and the second-best moves found by Stockfish on the principal variation. Although, the real uniqueness check has more details as described in algorithm \ref{alg:uniqueness check}, the general idea is as follows: if the winning chances $w(a | s)$ from \eqref{eq:prob_win} of the player to move after the best move are significantly higher than the winning chances of the player to move after the second-best move, we consider the position to have a unique solution. The uniqueness condition is formally denoted by $\mathbb{I}_{\text{unique}}(s)$.
 
 \begin{algorithm}[H]
     \caption{Uniqueness metric}
     \label{alg:uniqueness check}
     \begin{algorithmic}
-        \algrenewcommand{\algorithmiccomment}[1]{\textcolor{gray}{// #1}}
-        \State \textcolor{red}{Maybe make this more like natural language and less like code? Also, maybe include less detail.}
-        \Require Position $s$, Stockfish engine, Threshold $\tau_{uni}$
-        \State $side\leftarrow \text{sideToMove}(s)$
-        \State $PV \leftarrow [\;]$
-        \State $isMate \leftarrow \text{engine.analyze}(s).a_{\text{best}}.\text{isMateScore}$
+        \Require Initial position $s_0$, Engine, Threshold $\tau_{uni}$
+        \State $s \leftarrow s_0$
         \While{$s$ is not terminal}
-            \State $a_{\text{best}}, a_{\text{second}} \leftarrow \text{engine.analyze}(s)$
-            \If{$\text{sideToMove}(s) = side$}
-                \State $unique \leftarrow w(a_{\text{best}} | s) - w(a_{\text{second}} | s) > \tau_{uni}$
-                \If{$a_{\text{best}} \text{ is mate-in-1 and } w(a_{\text{bestNonMate}} | s) < 0.6$}
-                    % \State \Comment{If multiple mates in one are possible, $a_{\text{best}}$ can be accepted if the best non-mating move is not too good.}
-                    \State $unique \leftarrow \text{True}$ 
-                \EndIf
-                \If{\textbf{not} $unique$}
-                    \If{$isMate$}
-                        \State \textbf{return} False, $\emptyset$
-                    \Else
-                        \State \textbf{break}
-                    \EndIf
-                \EndIf
-                \If{\textbf{not} $isMate$ \textbf{and} $\text{eval}(a_{\text{best}} | s) < 200$}
-                    \State \textbf{return} False, $\emptyset$ \Comment{The player must be clearly winning after best move}
+            \State $a_{\text{best}}, a_{\text{second}} \leftarrow \text{Engine.analyze}(s)$
+            \If{$\text{sideToMove}(s) = \text{sideToMove}(s_0)$}
+                \If{$w(a_{\text{best}} | s) - w(a_{\text{second}} | s) \leq \tau_{uni}$}
+                    \State If $s = s_0$, return False, otherwise break
                 \EndIf
             \EndIf
-            \State $PV\text{.append}(a_{\text{best}})$
             \State $s \leftarrow \text{applyMove}(s, a_{\text{best}})$
         \EndWhile
-        \If{\textbf{not} $isMate$}
-            \While{$|PV| \pmod 2 = 0$}
-                \State $PV \leftarrow PV[:-1]$
-            \EndWhile
-        \EndIf
-        % \State Remove moves from the $PV$ so that the $side$ has the last move.
-        \If{$|PV| > 1$}
-            \State \textbf{return} True, $PV$
-        \Else
-            \State \textbf{return} False, $\emptyset$
-        \EndIf
+        \State \textbf{return} True
     \end{algorithmic}
 \end{algorithm}
 
-
+While Algorithm \ref{alg:uniqueness check} illustrates the core concept of the uniqueness metric, our practical implementation incorporates several additional constraints to guarantee uniqueness. During the recursive evaluation, we record the principal variation of $s_0$ and subsequently truncate it to ensure that the sequence concludes on the original player's turn with a non-forced move. Furthermore, we explicitly reject positions that offer only one initial legal move, result in trivial one-move puzzles, or lead to a repetition of moves. We also require the original player to maintain a clear advantage of $200$ centipawns throughout the variation. Finally, in forced checkmates, we relax the strict uniqueness requirement: if multiple mates-in-one are available, the sequence is still considered unique provided that the evaluation of the best move that is not a mate-in-one is sufficiently poor. The link to the implementation can be found in Appendix \ref{sec:implementation details}.
 
 \subsubsection{Counter-intuitiveness}
 \label{sec:counter-intuitiveness}
@@ -111,10 +81,15 @@ A second condition that a puzzle must satisfy is that it must have a unique solu
 Although, legality and uniqueness are necessary conditions for puzzles, they are not sufficient. Many trivial positions, which can not be considered puzzles, satisfy the legality and uniqueness criteria. For instance, a checkmate in a material deficit or a recapture of a hanging piece, which was traded on the previous move both satisfy these conditions, but are clearly too easy to be considered puzzles. We address this in the same manner as \citeauthor{feng2025generatingcreativechesspuzzles} and introduce a counter-intuitiveness metric, which quantifies the difficulty of a puzzle. We use the following definition:
 
 \begin{equation}
+    \left\{
+        \begin{aligned}
+            r_{\text{counter-intuitive}}(s) &= 0.8 \cdot \frac{d_{\text{cp}} - 1}{50} - 0.1 \cdot \frac{v_{\text{capturedMaterial}}}{9}, \\
+            \mathbb{I}_{\text{counter-intuitive}}(s) &= r_{\text{counter-intuitive}}(s) > \tau_{\text{cnt}} ,
+        \end{aligned}
+    \right.
     \label{eq:counter intuitive}
-    \mathbb{I}_{\text{counter-intuitive}}(s) = 0.8 \cdot \frac{d_{\text{cp}} - 1}{d_{\text{max}}} - 0.1 \cdot \frac{v_{\text{capturedMaterial}}}{9} > \tau_{\text{cnt}} ,
 \end{equation}
-where $d_{\text{cp}}$ is the critical depth of the Stockfish's search, i.e. the lowest depth, where Stockfish first finds the eventual best move computed with the maximum search depth $d_{\text{max}}$. $v_{\text{capturedMaterial}}$ is the value of the material captured on the best move. The material values of the pieces are described in section \ref{sec:chess terminology}.
+where $d_{\text{cp}}$ is the critical depth of the Stockfish's search, i.e. the lowest depth, where Stockfish first finds the eventual best move computed with the maximum search depth, which has an upper limit of 50. $v_{\text{capturedMaterial}}$ is the value of the material captured on the best move. The material values of the pieces are described in section \ref{sec:chess terminology}.
 
 Intuitively, the counter-intuitiveness metric is designed to penalize obvious moves while rewarding moves that require deeper thought. The material penalty ensures that moves capturing high-value pieces, such as taking a queen, receive lower scores, as they are typically the first candidate moves a human player would consider. On the other hand, a high critical depth indicates that the engine had to search extensively before settling on the best move, which often correlates with "quiet" positional moves or sacrifices that are not immediately obvious. Since the critical depth carries a significantly larger weight than the material penalty, it is the primary driver of the metric.
 
@@ -137,14 +112,18 @@ We consider a legal position to be a puzzle if it satisfies both the uniqueness 
 
 % Talk about KL divergence and piece count penalty.
 
-We believe that educational value of a puzzle is strongly tied to its realism. Although, a puzzle that will never appear in a regular game could have an incredible solution, we think that the puzzle will offer more educational value to the user if the position could have appeared in a regular game. Therefore, we use a similar methods as \citeauthor{feng2025generatingcreativechesspuzzles} to prevent the model from generating unrealistic positions.
+It can be argued that the educational value of a puzzle is strongly tied to its realism. Although, a puzzle that will never appear in a regular game could have an incredible solution, we think that the puzzle will offer more educational value to the user if the position could have appeared in a regular game. Therefore, we use similar methods as \citeauthor{feng2025generatingcreativechesspuzzles} to prevent the model from generating unrealistic positions.
 
-Firstly, we apply a KL-divergence based penalty to discourage the model from generating positions with piece counts that deviate significantly from those in the training data. We discuss the computation of the KL penalty in section \ref{sec:kldivergence}. Although, \citeauthor{feng2025generatingcreativechesspuzzles} use the kl penalty as a part of the reward function, we subtract it from the PPO loss function as done by \citeauthor{ou2025principledrldiffusionllms}. We do this as it is more stable than to add it to the reward function.
+Firstly, we apply a KL-divergence based penalty to discourage the model from generating positions with piece counts that deviate significantly from those in the training data. We discuss the computation of the KL penalty in section \ref{sec:kldivergence and entropy}. Although, \citeauthor{feng2025generatingcreativechesspuzzles} use the KL penalty as a part of the reward function, we subtract it from the PPO loss function \eqref{eq:PPO loss} as done by \citeauthor{ou2025principledrldiffusionllms}. We do this as it is more stable than to add it to the reward function.
 
 Secondly, we use piece count thresholds to prevent the model from increasing the piece counts above unrealistic levels. Although, it is possible to promote multiple pawns in one game, this is quite rare and hence we consider it unrealistic. For a position to pass the piece count check, the number of each piece must be at most the number of that same piece at the beginning of the game. The piece counts are described in section \ref{sec:chess terminology}. We denote the piece count condition with $\mathbb{I}_{\text{piece counts}}(s)$.
 
+\paragraph{Theme matching}
+\label{sec:theme matching}
 
-\textcolor{red}{Talk about PPO-ptx from instructgpt if we end up using it. (Also talk about adding good puzzles to the batch with random trajectories.)}
+Since we condition the puzzle generation on specific themes, we integrate a validation step into the reward function to ensure that the generated puzzles accurately reflect the requested themes. To formulate this check, we must first identify the themes present in any given generated position. For this purpose, we leverage the Lichess puzzler pipeline \cite{lichesspuzzler}, which provides robust detection for the most important themes used in our work. This pipeline implements checks for a variety of puzzle characteristics and tactics, including, but not limited to puzzle length, checkmate type, and specific motifs such as pins and forks. Computing these themes with the Lichess puzzler requires the position to possess a unique solution, as identifying certain tactical motifs, such as a fork, necessitates iterating over the principal variation. The full list of supported themes is provided in Appendix \ref{sec:theme computation}.
+
+To condition the generation on specific themes, we penalize the model during reinforcement learning if the requested themes are not met. Although the actual procedure is slightly more complicated, we define a puzzle to match the requested target themes if $\mathcal{T}_{\text{req}} \subseteq \mathcal{T}_{\text{gen}}$, where $\mathcal{T}_{\text{req}}$ is the set of requested themes and $\mathcal{T}_{\text{gen}}$ is the set of themes computed by the Lichess puzzler for the generated puzzle. We define the exact criterion in Appendix \ref{sec:theme computation}. This condition is represented by the indicator function $\mathbb{I}_{\text{theme}}(s)$, which is incorporated into our final reward function.
 
 
 \paragraph{Diversity-filtering}
@@ -179,31 +158,22 @@ The Levenshtein distance is a distance metric between two strings \cite{li2007no
     \right.
     \label{eq:distance metrics}
 \end{equation}
-where $\text{fen}(s)$ denotes the padded fen of position $s$ without the half and full move counters, as described in section \ref{sec:tokenization}. $\text{pv}(s)$ denotes the principal variation of position $s$. The PV distance is normalized by the maximum number of moves in a principal variation between the two strings. In reality, we truncate the principal variations to 1 move, hence the denominator is always 1.
+where $\text{fen}(s)$ denotes the padded fen of position $s$ without the half and full move counters, as described in section \ref{sec:tokenization}. $\text{pv}(s)$ denotes the principal variation of position $s$ and is described in section \ref{sec:chess terminology}. The PV distance is normalized by the maximum number of moves in a principal variation between the two strings. In reality, we truncate the principal variations to one move during RL, whereas, when evaluating our models, we truncate to 6 moves.
 
-We use these distance metrics in two ways for diversity-filtering. Firstly, we compare each position generated during RL to all other generated positions within the same batch. If the distances $d_{\text{fen}}(s, s')$ or $d_{\text{pv}}(s, s')$ between two positions $s$ and $s'$ are less than the threshold values $\tau_{\text{fen}}$ or $\tau_{\text{pv}}$, we zero out the reward of both positions. We denote this with the indicator functions $\mathbb{I}_{\text{intra}, \text{fen}}(s) = \prod_{s'\in \mathcal{B}, s' \neq s}\mathbb{I}[d_{\text{fen}}(s, s') \geq \tau_{\text{fen}}]$ and $\mathbb{I}_{\text{intra}, \text{pv}}(s) = \prod_{s'\in \mathcal{B}, s' \neq s}\mathbb{I}[d_{\text{pv}}(s, s') \geq \tau_{\text{pv}}]$, where $\mathcal{B}$ represents the current batch of positions. Similarly, we compare the generated positions to the preceeding batches and zero out the rewards of positions which are too similar to old positions. This is implemented with a replay buffer, which is described in more detail in section \ref{sec:Reinforcement learning algorithm}. We, however, do not compare the principal variation distances between the new and old positions, as the check is quite restrictive and we do not see model collapse without it. This is denoted by $\mathbb{I}_{\text{inter}, \text{fen}}(s) = \prod_{s'\in \mathcal{D}_{sub}}\mathbb{I}[d_{\text{fen}}(s, s') \geq \tau_{\text{fen}}]$, where $\mathcal{D}$ represents the replay buffer and $\mathcal{D}_{sub}$ a subsample randomly sampled from it.
+We employ these distance metrics in two distinct diversity-filtering mechanisms. For intra-batch diversity, each position $s$ generated during an RL step is compared against all other positions in the same batch $\mathcal{B}$. We first identify the position $s^* = \operatorname*{arg\,min}_{s'\in \mathcal{B}, s' \neq s} d_{\text{fen}}(s, s')$ that minimizes the board distance to $s$. The reward for $s$ is zeroed out unless both its board and PV distances to $s^*$ exceed their respective thresholds, $\tau_{\text{fen}}$ and $\tau_{\text{pv}}$. This intra-batch filtering is formally defined by the indicator function $\mathbb{I}_{\text{intra}}(s) = \mathbb{I}[d_{\text{fen}}(s, s^*) \geq \tau_{\text{fen}}] \cdot \mathbb{I}[d_{\text{pv}}(s, s^*) \geq \tau_{\text{pv}}]$. Similarly, to prevent the model from collapsing to previously discovered solutions, we apply inter-batch diversity filtering using a replay buffer $\mathcal{D}$, which is described in more detail in section \ref{sec:Reinforcement learning algorithm}. We sample a random subset $\mathcal{D}_{\text{sub}}$ from the buffer and find the closest position $s^*_{\text{inter}} = \operatorname*{arg\,min}_{s'\in \mathcal{D}_{\text{sub}}} d_{\text{fen}}(s, s')$. The reward for $s$ is zeroed out if it is too similar to $s^*_{\text{inter}}$ in terms of either the board or PV distance. This inter-batch diversity constraint is represented by the indicator function $\mathbb{I}_{\text{inter}}(s) = \mathbb{I}[d_{\text{fen}}(s, s^*_{\text{inter}}) \geq \tau_{\text{fen}}] \cdot \mathbb{I}[d_{\text{pv}}(s, s^*_{\text{inter}}) \geq \tau_{\text{pv}}]$.
 
-In their work, \citeauthor{feng2025generatingcreativechesspuzzles} find significant model collapse problems even with intra- and inter-batch diversity filtering with Levenshtein distances. To remedy these problems, they apply entropy filtering and an entropy penalty. Although, entropy collapse problems are not as prevalent in our setup, as we use the masked diffusion model, we still experiment with entropy filtering and an entropy penalty. However, we found that by approximating the entropy of the generations using the evidence lower bound, and including it in the reward, the model diverges and starts to generate illegal positions. We estimated the average token-level entropy as follows:
+In their work, \citeauthor{feng2025generatingcreativechesspuzzles} find significant model collapse problems even with intra- and inter-batch diversity filtering with Levenshtein distances. To remedy these problems, they apply entropy filtering and an entropy penalty. Although entropy collapse problems are not as prevalent in our setup, as we use the masked diffusion model, we still experiment with entropy filtering and an entropy penalty. For each position, we give a small entropy bonus described in section \ref{sec:DDPO}. Additionally, we zero out the reward of positions, which have a lower entropy than the threshold $\tau_{\text{ent}}$. This is denoted as $\mathbb{I}_{\text{entropy}}(s) = \sum_{i=1}^{T} H(\pi_\theta \mid s_i) \ge \tau_{\text{ent}}$. We describe the entropy computation procedure in more detail in section \ref{sec:kldivergence and entropy}. In addition, we use the step-wise entropy to monitor the training process. We found the metric to be useful as if the model collapsed to one position, the entropy dropped close to zero. If the entropy surged above 1, the number of piece-count violations or illegal positions started to increase.
 
-\begin{equation*}
-    H(\pi_\theta) = -\frac{1}{L}\mathbb{E}_{y \sim \pi_\theta(\cdot | x)}\left[\log \pi_\theta(y | x) \right] \approx -\frac{1}{L}\mathbb{E}_{y \sim \pi_\theta(\cdot | x)}\left[\mathcal{L}_\theta(y | x) \right]
-\end{equation*}
-Although, we do not use entropy filtering or a penalty in the final reward or loss functions, we nevertheless monitor the average token-level entropy as a metric to determine if the model collapses to just a few positions. We found the metric to be useful as if the model collapsed to one position, the entropy dropped close to zero. If the entropy surged above 1, the number of piece-count violations or illegal positions started to increase.
-
-Using this diversity filtering setup, we can finally present the reward function we use for reinforcement learning. Mostly, we follow the work of \citeauthor{feng2025generatingcreativechesspuzzles}, however, with slight modifications to the diversity filtering as described previously. The final reward function we use is given by the following equation:
-\textcolor{red}{Make the equation number formatting better}
+Using this diversity filtering setup, we can finally present the reward function we use for reinforcement learning. Mostly, we follow the work of \citeauthor{feng2025generatingcreativechesspuzzles}, however, with slight modifications as described previously. The final reward function we use is given by the following equation:
 \begin{equation}
     R(s) = \begin{cases}
         -2 & \text{if } \quad\neg\mathbb{I}_{\text{legal}}(s) \\
-        1 & \text{if } \quad\mathbb{I}_{\text{legal}}(s) \cdot \mathbb{I}_{\text{diversity}}(s) \cdot \mathbb{I}_{\text{piece counts}}(s) \cdot \mathbb{I}_{\text{unique}}(s) \cdot \mathbb{I}_{\text{counter-intuitive}}(s)\\
+        \max(10\cdot r_{\text{counter-intuitive}}(s), 0) & \text{if } \quad\mathbb{I}_{\text{legal}}(s) \cdot \mathbb{I}_{\text{filter}}(s) \cdot \mathbb{I}_{\text{unique}}(s)\\
         0 & \text{otherwise}
     \end{cases}
     \label{eq:reward function}
 \end{equation}
-where $\mathbb{I}_{\text{diversity}}(s) = \mathbb{I}_{\text{intra}, \text{fen}}(s) \cdot \mathbb{I}_{\text{intra}, \text{pv}}(s) \cdot \mathbb{I}_{\text{inter}, \text{fen}}(s)$. Although, this reward function is very sparse, we found additive reward structures to yield worse results than the multiplicative structure we ultimately chose. Additionally, we found that incorporating a small positive reward for positions with unique but not counter-intuitive solutions had little to no effect.
-
-
-
+where $\mathbb{I}_{\text{filter}}(s) = \mathbb{I}_{\text{diversity}}(s) \cdot \mathbb{I}_{\text{piece counts}}(s) \cdot \mathbb{I}_{\text{theme}}(s)$ and $\mathbb{I}_{\text{diversity}}(s) = \mathbb{I}_{\text{entropy}}(s) \cdot \mathbb{I}_{\text{intra}, \text{fen}}(s) \cdot \mathbb{I}_{\text{intra}, \text{pv}}(s) \cdot \mathbb{I}_{\text{inter}, \text{fen}}(s) \cdot \mathbb{I}_{\text{inter}, \text{pv}}(s)$. Although, this reward function is zero quite often, we found less sparse reward functions to yield worse results than the multiplicative structure we ultimately chose.
 
 
 \subsubsection{Model evaluation criteria}
@@ -224,9 +194,7 @@ To quantify novelty, we measure how much the generated puzzles differ from the t
 \end{align*}
 where $A \subseteq \mathcal{A}$ is a subsample of the generated positions, $B \subseteq \mathcal{B}$ is a subsample of the Lichess dataset, and $d(\cdot, \cdot)$ represents either $d_{\mathrm{board}}(\cdot, \cdot)$ or $d_{\mathrm{pv}}(\cdot, \cdot)$. Ultimately, we consider the best-performing models to be those that achieve the highest puzzle rate, conditioned on maintaining sufficiently large Lichess and self-distances. This ensures that the models successfully generate high-quality puzzles without simply memorizing the training data or collapsing into a limited set of identical positions.
 
-In addition to the previous metrics, we measure the success of the conditional generation by verifying whether the requested themes are present in the generated positions. We once again take inspiration from the Lichess puzzler project \cite{lichesspuzzler}, which implements many different checks for different themes. For example, these themes encompass tags for puzzle length, checkmate length, checkmate type, and specific themes, such as pins or forks. We describe the full list of themes we check for in appendix \ref{sec:theme computation}.
-
-\textcolor{red}{If we end up talking about the models with the best move generation, talk about cp loss here}
+To evaluate the success of the conditional generation, we compute the \textit{theme match rate}, which measures the proportion of generated puzzles that successfully satisfy the requested themes according to the matching condition defined in section \ref{sec:theme matching}. By monitoring the theme match rate alongside the puzzle rate, we can quantify how well the model adheres to the conditioning constraints without compromising the overall quality of the puzzles.
 
 
 \subsection{Supervised training}
@@ -236,7 +204,7 @@ We use supervised pretraining to initialize the masked diffusion model before in
 
 For the pretraining phase, we utilize the Lichess puzzle dataset \cite{lichesspuzzledatabase}. This dataset is derived from the open Lichess database \cite{lichessopendatabase}, which contains games played on the Lichess platform, and is processed using the open-source Lichess puzzler pipeline \cite{lichesspuzzler}. Each data point includes the FEN string of the starting position, the corresponding principal variation, and metadata such as themes and difficulty ratings. While the dataset also contains contextual information, such as the opening classification and the original game ID, we discard these features in our work. In total, our dataset comprises 5,600,086 unique positions, from which we randomly reserve 50,000 for the test set and allocate the remainder for training. Notably, the FEN provided in the dataset does not represent the starting position of the puzzle itself. Instead, it describes the position immediately prior to the first move of the principal variation, which is played by the opponent. Therefore, to obtain the true starting state of the puzzle, we apply the first move of the PV to the initial FEN and remove this move from the principal variation.
 
-For the masked diffusion, we employ a transformer-based denoising network inspired by \citeauthor{ruoss2024amortizedplanninglargescaletransformers} and \citeauthor{feng2025generatingcreativechesspuzzles}. The network begins with an embedding layer that maps the tokenized sequence and a fixed positional embedding into a $1,024$-dimensional space. We also apply linear projections to map the multi-hot encoded themes and difficulty ratings into the same embedding space. This input representation is processed by 16 attention blocks, followed by a linear classification head. Each attention block utilizes pre-normalization with layer normalization \cite{touvron2023llamaopenefficientfoundation, touvron2023llama2openfoundation}, an 8-head self-attention mechanism, and a SwiGLU activation function \cite{shazeer2020gluvariantsimprovetransformer, touvron2023llamaopenefficientfoundation, touvron2023llama2openfoundation} with a hidden dimension of $\frac{8d}{3}$, where $d = 1,024$ is the model dimension. Conditioning on metadata is achieved via an 8-head cross-attention mechanism. No causal masking is applied in the self-attention blocks because the masked diffusion process naturally handles the decomposition of the joint probability distribution. The resulting model contains $268,892,160$ trainable parameters. \textcolor{red}{Talk about the token sequence (fen tokens + move tokens concatenated).}
+For the masked diffusion, we employ a transformer-based denoising network inspired by \citeauthor{ruoss2024amortizedplanninglargescaletransformers} and \citeauthor{feng2025generatingcreativechesspuzzles}. The network begins with an embedding layer that maps the tokenized sequence and a fixed positional embedding into a 1,024-dimensional space. We also apply linear projections to map the multi-hot encoded themes and difficulty ratings into the same embedding space. This input representation is processed by 16 attention blocks, followed by a linear classification head. Each attention block utilizes pre-normalization with layer normalization \cite{touvron2023llamaopenefficientfoundation, touvron2023llama2openfoundation}, an 8-head self-attention mechanism, and a SwiGLU activation function \cite{shazeer2020gluvariantsimprovetransformer, touvron2023llamaopenefficientfoundation, touvron2023llama2openfoundation} with a hidden dimension of $\frac{8d}{3}$, where $d = $1,024 is the model dimension. Conditioning on metadata is achieved via an 8-head cross-attention mechanism. No causal masking is applied in the self-attention blocks because the masked diffusion process naturally handles the decomposition of the joint probability distribution. The resulting model contains 268,892,160 trainable parameters.
 
 The pretraining of the masked diffusion model follows a standard supervised learning setup. At each training step, we sample a batch of target puzzles, alongside their corresponding themes and difficulty ratings, from the dataset $D$. For each sample in the batch, a timestep $t$ is drawn uniformly from the interval $[0, 1]$. We then corrupt the tokenized puzzles by sampling from the forward diffusion process. Finally, we compute the negative evidence lower bound using \eqref{eq:supervised ELBO} and its gradient with respect to the model parameters, and update the weights using the AdamW optimizer. We repeat this training loop for a total of 2,000,000 steps. The complete procedure is detailed in Algorithm \ref{alg:supervised training}.
 
@@ -260,7 +228,7 @@ The pretraining of the masked diffusion model follows a standard supervised lear
     \end{algorithmic}
 \end{algorithm}
 
-To train the model, we configure the supervised learning process with a set of specific hyperparameters. We utilize a batch size of $1,024$ and a weight decay coefficient of $10^{-4}$. The optimization is performed using the AdamW optimizer with a learning rate schedule that features a linear warmup for the first $1,000$ steps from $10^{-6}$ to $10^{-4}$, followed by a cosine annealing schedule decaying to a minimum learning rate of $10^{-5}$ over the remaining steps \cite{loshchilov2017sgdr}. To stabilize the updates, we clip the $l_2$ gradient norm of the model parameters to a maximum threshold of $1.0$. For the noise schedule, we adopt a linear masking schedule. The training is executed on a cluster of eight Nvidia H200 GPUs.
+To train the model, we configure the supervised learning process with a set of specific hyperparameters. We utilize a batch size of 1,024 and a weight decay coefficient of $10^{-4}$. The optimization is performed using the AdamW optimizer with a learning rate schedule that features a linear warmup for the first 1,000 steps from $10^{-6}$ to $10^{-4}$, followed by a cosine annealing schedule decaying to a minimum learning rate of $10^{-5}$ over the remaining steps \cite{loshchilov2017sgdr}. To stabilize the updates, we clip the $l_2$ gradient norm of the model parameters to a maximum threshold of $1.0$. For the noise schedule, we adopt a linear masking schedule. The training is executed on a cluster of eight Nvidia H200 GPUs.
 
 
 
@@ -268,21 +236,20 @@ To train the model, we configure the supervised learning process with a set of s
 \subsection{Reinforcement learning algorithm}
 \label{sec:Reinforcement learning algorithm}
 
-\textcolor{red}{Modify this a lot if we end up using DDPO.}
 
+A primary objective of this work is to enhance the creativity and qualitative attributes of the masked diffusion model through reinforcement learning. To achieve this, we employ the DDPO algorithm, which is specifically designed for diffusion models. While the theoretical formulation of the DDPO objective was introduced in Section \ref{sec:DDPO}, here we detail the practical reinforcement learning setup tailored to our task. Because the reward function is quite sparse, meaning that the model gets nonzero rewards quite rarely, we must carefully balance the trade-off between policy collapse and over-regularization.
 
-A primary objective of this work is to enhance the creativity and qualitative attributes of the masked diffusion model through reinforcement learning. To achieve this, we employ the ESPO algorithm, which is specifically designed for diffusion large language models (dLLM). While the theoretical formulation of the ESPO objective was introduced in Section \ref{sec:ESPO}, here we detail the practical reinforcement learning setup tailored to our task. Because the reward function is exceptionally sparse, and chess syntax is rigid, we must carefully balance the trade-off between policy collapse and over-regularization.
+% \textcolor{red}{If we end up using PTX, leave this here}
+% To ensure the generated positions remain realistic and novel, we rely on the reward shaping techniques discussed previously, including diversity-filtering and piece-count penalties. Furthermore, as described in Section \ref{sec:kldivergence and entropy}, we incorporate a KL divergence penalty within the DDPO objective to prevent the model from drifting too far from the Lichess-trained supervised policy. However, we found that relying solely on these constraints sometimes led to training instability. To improve the process, we take inspiration from \citeauthor{feng2025generatingcreativechesspuzzles} and introduce off-policy data from a replay buffer. Unlike their approach, which directly concatenates buffer samples into the active batch, we compute an additional supervised loss (the negative ELBO from \eqref{eq:RL ELBO}) on the buffered data and add it to our objective. We believe this is more principled as PPO is an on-policy algorithm. This approach mimics the Pre-Training Extension (PTX) loss utilized in InstructGPT, which combines pretraining and PPO gradients to mitigate catastrophic forgetting \cite{ouyang2022traininglanguagemodelstofollowinstructionswithhumanfeedback}. By introducing this supervised penalty, we are able to lower the KL divergence coefficient, granting the model more freedom to explore creative solutions without sacrificing training stability.
 
-To ensure the generated positions remain realistic and novel, we rely on the reward shaping techniques discussed previously, including diversity-filtering and piece-count penalties. Furthermore, as described in Section \ref{sec:kldivergence}, we incorporate a KL divergence penalty within the ESPO objective to prevent the model from drifting too far from the Lichess-trained supervised policy. However, we found that relying solely on these constraints often led to training instability or failed learning entirely. To improve the process, we take inspiration from \citeauthor{feng2025generatingcreativechesspuzzles} and introduce off-policy data from a replay buffer. Unlike their approach, which directly concatenates buffer samples into the active batch, we compute an additional supervised loss (the negative ELBO from \eqref{eq:RL ELBO}) on the buffered data and add it to our objective. We believe this is more principled as PPO is an on-policy algorithm. This approach mimics the Pre-Training Extension (PTX) loss utilized in InstructGPT models, which combines pretraining and PPO gradients to mitigate catastrophic forgetting \cite{ouyang2022traininglanguagemodelstofollowinstructionswithhumanfeedback}. By introducing this supervised penalty, we are able to lower the KL divergence coefficient, granting the model more freedom to explore creative solutions without sacrificing training stability.
-
-Modern actor-critic algorithms traditionally rely on a separate critic network to estimate the advantage function. However, for language modelling, as described in section \ref{sec:ESPO} people usually employ Monte Carlo value estimates instead. Therefore, as proposed by \citeauthor{kool2019unbiasedbaseline}, to compute the advantages $\hat{A}^{(i)}$, we employ the following unbiased Monte Carlo estimator:
+Modern actor-critic algorithms traditionally rely on a separate critic network to estimate the advantage function. However, for language modelling, as described in section \ref{sec:DDPO} people usually employ Monte Carlo value estimates instead. Therefore, as proposed by \citeauthor{kool2019unbiasedbaseline}, to compute the advantages $\hat{A}^{(i)}$, we employ the following unbiased Monte Carlo estimator:
 \begin{equation}
     \hat{A}^{(i)} = R(x, y^{(i)}) - \frac{1}{G - 1}\sum_{j \neq i}R(x, y^{(j)}),
     \label{eq:advantage estimation}
 \end{equation}
-where $G$ is the group size and $R$ the reward function \cite{kool2019unbiasedbaseline}. By evaluating a generation $y^{(i)}$ against the average reward of the remaining $G - 1$ samples in the batch, the estimator naturally centers the advantages with an unbiased baseline. Consequently, the model is rewarded for generations that outperform the batch average and penalized for those that perform worse.
+where $G$ is the group size and $R$ the reward function \cite{kool2019unbiasedbaseline}. By evaluating a generation $y^{(i)}$ against the average reward of the remaining $G - 1$ samples in the batch, the estimator naturally centers the advantages with an unbiased baseline. To further stabilize the gradients, we standardize these values by dividing the mean-centered advantages by the standard deviation of the rewards within the group. Consequently, the model is rewarded for generations that outperform the batch average and penalized for those that perform worse, while the standardization ensures the scale of the advantages remains consistent across varying reward distributions.
 
-Our complete reinforcement learning procedure iterates over a predetermined number of training steps. In each step, we sample a batch of $n_{\text{batch}}$ themes and difficulty ratings $x$, and generate corresponding positions $y$ using algorithm \ref{alg:ancestral sampling}. We then compute the rewards $r$ for these generations using \eqref{eq:reward function}, and evaluate the old and reference ELBOs, $\mathcal{L}_{\text{old}}(y | x)$ and $\mathcal{L}_{\text{ref}}(y | x)$. Simultaneously, we sample $n_{\text{buffer}}$ positions $(x', y')$ from the replay buffer to compute the reference SFT loss $\mathcal{L}_{\theta}(y' | x')$. Over $\mu$ inner optimization iterations, we compute the ESPO objective $L(\theta)$ via \eqref{eq:espo objective}. Within this objective, the KL divergence penalty \eqref{eq:k2 kl divergence} is evaluated over the generated samples. We then update the model parameters by taking a gradient step in the direction of $-\nabla_{\theta} L(\theta) + \gamma \nabla_{\theta} \mathcal{L}_{\theta}(y' | x')$. Finally, we record the relevant metrics for the current step. The full procedure is formalized in Algorithm \ref{alg:Reinforcement learning algorithm}.
+Our complete reinforcement learning procedure iterates over a predetermined number of training steps. In each step, we sample a batch of $n_{\text{batch}}$ themes and difficulty ratings $x$, and generate corresponding positions $y$ using algorithm \ref{alg:ancestral sampling}. On each step of sampling, we store the log probabilities and tokens that were sampled. We then compute the rewards $r$ for these generations using \eqref{eq:reward function}. Over $\mu$ inner optimization iterations, we compute the log probabilities of steps with the reference and the up-to-date models. Within these values, the KL divergence penalty \eqref{eq:kl estimate}, the entropy bonus \eqref{eq:entropy bonus}, and the DDPO loss \eqref{eq:DDPO loss} are evaluated over the generated samples. We then update the model parameters using the AdamW optimizer. Finally, we record the relevant metrics for the current step. The full procedure is formalized in Algorithm \ref{alg:Reinforcement learning algorithm}.
 
 
 \begin{algorithm}[H]
@@ -292,20 +259,19 @@ Our complete reinforcement learning procedure iterates over a predetermined numb
         \algrenewcommand{\algorithmiccomment}[1]{\textcolor{gray}{// #1}}
         \For{$i = 1 \dots n_{\text{steps}}$}
             \State Sample $n_{\text{batch}}$ random themes and ratings $x$ from the dataset.
-            \State Sample $n_{\text{batch}}$ positions $y$ from the model with algorithm \ref{alg:ancestral sampling}.
-            \State Compute rewards $r$ for $y$ with \ref{eq:reward function} and estimate the advantage using \eqref{eq:advantage estimation}.
-            \State Save the rewards and other metrics for monitoring.
-            \State \textcolor{red}{Sample artificial puzzles and themes from the replay buffer and concatenate them into $x$ and $y$ with reward 1.0.}
-            \State Compute old $\mathcal{L}_{\text{old}}(y | x)$ and reference $\mathcal{L}_{\text{ref}}(y | x)$ ELBOs with \eqref{eq:RL ELBO} without gradients.
+            \State Sample $n_{\text{batch}}$ positions $y$ from the model with algorithm \ref{alg:ancestral sampling} and store the trajectories.
+            \State Compute rewards $r$ for $y$ with \eqref{eq:reward function} and estimate the advantage using \eqref{eq:advantage estimation}.
+            \State Compute old $\pi_{\text{old}}(y | x)$ and reference $\pi_{\text{ref}}(y | x)$ log probabilities without gradients.
             \For{$j = 1\dots \mu$}
-                \State Compute the new ELBOs $\mathcal{L}_\theta(y | x)$ with \eqref{eq:RL ELBO}.
-                Compute the ESPO objective with \eqref{eq:espo objective}, where the kl divergence is computed with \eqref{eq:k2 kl divergence} over the generated samples.
-                \State \textcolor{red}{Compute the SFT loss of the artificial positions and subtract it to the objective.}
-                \State Maximize the ESPO objective via gradient descent.
+                \State Compute the new log probabilities $\pi_\theta(y | x)$.
+                \State Compute the DDPO objective with \eqref{eq:DDPO loss}, where the kl divergence is computed with \eqref{eq:kl estimate} and entropy with \eqref{eq:entropy bonus}.
+                \State Maximize the DDPO objective via gradient ascent.
             \EndFor
+            \State Save the rewards and other metrics for monitoring.
         \EndFor
     \end{algorithmic}
 \end{algorithm}
 
-The reinforcement learning algorithm has many different hyperparameters. \textcolor{red}{Continue this chapter once the best configuration is known.}
+The reinforcement learning algorithm has many different hyperparameters. We use 6 groups of 16 samples each. This results in a total of 96 generated positions for each gradient update. We use a learning rate of $3\cdot 10^{-5}$ and $\mu = 1$ gradient updates per generation. We observe that a larger $\mu$ results in the model collapse considerably easier. Additionally, we use a weight decay of $0.01$. The KL- and entropy coefficients are chocen such that the KL divergence stays low and the entropy grows over the training. We perform manual hyperparameter search for these coefficients in appendix \ref{sec:RL appendix}. The final values we ultimately chose were $\beta = 0.1$ and $\gamma = 0.2$. Lastly, to prevent model collapse, we employ intra- and inter batch distance regularization in the reward function as shown in \eqref{eq:reward function}. The board distance limits are both selected to be 6 units and the pv distance limits are 1. The entropy mask threshold is chosen as $\log 128 + 0.6 \approx 5.45$, where 128 is the amount of denoising steps in the sampling process. The training is performed with one NVIDIA h200 gpu.
 
+\textcolor{red}{Make sure these are correct at the very end}
