@@ -7,7 +7,7 @@ In this section, we present the main results of our model training and inference
 \subsection{Supervised results}
 \label{sec:supervised results}
 
-After training our model with the setup described in section \ref{sec:supervised training}, we obtain the loss curve shown in Figure \ref{fig:training_loss}. We see that the model learns the data well, as the test loss decreases steadily over the course of training. At around 1,000,000 training steps, however, we observe that the model starts to overfit slightly, as the test loss starts to increase once again. The lowest test loss is observed at 930,000 training steps. Because we store checkpoints of our model at intervals of 100,000 steps, we choose the model trained for 1,000,000 steps. While this latest training run exhibited no instability, we had observed instability and model collapse during some earlier training runs. We managed to solve this by incorporating clipping to the cross-entropy weights in the evidence lower bound \eqref{eq:ELBO} as done by \citeauthor{shi2025simplifiedgeneralizedmaskeddiffusion} in their implementation. Lastly, comparing Figure \ref{fig:training_loss} to Figure \ref{fig:supervised_training_metrics}, we observe that the loss corresponds quite well with the real metrics we are interested in.
+After training our model with the setup described in section \ref{sec:supervised training}, we obtain the loss curve shown in Figure \ref{fig:training_loss}. We see that the model learns the data well, as the test loss decreases steadily over the course of training. At around 1,000,000 training steps, however, we observe that the model starts to overfit slightly, as the test loss starts to increase. The lowest test loss is observed at 930,000 training steps. Because we store checkpoints of our model at intervals of 100,000 steps, we choose the model trained for 1,000,000 steps. While this latest training run exhibited no instability, we had observed instability and model collapse during some earlier training runs. We managed to solve this by incorporating clipping to the cross-entropy weights in the evidence lower bound \eqref{eq:ELBO} as done by \citeauthor{shi2025simplifiedgeneralizedmaskeddiffusion} in their implementation. Lastly, comparing Figure \ref{fig:training_loss} to Figure \ref{fig:supervised_training_metrics}, we observe that the loss corresponds quite well with the real metrics we are interested in.
 
 \begin{figure}[h]
     \includegraphics[width=\textwidth]{./sections/figures/supervised_training_progress/Training_loss.pdf}
@@ -15,38 +15,289 @@ After training our model with the setup described in section \ref{sec:supervised
     \label{fig:training_loss}
 \end{figure}
 
-As described in section \ref{sec:evaluation criteria}, our main evaluation metric is the proportion of positions that pass both the uniqueness and the counter-intuitiveness criteria, i.e. the puzzle rate. Additionally, we monitor the legal rate, the uniqueness rate and the counter intuitiveness rate individually, as well as some diversity filtering metrics. In figure \ref{fig:supervised_training_metrics}, we see the evolution of these metrics over the supervised training run. Each data point is collected by sampling 10,000 positions from the model for each checkpoint, which are stored on 100,000-step intervals. We notice that the legal rate quickly improves to the final value, whereas the other metrics, which are more nuanced, take longer to improve. We see that the uniqueness rate steadily improves, however, the counter intuitiveness values and consequently the puzzle rate are quite noisy. This is due to the high variance of the counter-intuitiveness metric, which stems from Stockfish being great at finding the correct solutions very quickly.
-
-In figure \ref{fig:supervised_training_metrics}, we see that the values of the different metrics increase over the training steps. \textcolor{red}{Talk about overfitting (context from test probably decreases somewhere)}
-
-% \ref{sec:supervised training}
+As established in Section \ref{sec:evaluation criteria}, our primary evaluation metric is the puzzle rate, which measures the proportion of generated positions satisfying both the uniqueness and counter-intuitiveness criteria. In addition to this, we independently track the legal rate, uniqueness rate, counter-intuitiveness rate, and various diversity filtering metrics. Figure \ref{fig:supervised_training_metrics} illustrates the trajectory of these key metrics throughout the supervised pretraining phase. We evaluate each checkpoint saved at 100,000-step intervals by sampling 10,000 positions. The results demonstrate that while the model rapidly learns to generate legal positions, mastering the more complex, nuanced metrics requires significantly more training time. Notably, the uniqueness rate shows steady, continuous improvement. In contrast, the counter-intuitiveness rate, and by extension the overall puzzle rate, exhibits considerable variance. We attribute this volatility to the inherently high variance of the counter-intuitiveness metric, as Stockfish can often find correct solutions almost instantly. Finally, because the evaluation context is sampled directly from the training set, we observe no degradation in these metrics that would indicate overfitting.
 
 
-\begin{figure}[htbp]
+\begin{figure}[h]
     \centering
-    \includegraphics[width=0.49\linewidth]{sections/figures/supervised_training_progress/Legal_rate.pdf}
+    \includegraphics[width=0.49\linewidth]{sections/figures/supervised_training_progress/train/Legal_rate.pdf}
     \hfill
-    \includegraphics[width=0.49\linewidth]{sections/figures/supervised_training_progress/Uniqueness_rate.pdf}
+    \includegraphics[width=0.49\linewidth]{sections/figures/supervised_training_progress/train/Uniqueness_rate.pdf}
     
     \vspace{0.5cm}
     
-    \includegraphics[width=0.49\linewidth]{sections/figures/supervised_training_progress/Counter_intuitive_given_unique.pdf}
+    \includegraphics[width=0.49\linewidth]{sections/figures/supervised_training_progress/train/Counter_intuitive_rate_given_unique.pdf}
     \hfill
-    \includegraphics[width=0.49\linewidth]{sections/figures/supervised_training_progress/Puzzle_rate.pdf}
-    \caption{Evolution of the primary quality metrics with context from the training set during supervised pretraining.}
+    \includegraphics[width=0.49\linewidth]{sections/figures/supervised_training_progress/train/Puzzle_rate.pdf}
+    \caption{Evolution of the primary quality metrics with context from the training set during supervised pretraining. We omit the first data point, as it is identically zero for all metrics.}
     \label{fig:supervised_training_metrics}
 \end{figure}
+
+To evaluate the supervised model, we present the metrics in Table \ref{tab:supervised metrics}, derived from a sample of 200,000 positions generated using refined inference parameters, specifically, an increased step count of 256 denoising steps. The results demonstrate strong generalization capabilities, as the model achieves comparable performance regardless of whether the conditioning context originates from the training or test data distribution.
+
+In addition to evaluating the model's generalization, Table \ref{tab:supervised metrics} also illustrates the impact of different sampling algorithms on puzzle quality. We investigate whether explicitly tying the model's chess understanding to the generation process improves its performance. To do so, we compare an approach where the position and the best move are sampled simultaneously against one where the best move is predicted only after the puzzle is generated. Interestingly, puzzle generation metrics measurably improve when the best move is generated simultaneously alongside the position, indicating that deeper understanding of chess directly enhances the model's generative capabilities. To further quantify this underlying chess knowledge, Figure \ref{fig:supervised move match rate} plots the model's accuracy in predicting the optimal move for valid puzzles over the supervised training. The results show that while the model correctly identifies the best move in most cases, the predictive accuracy stagnates early in the training process, exhibiting minimal improvement after the initial checkpoints.
+
+Table \ref{tab:supervised metrics} also presents the theme match rate, as defined in Section \ref{sec:evaluation criteria}. For positions with unique solutions, the generated position aligns with the specified themes in over 85\% of the cases. This proportion is substantial and suggests a strong understanding of various chess concepts. In fewer than 15\% of instances, the model inadvertently generates a position with a unique solution that deviates from the required conditioning.
+
+
+\begin{table}[h]
+    \centering
+    \caption{The final metrics after supervised training with different context distributions. The sampling is performed with a temperature $1.0$ and $256$ denoising steps. The errors are computed as the 95\% confidence intervals of the wanted proportion \cite{brown2001intervalestimationforabinomialproportion}.}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|c|c|c|c|c|c|c|}
+        \hline
+        Context & Sampling & Legal & Unique & Counter-intuitive | unique & Puzzle & Theme\\
+        \hline\hline
+        Train & block & 98.98 $\pm$ 0.044 & 27.10 $\pm$ 0.19 & 0.62 $\pm$ 0.018 & 0.17 $\pm$ 0.018 & 85.29 $\pm$ 0.18\\
+        Train & normal & 98.99 $\pm$ 0.044 & 28.99 $\pm$ 0.20 & 0.63 $\pm$ 0.019 & 0.18 $\pm$ 0.018 & 86.33 $\pm$ 0.19\\
+        Test & block & 98.97 $\pm$ 0.044 & 27.08 $\pm$ 0.19 & 0.63 $\pm$ 0.018 & 0.17 $\pm$ 0.018 & 85.53 $\pm$ 0.18\\
+        Test & normal & 98.95 $\pm$ 0.045 & 28.75 $\pm$ 0.20 & 0.61 $\pm$ 0.018 & 0.18 $\pm$ 0.019 & 86.27 $\pm$ 0.19\\
+        \hline\hline
+        \multicolumn{2}{|c|}{Lichess puzzles} & \textbf{100.0} $\pm$ 0.0 & \textbf{83.58} $\pm$ 0.23 & \textbf{1.55} $\pm$ 0.070 & \textbf{1.29} $\pm$ 0.070 & \textbf{100.0} $\pm$ 0.0\\
+        \hline
+    \end{tabular}
+    }
+    \label{tab:supervised metrics}
+\end{table}
+
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{sections/figures/supervised_training_progress/train/Move_match_rate_given_puzzle.pdf}
+    \caption{The evolution of the model's ability to predict the best move for the positions, which pass the puzzle test.}
+    \label{fig:supervised move match rate}
+\end{figure}
+
+When contextualizing our results against existing literature, we find that our conditioning approach helps the model achieve higher uniqueness scores than the models trained by \citeauthor{feng2025generatingcreativechesspuzzles}. However, an exact comparison is complicated by differences in metric implementation. As demonstrated in Table \ref{tab:supervised metrics}, our implementations of the uniqueness and counter-intuitiveness checks are considerably stricter than those used by \citeauthor{feng2025generatingcreativechesspuzzles}. For instance, when evaluated on the same Lichess puzzle dataset, their implementation yields a 95.25\% uniqueness rate and a 2.25\% counter-intuitiveness rate (for positions with unique solutions), whereas our stricter evaluation yields significantly lower values. Despite these differences in absolute measurement, the strong relative performance of our model supports the conclusion that explicit conditioning effectively guides the model to generate more valid puzzles.
+
+To assess the novelty of the generated positions, we utilize the distance metrics introduced in Section \ref{sec:evaluation criteria}. Table \ref{tab:supervised distance metrics} indicates that the baseline Lichess distribution exhibits a high average minimum board distance of 11.8827, corresponding to a difference of roughly 12 elements (pieces, side to move, castling rights, or en passant square) between positions. The average principal variation distance stands at 0.9496, reflecting a typical difference of one rank or file for either the start or target square of a move. Furthermore, Table \ref{tab:supervised distance metrics} demonstrates that our trained model largely preserves these distance characteristics. While the model's distances are slightly lower than those of the original Lichess puzzles, explicit conditioning effectively promotes diversity. Compared to the models proposed by \citeauthor{feng2025generatingcreativechesspuzzles}, our generated positions exhibit comparable distances.
+
+\begin{table}[h]
+    \centering
+    \caption{The distance metrics after supervised training with different context distributions and sampling methods. The sampling is performed with a temperature $1.0$ and $256$ denoising steps. The self distances are computed with 40,000 samples and the Lichess distances with 100,000 samples. All generated positions are filtered so that we only compare positions that pass the uniqueness check.}
+    \begin{tabular}{|c|c|c|c|c|c|}
+        \hline
+        Context & Sampling & Board (Self) & Board (Lichess) & PV (Self) & PV (Lichess) \\
+        \hline\hline
+        Train & block & 11.5237 & 11.1493 & 0.8684 & 0.8894\\
+        Train & normal & 11.5492 & 11.1601 & 0.8718 & 0.8900\\
+        Test & block & 11.4987 & 11.1264 & 0.8655 & 0.8918\\
+        Test & normal & 11.5497 & 11.1641 & 0.8723 & 0.8938\\
+        \hline\hline
+        \multicolumn{2}{|c|}{Lichess puzzles} & 11.8827 & - & 0.9496 & -\\
+        \hline
+    \end{tabular}
+    \label{tab:supervised distance metrics}
+\end{table}
+
+
+
 
 
 \subsection{Reinforcement learning results}
 \label{sec:rl results}
 
+\begin{wrapfigure}{r}{0.3\textwidth}
+    \centering
+    \vspace{-25pt}
+    \chessboard[
+        setfen=4r1kN/6pp/p2p4/4q3/5QnP/8/P7/5RK1 w - - 5 31, 
+        showmover=false,
+        boardfontsize=14pt
+    ]
+    \caption{f4f7 g8h8 f7f8 e8f8 f1f8}
+    \label{fig:example overfit puzzle}
+\end{wrapfigure}
+
+After completing the supervised pretraining phase, we fine-tune the model using the procedure described in \ref{sec:Reinforcement learning algorithm}. In this section, we evaluate the impact of this reinforcement learning phase on the model's generative capabilities. We first examine the training progression, focusing on the reward function and the stability of the training process. Next, we compare the primary performance metrics, namely the uniqueness, counter-intuitiveness, and puzzle rates, between the supervised baseline and the finetuned model. We also analyze the theme match rate to determine whether the model successfully adheres to the conditioning constraints without compromising puzzle quality. Finally, we investigate the effectiveness of our diversity and realism filters by analyzing the distance metrics of the generated positions, ensuring that the model we ultimately choose to use does not suffer from mode collapse.
+
+In Figure \ref{fig:rl_training_progress}, we see how most monitored metrics change during reinforcement learning. We observe that the reward steadily increases in Figure \ref{fig:rl_reward}. The increase in reward comes initially from the increase in the legal rate in Figure \ref{fig:rl_legal_rate} and eventually from the increase in the counter-intuitive rate in \ref{fig:rl_counter_intuitive}. Similar to \cite{feng2025generatingcreativechesspuzzles}, we observe that the uniqueness rate remains almost constant during the training, although with a sudden increase in the end when our model learns to exploit one specific puzzle type.
+
+From Figures \ref{fig:rl_self_board}--\ref{fig:rl_lichess_pv} we observe that the model collapse happens at around 4,500 training steps, with the first signs being visible at around 3,500 steps. In the beginning, the training proceeds successfully and the diversity filtering is enough to prevent the model from collapsing. All distance metrics steadily increase and achieve a maximum at 3,000 steps. After collapsing, the model begins to generate mostly one counter-intuitive back rank checkmate with minor modifications that do not affect the solution. An example of such a position from White's perspective is shown in Figure \ref{fig:example overfit puzzle}. Due to the model collapse, we select the checkpoint at 3,500 training steps for the final experiments, as the distance metrics still remain high, but the puzzle rate is considerably higher than the supervised model.
+
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/Reward.pdf}
+        \caption{Reward}
+        \label{fig:rl_reward}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/Legal_rate.pdf}
+        \caption{Legal rate}
+        \label{fig:rl_legal_rate}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/Uniqueness_rate.pdf}
+        \caption{Uniqueness rate}
+        \label{fig:rl_uniqueness}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/Puzzle_rate.pdf}
+        \caption{Puzzle rate}
+        \label{fig:rl_puzzle_rate}
+    \end{subfigure}
+
+
+
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/Counter_Intuitive_rate_given_unique.pdf}
+        \caption{Counter-intuitive rate given unique}
+        \label{fig:rl_counter_intuitive}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/Themes_match_rate_given_unique.pdf}
+        \caption{Theme match rate}
+        \label{fig:rl_themes}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/Move_match_rate_given_puzzle.pdf}
+        \caption{Move match rate}
+        \label{fig:rl_move_match}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/Entropy.pdf}
+        \caption{Entropy}
+        \label{fig:rl_entropy}
+    \end{subfigure}
+
+
+
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/self_distance_board.pdf}
+        \caption{Board distance (Self)}
+        \label{fig:rl_self_board}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/self_distance_pv.pdf}
+        \caption{PV distance (Self)}
+        \label{fig:rl_self_pv}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/lichess_distance_board.pdf}
+        \caption{Board distance (Lichess)}
+        \label{fig:rl_lichess_board}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sections/figures/rl_training_progress/good_run/lichess_distance_pv.pdf}
+        \caption{PV distance (Lichess)}
+        \label{fig:rl_lichess_pv}
+    \end{subfigure}
+    
+    \caption{The training progress during reinforcement learning. We observe model collapse after around 4,500 steps. The self distances are computed with a subsample of 10,000 instead of 40,000 unique positions due to computational constraints, hence the values are larger than in table \ref{tab:supervised distance metrics}. The shaded area represents the 95\% confidence interval for the estimated value of the given metric.}
+    \label{fig:rl_training_progress}
+\end{figure}
+
+
+For the final RL checkpoint at 3,500 training steps, we sample 1,000,000 positions and compute the metrics seen in Tables \ref{tab:rl metrics} and \ref{tab:rl distance metrics}. We choose to employ normal sampling, as we saw additional benefits in terms of the uniqueness metric for the supervised model. Furthermore, we also condition the generation on themes sampled from the test set. We observe that the puzzle rate has approximately doubled, while a clear increase in the distance metrics can also be seen. Consistent with Figure \ref{fig:rl_training_progress}, the uniqueness is slightly lower than before RL, while the counter-intuitiveness is approximately $2.3$ times larger than previously. The increase in the puzzle rate can hence be primarily attributed to this rise in counter-intuitiveness. However, this improvement in puzzle quality comes at a slight cost to conditioning accuracy. The theme match rate slightly decreases compared to the supervised baseline, indicating that the RL objective shifts the model's focus slightly away from adhering to the requested themes in favor of producing valid puzzles. Nevertheless, the total percentage of positions that pass the legality, uniqueness, counter-intuitiveness and the theme criteria increases from around $0.12\%\pm 0.02\%$ to around $0.26\%\pm 0.01\%$.
+
+As seen in Figure \ref{fig:rl_training_progress}, for the first 3,000 training steps, the distance metrics increase. By comparing Tables \ref{tab:supervised distance metrics} and \ref{tab:rl distance metrics}, we note that the board distances are considerably higher after reinforcement learning. The principal variation distance to the Lichess dataset has also increased, although less than the board distances. The PV distance between the positions generated by the model has not meaningfully changed. This suggests that although the solutions to the puzzles might be similar to the ones before RL, by modifying other unimportant pieces, the model is able to make the positions more counter-intuitive. However, overall the model performs considerably better after reinforcement learning than before it.
+
+
+
+\begin{table}[h]
+    \centering
+    \caption{The final metrics after RL training for 3,500 steps. The sampling is performed with a temperature $1.0$ and $256$ denoising steps. The errors are computed as the 95\% confidence intervals of the wanted proportion \cite{brown2001intervalestimationforabinomialproportion}.}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|c|c|c|c|c|c|c|}
+        \hline
+        Context & Sampling & Legal & Unique & Counter-intuitive | unique & Puzzle & Theme\\
+        \hline\hline
+        Test & normal & 99.87 $\pm$ 0.01 & 25.28 $\pm$ 0.09 & 1.45 $\pm$ 0.012 & 0.37 $\pm$ 0.012 & 78.72 $\pm$ 0.08\\
+        \hline
+    \end{tabular}
+    }
+    \label{tab:rl metrics}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{The distance metrics after RL training for 3,500 steps. The sampling is performed with a temperature $1.0$ and $256$ denoising steps. The self distances are computed with 40,000 samples and the Lichess distances with 100,000 samples. All generated positions are filtered so that we only compare positions that pass the uniqueness check.}
+    \begin{tabular}{|c|c|c|c|c|c|}
+        \hline
+        Context & Sampling & Board (Self) & Board (Lichess) & PV (Self) & PV (Lichess) \\
+        \hline\hline
+        Test & normal & 15.0239 & 14.3468 & 0.8562 & 0.9533\\
+        \hline
+    \end{tabular}
+    \label{tab:rl distance metrics}
+\end{table}
 
 
 
 
-\subsection{Tests with the final model}
-\label{sec:final tests}
 
-\textcolor{red}{Example positions etc.}
+\subsection{Qualitative results}
+\label{sec:qualitative results}
 
+In this section, we bridge the gap between the quantitative metrics presented in section \ref{sec:rl results} and the actual qualitative output of the final model. Mainly, we present and review a few puzzles generated by the model. After selecting the checkpoint we want to use, we generated 1,000,000 positions, 2,606 of which pass the legality, uniqueness, counter-intuitiveness, and theme criteria as described in Section \ref{sec:rl results}. To further filter these positions, we sort them by the counter-intuitive value $r_{\text{counter-intuitive}}(s)$ in descending order. To select puzzles for this section, we manually review the most counter-intuitive puzzles and select the best ones. Although the author has experience playing chess and solving puzzles, it should be noted that the manual selection was conducted from the perspective of a casual puzzle enthusiast rather than a chess expert. Consequently, the chosen puzzles may reflect the author's ability to understand chess, and a stronger chess player or puzzle composer may choose the puzzles differently. The chosen puzzles can be seen in Figure \ref{fig:final puzzles} with links to the closest matches from the Lichess dataset in the caption.
+
+
+\begin{figure}[h]
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \chessboard[
+            setfen=6k1/7p/pPp1P1pP/P4R2/6p1/r7/4r3/1K5R w - - 0 43, 
+            showmover=false, % 8 / 2606
+            boardfontsize=14pt
+        ]
+        \caption{Closest: \href{https://lichess.org/analysis/fromPosition/6nk/3R4/2p1p1P1/p1r4P/8/P7/2P2r2/2K4R_w_-_-_1_32}{[1]}, \href{https://lichess.org/analysis/fromPosition/6k1/7p/p6P/P5K1/8/8/8/8_w_-_-_11_60}{[2]}, \href{https://lichess.org/analysis/fromPosition/6k1/2R5/p2p1KP1/3P4/8/1p6/6r1/8_w_-_-_0_50}{[3]}\footnotemark[1]}
+        \label{fig:final puzzle1}
+    \end{subfigure}
+    % \hfill
+    \centering
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \chessboard[
+            setfen=r1b2k1r/2B1ppb1/p4np1/1p5p/1q3Pn1/PBN5/2P2QPP/3R1R1K w - - 1 22, 
+            showmover=false, % 19 / 2606
+            boardfontsize=14pt
+        ]
+        \caption{Closest: \href{https://lichess.org/analysis/fromPosition/r2r2k1/3N1pp1/p2bp2p/1p6/1q3P2/8/PP2Q1PP/3R1R1K_w_-_-_4_23}{[1]}, \href{https://lichess.org/analysis/fromPosition/r1b2r1k/1p4pp/2p5/p7/4P3/1Bb5/PPP3PP/3R1R1K_w_-_-_0_19}{[2]}, \href{https://lichess.org/analysis/fromPosition/5k1r/1b3pp1/pq4r1/1p5p/1P3Bn1/2N3Q1/1PP3P1/3R1R1K_w_-_-_4_24}{[3]}\footnotemark[2]}
+        \label{fig:final puzzle2}
+    \end{subfigure}
+    % \hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \chessboard[
+            setfen=2r1k3/4qpp1/1p2P2p/pP1Q1p2/2Np4/P1r2R2/2P3P1/7K w - - 1 34, 
+            showmover=false, % 21 / 2606
+            boardfontsize=14pt
+        ]
+        \caption{Closest: \href{https://lichess.org/analysis/fromPosition/4r1k1/5pp1/1p2P2p/p2Q1P2/2p5/2P1R1P1/2q2KP1/8_w_-_-_3_30}{[1]}, \href{https://lichess.org/analysis/fromPosition/2r5/p4kpp/8/1p6/2Np4/1P5P/P1P3P1/7K_w_-_-_0_25}{[2]}, \href{https://lichess.org/analysis/fromPosition/4r1k1/6bp/p2p2q1/3P3p/4NP2/8/2Q3PP/4R2K_w_-_-_3_32}{[3]}\footnotemark[3]}
+        \label{fig:final puzzle3}
+    \end{subfigure}
+    \caption{Three example puzzles.}
+    \label{fig:final puzzles}
+\end{figure}
+
+\footnotetext[1]{Principal variation: f5b5 c6b5 b6b7}
+\footnotetext[2]{Principal variation: f2d2 b4d6 c7d6}
+\footnotetext[3]{Principal variation: e6f7 e8f8 c4e5 e7e5 d5e5}
+
+
+In Figure \ref{fig:final puzzle1}, we observe an endgame generated with the following themes: advantage, endgame, short, rook endgame. In the puzzle, White's king is surrounded by both of Black's rooks and is about to be checkmated if White does not act immediately. Additionally, White has many pawns just a few moves away from promotion. If given a chance, White would like to save its king and promote with the same move. The only move that wins for White is the incredible f5b5, which sacrifices the rook in two different ways to the Black pawns. The rook sacrifice has an idea that if it is accepted, the White pawn is guarded by the Black pawn and can easily promote. On the other hand, if it is not accepted, Black must sacrifice a rook for White's pawn after it promotes, as Black is too slow to guard the promotion. The themes that are present in the generated puzzle are the following: endgame, advantage, advanced pawn, quiet move, sacrifice, rook endgame, short.
+
+In Figure \ref{fig:final puzzle2}, we see a puzzle generated with the following themes: crushing, middlegame, short. In the starting position, both White's and Black's queens are under attack and White has a chance to win Black's queen with the best move. With the unfortunate placement of Black's king, White can threaten back rank checkmate with f2d2 while avoiding Black's attack on the queen. If White had a second move in a row, White would checkmate with d2d8 f6e8 d8e8 f8e8 d1d8. Black's best response is to avoid checkmate by moving the queen with b4d6, where the queen is lost. If Black attempts a different move to avoid checkmate, White can capture Black's queen with a3b4. White has another option that is on the edge of winning, but is much worse than the best move. White could check Black's king immediately with d1d8, but this leads to a worse position where Black has chances to draw while down a rook but with a huge pawn majority. The themes that are present in the generated puzzle are middlegame, advantage, quiet move, short.
+
+Lastly, in Figure \ref{fig:final puzzle3}, we observe a puzzle conditioned on the following themes: advantage, endgame, short. Initially, the position seems good for Black, as White is down an exchange, but White has a winning resource. The best strategy for white is to capture the pawn with e6f7 to prepare to leverage the knight on c4. Black has only two legal moves as a response, but e7f7 walks straight into a fork of the king and the queen. Black's best response is to shelter the king behind the pawn with e8f8. White has only one winning continuation by threatening another fork and a checkmate on g6 with c4e5. Black can attempt to save the game with a perpetual check on h4, but with White's rook on f3, White can avoid the checks. The best response for Black is to avoid checkmate by sacrificing the queen for the knight with e7e5 and play the endgame with two rooks against a rook and a queen. The themes that are present in this puzzle are the following: endgame, advantage, advanced pawn, quiet move, attacking f2/f7, long.

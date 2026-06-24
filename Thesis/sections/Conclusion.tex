@@ -1,0 +1,37 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+% Discussion, limitations and future directions
+
+
+% In this work, we explored using a masked diffusion model for the generation of chess puzzles. We followed the work of \citeauthor{feng2025generatingcreativechesspuzzles} and trained a masked diffusion model first with supervised training and later improved its performance by reinforcement learning. Additionally, we condition the generative process on the themes of a puzzle, for instance fork or mate-in-two, which steers the generation toward spesific puzzles. By supervised training we managed to train a model, which generates puzzles puzzles around $0.18\%$ of the time. We improve our model using reinforcement learning to generate puzzles around $0.37\%$ of the time. We also manage to improve the diversity of the generated positions.
+%
+% We had four main contributions from this research. Firstly, we demonstrated the effectiveness of masked diffusion models for generation of structured outputs. Secondly, we showed that the puzzle generation can be conditioned on specific themes. Thirdly, we demonstrated that the performance of masked diffusion models can be improved with reinforcement learning, although the task at hand is very difficult. Lastly, we demonstrated that the performance of the generation is improved by an auxiliary task of best move generation. Looking back at the contributions, although we have not demonstrated the generalization of these contributions to other tasks, in chess puzzle generation, the masked diffusion model works well and can be improved in many ways.
+%
+% For reinforcement learning, we employ an algorithm called DDPO. For this, we define a Markov decision process that works 
+%
+% For DDPO, we derive easy expressions for the step-wise KL divergence and the step-wise entropy.
+%
+% During this research, we have encountered many challenges. 
+%
+% This research has many limitations. (Generalizability, authors knowledge on chess etc.)
+%
+% In the future research, many questions remain. Firstly, we were unable to find a configuration, where the recently published ESPO algorithm would have worked. ESPO has offered benefits compared to DDPO in terms of efficiency and may improve the RL pipeline in this problem as well if a good configuration is found. Secondly, demonstrating similar setups in other NLP problems, and showcasing generalization, would push the research boundary further. Lastly, experimenting with different types of puzzle generation frameworks, such as combining iterative algorithms and generative models in one chain-of-thought \cite{wei2022chainofthought} system could improve puzzle generation and allow for easier generalization to other problems.
+%
+% \begin{itemize}
+%     \item \textbf{Effectiveness of masked diffusion models:} Summarize how well the masked diffusion model performed at generating valid, structured chess puzzles compared to the baselines.
+%     \item \textbf{Conditioning on themes:} Discuss the success rate of guiding the puzzle generation using specific tactical themes and any trade-offs observed (e.g., lower theme adherence after RL).
+%     \item \textbf{Reinforcement learning improvements and challenges:} Highlight the increase in puzzle rate and counter-intuitiveness achieved through RL, but also mention the limitations encountered, such as mode collapse during extended training.
+%     \item \textbf{Impact of auxiliary tasks:} Conclude on how predicting the best move simultaneously with the position improved the model's underlying chess knowledge and generative capabilities.
+%     \item \textbf{Future directions:} Suggest applying this framework to other NLP tasks requiring strict structured outputs (like HTML rendering or code generation) and exploring better diversity filters or reward functions to prevent mode collapse in RL.
+% \end{itemize}
+
+In this work, we explored using a masked diffusion model for the generation of chess puzzles, building upon the framework proposed by \citeauthor{feng2025generatingcreativechesspuzzles}. We initially trained a masked diffusion model using supervised training and subsequently enhanced its performance through reinforcement learning. A key aspect of our approach was conditioning the generative process on specific puzzle themes, effectively steering the generation toward desired puzzle types. After supervised training, our model successfully generated valid puzzles approximately $0.18\%$ of the time. By applying reinforcement learning, we more than doubled this success rate to around $0.37\%$, while simultaneously improving the diversity of the generated positions.
+
+We presented four main contributions in this research. First, we demonstrated the effectiveness of masked diffusion models for generating strict, structured outputs. Second, we showed that chess puzzle generation can be accurately conditioned on specific tactical themes. Third, we established that the performance of masked diffusion models can be meaningfully improved through reinforcement learning, despite the inherent difficulty of the task. Finally, we demonstrated that integrating the auxiliary task of predicting the best move alongside the position enhances the generative capabilities of the model. While we focused specifically on chess puzzle generation, our results indicate that masked diffusion models are highly capable and offer various avenues for improvement in structured generation tasks.
+
+For the reinforcement learning phase, we employed the Denoising Diffusion Policy Optimization algorithm. To facilitate this, we formulated a Markov decision process suitable for the generation process and derived tractable expressions for the step-wise KL divergence and step-wise entropy.
+
+Despite the promising results, this research encountered several challenges and possesses certain limitations. For instance, while we hope our findings are broadly applicable, we have not yet demonstrated the generalization of these contributions to other natural language processing tasks. Additionally, the manual evaluation and selection of the generated puzzles were inherently constrained by the author's level of chess knowledge. A stronger player or puzzle composer might offer a different perspective spesifically to evaluation of our final model.
+
+Looking ahead, numerous questions and directions for future research remain. During our experiments, we were unable to find a configuration where the recently published ESPO algorithm succeeded. Since ESPO has shown efficiency benefits over DDPO, discovering a viable configuration could further optimize the RL pipeline for this problem. Furthermore, applying similar setups to other NLP domains to showcase generalizability would significantly advance the research boundary. Lastly, experimenting with alternative puzzle generation frameworks, such as combining iterative algorithms and generative models within a chain-of-thought system \cite{wei2022chainofthought}, could not only improve chess puzzle generation but also pave the way for easier adaptation to other complex problems.
