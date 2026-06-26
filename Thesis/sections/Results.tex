@@ -1,7 +1,7 @@
 \section{Results}
 \label{sec:results}
 
-In this section, we present the main results of our model training and inference. We present the results of supervised pretraining in section \ref{sec:supervised results}, and the results of the reinforcement learning in section \ref{sec:rl results}. Finally, we experiment with the final model's ability to generate puzzles in section \ref{sec:final tests}.
+In this section, we present the main results of our model training and inference. We present the results of supervised pretraining in section \ref{sec:supervised results}, and the results of the reinforcement learning in section \ref{sec:rl results}. Finally, we experiment with the final model's ability to generate puzzles in section \ref{sec:qualitative results}.
 
 
 \subsection{Supervised results}
@@ -96,9 +96,12 @@ To assess the novelty of the generated positions, we utilize the distance metric
 \subsection{Reinforcement learning results}
 \label{sec:rl results}
 
+After completing the supervised pretraining phase, we fine-tune the model using the procedure described in \ref{sec:Reinforcement learning algorithm}. In this section, we evaluate the impact of this reinforcement learning phase on the model's generative capabilities. We first examine the training progression, focusing on the reward function and the stability of the training process. Next, we compare the primary performance metrics, namely the uniqueness, counter-intuitiveness, and puzzle rates, between the supervised baseline and the finetuned model. We also analyze the theme match rate to determine whether the model successfully adheres to the conditioning constraints without compromising puzzle quality. Finally, we investigate the effectiveness of our diversity and realism filters by analyzing the distance metrics of the generated positions, ensuring that the model we ultimately choose to use does not suffer from mode collapse.
+
+In Figure \ref{fig:rl_training_progress}, we see how most monitored metrics change during reinforcement learning. We observe that the reward steadily increases in Figure \ref{fig:rl_reward}. The increase in reward comes initially from the increase in the legal rate in Figure \ref{fig:rl_legal_rate} and eventually from the increase in the counter-intuitive rate in \ref{fig:rl_counter_intuitive}. Similar to \cite{feng2025generatingcreativechesspuzzles}, we observe that the uniqueness rate remains almost constant during the training, although with a sudden increase in the end when our model learns to exploit one specific puzzle type.
+
 \begin{wrapfigure}{r}{0.3\textwidth}
     \centering
-    \vspace{-25pt}
     \chessboard[
         setfen=4r1kN/6pp/p2p4/4q3/5QnP/8/P7/5RK1 w - - 5 31, 
         showmover=false,
@@ -107,10 +110,6 @@ To assess the novelty of the generated positions, we utilize the distance metric
     \caption{f4f7 g8h8 f7f8 e8f8 f1f8}
     \label{fig:example overfit puzzle}
 \end{wrapfigure}
-
-After completing the supervised pretraining phase, we fine-tune the model using the procedure described in \ref{sec:Reinforcement learning algorithm}. In this section, we evaluate the impact of this reinforcement learning phase on the model's generative capabilities. We first examine the training progression, focusing on the reward function and the stability of the training process. Next, we compare the primary performance metrics, namely the uniqueness, counter-intuitiveness, and puzzle rates, between the supervised baseline and the finetuned model. We also analyze the theme match rate to determine whether the model successfully adheres to the conditioning constraints without compromising puzzle quality. Finally, we investigate the effectiveness of our diversity and realism filters by analyzing the distance metrics of the generated positions, ensuring that the model we ultimately choose to use does not suffer from mode collapse.
-
-In Figure \ref{fig:rl_training_progress}, we see how most monitored metrics change during reinforcement learning. We observe that the reward steadily increases in Figure \ref{fig:rl_reward}. The increase in reward comes initially from the increase in the legal rate in Figure \ref{fig:rl_legal_rate} and eventually from the increase in the counter-intuitive rate in \ref{fig:rl_counter_intuitive}. Similar to \cite{feng2025generatingcreativechesspuzzles}, we observe that the uniqueness rate remains almost constant during the training, although with a sudden increase in the end when our model learns to exploit one specific puzzle type.
 
 From Figures \ref{fig:rl_self_board}--\ref{fig:rl_lichess_pv} we observe that the model collapse happens at around 4,500 training steps, with the first signs being visible at around 3,500 steps. In the beginning, the training proceeds successfully and the diversity filtering is enough to prevent the model from collapsing. All distance metrics steadily increase and achieve a maximum at 3,000 steps. After collapsing, the model begins to generate mostly one counter-intuitive back rank checkmate with minor modifications that do not affect the solution. An example of such a position from White's perspective is shown in Figure \ref{fig:example overfit puzzle}. Due to the model collapse, we select the checkpoint at 3,500 training steps for the final experiments, as the distance metrics still remain high, but the puzzle rate is considerably higher than the supervised model.
 

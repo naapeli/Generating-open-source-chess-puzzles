@@ -26,6 +26,22 @@ def PV_distance(pv1: str, pv2: str) -> bool:
 def board_distance(fen1: str, fen2: str) -> bool:
     return Levenshtein.distance(fen_to_padded(fen1), fen_to_padded(fen2)) >= 6
 
+def get_pv_distance(pv1: str, pv2: str) -> int:
+    if not pv1 or not pv2:
+        return 0
+    pv1 = pv1.split(" ", 1)[0]  # only check if the first move is the same
+    pv2 = pv2.split(" ", 1)[0]  # only check if the first move is the same
+    return Levenshtein.distance(pv1, pv2)
+
+def get_board_distance(fen1: str, fen2: str) -> int:
+    return Levenshtein.distance(fen_to_padded(fen1), fen_to_padded(fen2))
+
+def get_opponent_pv_distance(pv1: str, pv2: str) -> int:
+    opponent_pv1 = pv1.split(" ")
+    opponent_pv2 = pv2.split(" ")
+    return Levenshtein.distance(opponent_pv1[1], opponent_pv2[1]) if len(opponent_pv1) >= 2 and len(opponent_pv2) >= 2 else 5
+
+
 
 class ReplayBuffer:
     def __init__(self, capacity, path="./replay_buffer"):

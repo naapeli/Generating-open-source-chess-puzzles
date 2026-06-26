@@ -175,7 +175,7 @@ To evaluate the depth of the model's chess comprehension, we adopt a technique k
 
 We apply reinforcement learning (RL) to enhance the capabilities of the model after supervised training. We describe our RL procedure in detail at the end of the section.
 
-In this section, we work with Markov Decision Processes, which are defined as follows \cite{SuttonAndBarto2018,lehmann2024definitiveguidepolicygradients}:
+In this section, we work with Markov Decision Processes, which are defined as follows \cite{SuttonAndBarto2018}:
 
 \begin{definition}[Markov Decision Process]
     A Markov decision process (MDP) is a tuple $\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, \gamma, p_0)$, where $\mathcal{S}, \mathcal{A}$ are the state and action spaces and $P:\mathcal{S}\cross\mathcal{A}\rightarrow\Delta(\mathcal{S}\cross\mathbb{R})$ is the transition function of the environment characterized by transition probabilities $P(s', r | s, a) = \mathbb{P}[S_{t + 1} = s', R_{t + 1} = r | S_t = s, A_t = a]$ for states $s', s\in\mathcal{S}$,  action $a\in\mathcal{A}$ and reward $r\in\mathbb{R}\setminus\{-\infty, \infty\}$. Moreover, $\gamma\in[0, 1]$ is a discount factor for the future rewards and $p_0\in\Delta(S)$ is the distribution over the starting states.
@@ -200,7 +200,7 @@ Given an MDP $\mathcal{M}$, we consider an agent that explores $\mathcal{M}$. Th
 
 \subsubsection{Policy gradient theorem}
 
-In reinforcement learning, one often models the value function by function approximation, e.g. using a neural network, and uses an implicit greedy policy. In natural language processing, however, it is often more convenient to model a policy directly with function approximation, as the pretrained language model can serve as the policy\protect\footnote{In this work, we will use the terms model and policy almost interchangeably.}. This way, the trained policy will remain stochastic allowing sampling of completions. One can also avoid explicitly learning the value-function, which may affect the stability of the learning algorithm. We call methods, which learn the policy directly policy gradient methods. These methods rely on the policy gradient theorem, which yields gradients for the expected episodic reward \cite{lehmann2024definitiveguidepolicygradients}.
+In reinforcement learning, one often models the value function by function approximation, e.g. using a neural network, and uses an implicit greedy policy. In natural language processing, however, it is often more convenient to model a policy directly with function approximation, as the pretrained language model can serve as the policy\protect\footnote{In this work, we will use the terms model and policy almost interchangeably.}. This way, the trained policy will remain stochastic allowing sampling of completions. One can also avoid explicitly learning the value-function, which may affect the stability of the learning algorithm. We call methods, which learn the policy directly policy gradient methods. These methods rely on the policy gradient theorem, which yields gradients for the expected episodic reward.
 
 \begin{definition}[Expected episodic reward]
     For a given policy $\pi_\theta$ and a distribution of starting states $p_0$, the function $J(\theta)$ is called the expected episodic reward and is given by the following equation:
@@ -211,7 +211,7 @@ In reinforcement learning, one often models the value function by function appro
     \end{align*}
 \end{definition}
 
-This definition allows us to formulate the policy gradient theorem, as follows\cite{SuttonPolicyGradientTheorem, SuttonAndBarto2018, lehmann2024definitiveguidepolicygradients}:
+This definition allows us to formulate the policy gradient theorem, as follows\cite{SuttonPolicyGradientTheorem, SuttonAndBarto2018}:
 
 
 \begin{theorem}[Policy gradient theorem]
@@ -364,6 +364,7 @@ This makes the kl divergences exactly comparable to normal LLMs and hence, we mo
 
 Similarly to the KL divergence, we can compute the exact step-wise entropy of the policy. The entropy of a distribution over each step factors into the sum of the token-wise entropies due to the conditional independence of the token transitions. The step-wise entropy is computed as follows:
 
+{\allowdisplaybreaks
 \begin{align}
     H(\pi_\theta \mid s_i) 
     &= -\sum_{a_i \in \mathcal{A}} \pi_\theta(a_i \mid s_i) \log \pi_\theta(a_i \mid s_i) \nonumber\\
@@ -377,6 +378,7 @@ Similarly to the KL divergence, we can compute the exact step-wise entropy of th
     &= p_{\text{unmask}}^{t(i - 1)} \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} H\left(\mu_\theta(x_{t(i)})^{(j)}\right) + \abs{M_{t(i)}} H_b(p_{\text{unmask}}^{t(i - 1)}),
     \label{eq:entropy bonus}
 \end{align}
+}
 where $H_b(\cdot)$ denotes the binary entropy function, $\mathbf{1}$ is the vector of ones and $\abs{M_{t(i)}}$ is the number of masked tokens at step $i$. This result shows that the total entropy is a combination of the entropy of the model's output distribution scaled by the unmasking probability, plus the uncertainty of whether the masked tokens will be unmasked at all.
 
 Notably, the second term of the entropy depends solely on the fixed masking schedule and is therefore constant with respect to the model parameters $\theta$. Consequently, it only affects the absolute magnitude of the entropy and does not influence its gradient during optimization. Thus, when an entropy bonus is employed during reinforcement learning, as discussed in section \ref{sec:DDPO}, the gradients purely flow through the entropy of the network's output distribution $\mu_\theta$.

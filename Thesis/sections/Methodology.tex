@@ -54,7 +54,7 @@ Instead of the previously described approach, in this work, we settle for a more
 
 A second condition that a puzzle must satisfy is that it must have a unique solution. Following the work of \citeauthor{feng2025generatingcreativechesspuzzles}, inspired by the Lichess puzzler project \cite{lichesspuzzler}, we check the uniqueness by recursively comparing the best and the second-best moves found by Stockfish on the principal variation. Although, the real uniqueness check has more details as described in algorithm \ref{alg:uniqueness check}, the general idea is as follows: if the winning chances $w(a | s)$ from \eqref{eq:prob_win} of the player to move after the best move are significantly higher than the winning chances of the player to move after the second-best move, we consider the position to have a unique solution. The uniqueness condition is formally denoted by $\mathbb{I}_{\text{unique}}(s)$.
 
-\begin{algorithm}[H]
+\begin{algorithm}[h]
     \caption{Uniqueness metric}
     \label{alg:uniqueness check}
     \begin{algorithmic}
@@ -259,12 +259,12 @@ Our complete reinforcement learning procedure iterates over a predetermined numb
         \algrenewcommand{\algorithmiccomment}[1]{\textcolor{gray}{// #1}}
         \For{$i = 1 \dots n_{\text{steps}}$}
             \State Sample $n_{\text{batch}}$ random themes and ratings $x$ from the dataset.
-            \State Sample $n_{\text{batch}}$ positions $y$ from the model with algorithm \ref{alg:ancestral sampling} and store the trajectories.
+            \State Sample $G$ positions $y$ from the model with algorithm \ref{alg:ancestral sampling} and store the trajectories.
             \State Compute rewards $r$ for $y$ with \eqref{eq:reward function} and estimate the advantage using \eqref{eq:advantage estimation}.
-            \State Compute old $\pi_{\text{old}}(y | x)$ and reference $\pi_{\text{ref}}(y | x)$ log probabilities without gradients.
+            \State Compute $\pi_{\text{old}}(y | x)$ and $\pi_{\text{ref}}(y | x)$ with no gradient tracking.
             \For{$j = 1\dots \mu$}
                 \State Compute the new log probabilities $\pi_\theta(y | x)$.
-                \State Compute the DDPO objective with \eqref{eq:DDPO loss}, where the kl divergence is computed with \eqref{eq:kl estimate} and entropy with \eqref{eq:entropy bonus}.
+                \State Compute the DDPO objective with \eqref{eq:DDPO loss}.%, where the KL divergence is computed with \eqref{eq:kl estimate} and entropy with \eqref{eq:entropy bonus}.
                 \State Maximize the DDPO objective via gradient ascent.
             \EndFor
             \State Save the rewards and other metrics for monitoring.
@@ -272,6 +272,4 @@ Our complete reinforcement learning procedure iterates over a predetermined numb
     \end{algorithmic}
 \end{algorithm}
 
-The reinforcement learning algorithm has many different hyperparameters. We use 6 groups of 16 samples each. This results in a total of 96 generated positions for each gradient update. We use a learning rate of $3\cdot 10^{-5}$ and $\mu = 1$ gradient updates per generation. We observe that a larger $\mu$ results in the model collapse considerably easier. Additionally, we use a weight decay of $0.01$. The KL- and entropy coefficients are chocen such that the KL divergence stays low and the entropy grows over the training. We perform manual hyperparameter search for these coefficients in appendix \ref{sec:RL appendix}. The final values we ultimately chose were $\beta = 0.1$ and $\gamma = 0.2$. Lastly, to prevent model collapse, we employ intra- and inter batch distance regularization in the reward function as shown in \eqref{eq:reward function}. The board distance limits are both selected to be 6 units and the pv distance limits are 1. The entropy mask threshold is chosen as $\log 128 + 0.6 \approx 5.45$, where 128 is the amount of denoising steps in the sampling process. The training is performed with one NVIDIA h200 gpu.
-
-\textcolor{red}{Make sure these are correct at the very end}
+The reinforcement learning algorithm has many different hyperparameters. We use 6 groups of 16 samples each. This results in a total of 96 generated positions for each gradient update. We use a learning rate of $3\cdot 10^{-5}$ and $\mu = 1$ gradient updates per generation. We observe that a larger $\mu$ results in the model collapse considerably easier. Additionally, we use a weight decay of $0.01$. The KL- and entropy coefficients are chosen such that the KL divergence stays low, and the entropy grows over the training. We perform manual hyperparameter search for these coefficients in appendix \ref{sec:RL appendix}. The final values we ultimately chose were $\beta = 0.1$ and $\gamma = 0.2$. Lastly, to prevent model collapse, we employ intra- and inter batch distance regularization in the reward function as shown in \eqref{eq:reward function}. The board distance limits are both selected to be 6 units and the PV distance limits are 1. The entropy mask threshold is chosen as $\log 128 + 0.6 \approx 5.45$, where 128 is the amount of denoising steps in the sampling process. The training is performed with one NVIDIA h200 GPU.
