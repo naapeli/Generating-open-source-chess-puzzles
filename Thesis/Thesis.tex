@@ -71,12 +71,14 @@
 \thesisauthor{Aatu Selkee}
 
 
-\thesistitle{Teaching discrete diffusion models to generate chess puzzles with reinforcement learning}
+% \thesistitle{Teaching discrete diffusion models to generate chess puzzles with reinforcement learning}
+\thesistitle{Teaching masked diffusion language models to generate chess puzzles with reinforcement learning}
 
 \place{Espoo}
 
 
-\date{\today}  % esityspäivä
+% \date{\today}  % esityspäivä
+\date{July 3, 2026}
 
 \supervisor{Prof.\ Nuutti Hyvönen}
 
@@ -85,7 +87,7 @@
 
 
 
-\keywords{Discrete diffusion, reinforcement learning, PPO, ESPO}
+\keywords{Masked diffusion, dLLMs, Reinforcement learning, DDPO, Chess puzzles}
 
 \thesisabstract{
     In this thesis, we generate chess puzzles with generative AI.
@@ -125,7 +127,13 @@ All other rights are reserved.
 
 
 \begin{abstractpage}
-    In this thesis, we generate chess puzzles with generative models
+    Traditionally, creativity has been considered a fundamental measure of machine intelligence. While the recent advancement of large language models (LLMs) has enabled a wide array of new, creative applications, generating outputs that demand both creativity and reasoning remains a significant challenge. This thesis addresses this limitation by utilizing generative models to create chess puzzles. Chess puzzles are inherently delicate, as altering even a single piece can completely invalidate the solution. Consequently, chess puzzle generation serves as an excellent playground to benchmark and enhance the reasoning and creative capabilities of language models.
+
+    While autoregressive LLMs currently dominate language modelling, discrete diffusion models have recently emerged as a compelling alternative. In particular, masked diffusion models, which generate sequences through iterative unmasking, offer unique advantages. Notably, they grant the user manual control over inference speed while maintaining text quality comparable to traditional LLMs. They, however, require more pretraining to achieve the same performance. In this work, we employ masked diffusion models to generate creative and counter-intuitive chess puzzles conditioned on specific themes, granting users fine-grained control over the generated puzzle types.
+
+    Our methodology begins with pretraining on the Lichess puzzle dataset. Because valid chess puzzles must satisfy strict criteria, most importantly, possessing a unique best solution, we subsequently apply reinforcement learning (RL) to optimize the model directly for these constraints. We utilize Denoising Diffusion Policy Optimization (DDPO) for the optimization process. Our training specifically optimizes for solution uniqueness, counter-intuitiveness, theme accuracy, and creativity, among other metrics.
+
+    Our results demonstrate the effectiveness of this approach. While supervised training enables the model to generate valid puzzles $0.18\%$ of the time, the application of reinforcement learning doubles this success rate to $0.37\%$. Furthermore, we show that incorporating the auxiliary tasks of simultaneously generating the best move alongside the puzzle, further enhances puzzle quality. Ultimately, this thesis highlights the potential of masked diffusion models combined with reinforcement learning for solving complex generation tasks.
 \end{abstractpage}
 
 %\begin{abstractpage}
@@ -142,25 +150,38 @@ All other rights are reserved.
 \advisor{Adjunct Prof.\ Eric Malmi}
 \degreeprogram{Master's Programme in Mathematics and Operations Research}
 \major{Applied Mathematics}
-\keywords{Diskreetti diffuusio, vahvistusoppiminen, PPO, ESPO}
+\keywords{\textcolor{red}{Naamio diffuusio}, dLLM:t, vahvistusoppiminen, DDPO, Shakkipulmat}
 \begin{abstractpage}[finnish]
-    Tässä tutkielmassa luodaan shakki pulmia generatiivisen tekoälyn avulla. 
+    Perinteisesti luovuutta on pidetty koneälykkyyden tärkeimpänä mittarina. Vaikka suurten kielimallien (LLM) viimeaikainen kehitys on mahdollistanut uusia sovelluksia, on luovuutta ja päättelykykyä vaativien vastauksien luominen edelleen haastavaa. Tämä tutkielma käsittelee tätä rajoitetta käyttämällä generatiivisia malleja shakkipulmien luomiseen. Shakkipulmat ovat luonnostaan herkkiä, sillä yhdenkin nappulan vaihtaminen voi hajottaa ratkaisun. Tästä syystä shakkipulmien luominen on erinomainen ongelma kielimallien kykyjen testaamiseen ja parantamiseen.
+
+    % Traditionally, creativity has been considered a fundamental measure of machine intelligence. While the recent advancement of large language models (LLMs) has enabled a wide array of new, creative applications, generating outputs that demand both creativity and reasoning remains a significant challenge. This thesis addresses this limitation by utilizing generative models to create chess puzzles. Chess puzzles are inherently delicate, as altering even a single piece can completely invalidate the solution. Consequently, chess puzzle generation serves as an excellent playground to benchmark and enhance the reasoning and creative capabilities of language models.
+
+    Vaikka autoregressiiviset kielimallit hallitsevat kielien mallinnusta tällä hetkellä, diskreetit diffuusiomallit ovat kehittyneet varteenotettaviksi vaihtoehdoiksi viime vuosina. Erityisesti \textcolor{red}{naamio diffuusio mallit}, jotka kirjoittavat tekstiä luomalla toistuvasti muutamia tavuja kerrallaan, tarjoavat joitakin etuja autoregressiivisiin kielimalleihin nähden. Ne muun muassa antavat käyttäjälle mahdollisuuden vaikuttaa tekstin luomisnopeuteen manuaalisesti, ylläpitäen vastaavaa tekstin laatua kuin autoregressiiviset mallit. Niiden kouluttaminen kuitenkin vaatii enemmän laskentaa saman suorituskyvyn saavuttamiseksi. Tässä tutkielmassa käytämme \textcolor{red}{naamio diffuusio malleja} luomaan tiettyihin teemoihin ehdollistettuja, luovia ja epäintuitiivisia shakkipulmia.
+
+    % While autoregressive LLMs currently dominate language modelling, discrete diffusion models have recently emerged as a compelling alternative. In particular, masked diffusion models, which generate sequences through iterative unmasking, offer unique advantages. Notably, they grant the user manual control over inference speed while maintaining text quality comparable to traditional LLMs. They, however, require more pretraining to achieve the same performance. In this work, we employ masked diffusion models to generate creative and counter-intuitive chess puzzles conditioned on specific themes, granting users fine-grained control over the generated puzzle types.
+
+    Menetelmämme alkaa mallin esikoulutuksella, jossa käytämme Lichess:n shakkipulma tietoaineistoa. Koska hyvien shakkipulmien tulee täyttää tietyt kriteerit, käytämme vahvistusoppimista pulmien ominaisuuksien parantamiseen. Parannamme erityisesti mallin kykyä luoda pulmia, joilla on uniikki ratkaisu, mihin käytämme Denoising Diffusion Policy Optimization (DDPO) algoritmia. Algoritmi optimoi muun muassa ratkaisun uniikkiutta, epäintuitiivisuutta, teeman tarkkuutta, sekä luovuutta.
+
+    % Our methodology begins with pretraining on the Lichess puzzle dataset. Because valid chess puzzles must satisfy strict criteria, most importantly, possessing a unique best solution, we subsequently apply reinforcement learning (RL) to optimize the model directly for these constraints. We utilize Denoising Diffusion Policy Optimization (DDPO) for the optimization process. Our training specifically optimizes for solution uniqueness, counter-intuitiveness, theme accuracy, and creativity, among other metrics.
+
+    Tuloksemme osoittavat menetelmämme toimivuuden. Esikoulutusvaiheen jälkeen, mallimme loi pulmia noin $0.18\%$ ajasta. Vahvistusoppimisella pulmien osuus tuplaantui $0.37\%$:iin. Lisäksi näytämme, että parhaan siirron ennustaminen pulmien luomisen lisäksi parantaa pulmien ominaisuuksia. Pohjimmiltaan tämä työ korostaa \textcolor{red}{naamio diffuusio mallien} ja vahvistusoppimisen potentiaalia monimutkaisten asioiden tuottamiseksi.
+
+    % Our results demonstrate the effectiveness of this approach. While supervised training enables the model to generate valid puzzles $0.18\%$ of the time, the application of reinforcement learning doubles this success rate to $0.37\%$. Furthermore, we show that incorporating the auxiliary tasks of simultaneously generating the best move alongside the puzzle, further enhances puzzle quality. Ultimately, this thesis highlights the potential of masked diffusion models combined with reinforcement learning for solving complex generation tasks.
 \end{abstractpage}
 
 
 
-% \mysection{Esipuhe}
+\mysection{Preface}
 
-% Haluan kiittää Professori Pirjo Professoria ja ohjaajaani Olli Ohjaajaa hyvästä
-% ja huonosta ohjauksesta.\\
+I would like to express my sincere gratitude to my advisor, Adjunct Professor Eric Malmi, whose mentorship and ideas made this work possible. I am equally grateful for the privilege of working within his research group. Furthermore, I am also deeply grateful to Professor Nuutti Hyvönen for his advice and support throughout the writing process. Additionally, I would like to thank Dr. Severi Rissanen, on his guidance on the theory of diffusion models and the suggestion to utilize DDPO. Finally, I would like to thank my family and friends whose encouragement kept me going even when progress was slow. \\
 
-% \vspace{5cm}
-% Otaniemi, 31.8.2018
+\vspace{5cm}
+Otaniemi, 3.7.2026
 
-% \vspace{5mm}
-% {\hfill Teemu T.\ A.\ Teekkari \hspace{1cm}}
+\vspace{5mm}
+{\hfill Aatu Selkee \hspace{1cm}}
 
-% \newpage
+\newpage
 
 
 \thesistableofcontents
@@ -171,8 +192,61 @@ All other rights are reserved.
 \subsection*{Symbols}
 
 \begin{tabular}{ll}
-    $\Delta(S)$  & A set of probability distributions over a set $S$  \\
+    $e_i$ & A basis vector where the $i$-th element is one and the rest zeros. \\
+    $\text{Cat}(x; p)$ & The pmf of a categorical distribution with event probabilities $p$. \\
+    $\alpha_t$ & The masking schedule of a diffusion model. \\
+    $\mu_\theta$ & The denoising network of a diffusion model. \\
+    $p_{\text{unmask}}$ & The probability of a masked token being unmasked. \\
+    $\mathcal{L}_\theta(y | x)$ & Evidence lower bound. \\
+    $\mathcal{M}$ & The Markov decision process. \\
+    $\mathcal{S}$ & The set of states in an MDP. \\
+    $\mathcal{A}$ & The set of actions in an MDP. \\
+    $P$ & The transition function in an MDP. \\
+    $\Delta(S)$ & A set of probability distributions over a set $S$. \\
+    $\pi(s, a)$ & A policy exploring an MDP. \\
+    $G_t$ & The cumulative reward on step $t$. \\
+    $V(s)$ & The state-value function. \\
+    $Q(s, a)$ & The action-value function. \\
+    $J(\theta)$ & Expected episodic reward. \\
+    $\hat{A}_t$ & The advantage function. \\
+    $H(p)$ & The entropy of a distribution $p$. \\
+    $H_b(\cdot)$ & The binary entropy function. \\
+    $\mathbb{KL}(\pi_\theta\parallel\pi_{\text{ref}} | s_i)$ & The KL divergence between the current and reference policies. \\
+    $pv(s)$ & The principal variation of a positions $s$. \\
+    $w(a | s)$ & The winning chances of a player in a chess game. \\
+    $\mathbb{I}_{\text{legal}}(s)$ & The legality criterion. \\
+    $\mathbb{I}_{\text{unique}}(s)$ & The uniqueness criterion. \\
+    $\mathbb{I}_{\text{counter-intuitive}}(s)$ & The counter-intuitiveness criterion. \\
+    $r_{\text{counter-intuitive}}(s)$ & The counter-intuitiveness value function. \\
+    $\mathbb{I}_{\text{filter}}(s)$ & The diversity, realism and theme filter. \\
+    $R(s)$ & The reward function.
 \end{tabular}
+
+\subsection*{Abbreviations}
+
+\begin{tabular}{ll}
+    AI & Artificial Intelligence \\
+    DDPO & Denoising Diffusion Policy Optimization \\
+    dLLM & Diffusion Large Language Model \\
+    ELBO & Evidence Lower Bound \\
+    ESPO & ELBO-based Sequence-level Policy Optimization \\
+    FEN & Forsyth-Edwards Notation \\
+    GPU & Graphics Processing Unit \\
+    GSPO & Group Sequence Policy Optimization \\
+    KL & Kullback-Leibler \\
+    LLM & Large Language Model \\
+    MC & Monte-Carlo \\
+    MDP & Markov Decision Process \\
+    NLP & Natural Language Processing \\
+    PPO & Proximal Policy Optimization \\
+    PV & Principal Variation \\
+    RL & Reinforcement Learning \\
+    RLHF & Reinforcement Learning from Human Feedback \\
+    RLVR & Reinforcement Learning with Verifiable Rewards \\
+    UCI & Universal Chess Interface \\
+    VRAM & Video Memory
+\end{tabular}
+
 %
 %\subsection*{Operaattorit}
 %
