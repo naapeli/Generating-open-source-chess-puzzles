@@ -149,7 +149,7 @@ In this section, we present a few additional results on the reinforcement learni
     \label{fig:rl_overfit_metrics}
 \end{figure}
 
-To combat model collapse, we introduce many diversity filtering mechanisms inspired by \cite{feng2025generatingcreativechesspuzzles}. We introduce the methods described in section \ref{sec:reward function} and perform manual hyperparameter search for a good value of the entropy coefficient $\gamma$. In Figure \ref{fig:entropy coef search} we observe that with a high entropy bonus coefficient $\gamma = 0.3$, the task is too difficult for our model to learn, but with a lower entropy bonus coefficient $\gamma = 0.03$ or $\gamma = 0.06$, the entropy slowly decreases.
+To combat model collapse, we introduce many diversity filtering mechanisms inspired by \cite{feng2025generatingcreativechesspuzzles}. We introduce the methods described in Section \ref{sec:reward function} and perform manual hyperparameter search for a good value of the entropy coefficient $\gamma$. In Figure \ref{fig:entropy coef search} we observe that with a high entropy bonus coefficient $\gamma = 0.3$, the task is too difficult for our model to learn, but with a lower entropy bonus coefficient $\gamma = 0.03$ or $\gamma = 0.06$, the entropy slowly decreases.
 
 \begin{figure}[h]  % ddpo/Ablations/all_diversity_filtering_kl_entropy_with_grad, ddpo/Ablations/all_diversity_filtering_kl_entropy_with_grad_large_entropy_coef, ddpo/Ablations/all_diversity_filtering_kl_entropy_with_grad_medium_entropy_coef
     \includegraphics[width=0.49\textwidth]{sections/figures/rl_training_progress/overfit/DDPO/entropies.pdf}
@@ -173,7 +173,7 @@ In Figures \ref{fig:theme_dist}, we present the distributions of themes in the l
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{sections/figures/other/ci_distribution_over_themes.pdf}
-    \caption{The counter-intuitive rate for the Lichess puzzles dataset, our supervised model and the final model accross all themes. All positions are first filtered for positions with a unique solutions and so that the themes match the ones the model was conditioned on and the percentages are computed accross the filtered dataset.}
+    \caption{The counter-intuitive rate for the Lichess puzzles dataset, our supervised model and the final model across all themes. All positions are first filtered for positions with a unique solution and so that the themes match the ones the model was conditioned on, and the percentages are computed across the filtered dataset.}
     \label{fig:ci_over_themes}
 \end{figure}
 
@@ -201,7 +201,7 @@ Before deciding to use DDPO, we attempt to use the ELBO-based sequence-level pol
     \label{fig:rl_overfit_metrics_ESPO}
 \end{figure}
 
-After observing model collapse, we enable all diversity filtering mechanisms described in section \ref{sec:reward function}. In figure \ref{fig:espo collapse}, we observe that the model collapses to generate illegal positions. Although, the model improved in figure \ref{fig:rl_overfit_metrics_ESPO}, we observe no meaningful improvement in figure \ref{fig:espo collapse} even in the beginning of the training despite using the same training algorithm. At around 400 training steps, we observe huge gradient spikes and despite using gradient norm clipping, the model collapses to generate completely empty boards with no pieces. In addition to this run, we experimented with ESPO a lot, but were unable to get meaningful improvement to the model without complete mode collapse.
+After observing model collapse, we enable all diversity filtering mechanisms described in Section \ref{sec:reward function}. In Figure \ref{fig:espo collapse}, we observe that the model collapses to generate illegal positions. Although, the model improved in Figure \ref{fig:rl_overfit_metrics_ESPO}, we observe no meaningful improvement in Figure \ref{fig:espo collapse} even in the beginning of the training despite using the same training algorithm. At around 400 training steps, we observe huge gradient spikes and despite using gradient norm clipping, the model collapses to generate completely empty boards with no pieces. In addition to this run, we experimented with ESPO a lot, but were unable to get meaningful improvement to the model without complete mode collapse.
 
 \begin{figure}  % final_thesis_experiments/overfit3_espo and final_thesis_experiments/overfit4_espo
     \includegraphics[width=0.49\textwidth]{sections/figures/rl_training_progress/overfit/ESPO/legal_rate.pdf}
