@@ -19,6 +19,8 @@
 \usepackage{xskak}
 \usepackage{chessboard}
 
+\usepackage{makecell}
+
 
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]  % TODO: could try to remove the [section], if a global numbering system for theorems is better.
@@ -148,18 +150,18 @@ All other rights are reserved.
 
 \newpage
 % Teaching masked diffusion language models to generate chess puzzles with reinforcement learning
-\thesistitle{Vahvistusoppimisen käyttäminen shakkipulmien luomiseen naamiodiffuusiomalleilla}
+\thesistitle{Vahvistusoppimisen käyttäminen shakkitehtävien luomiseen naamiodiffuusiomalleilla}
 \supervisor{Prof.\ Nuutti Hyvönen}
 \advisor{Adjunct Prof.\ Eric Malmi}
 \degreeprogram{Matematiikan ja operaatiotutkimuksen maisteriohjelma}
 \major{Soveltava matematiikka}
 \keywords{Naamiodiffuusio, dLLM:t, vahvistusoppiminen, DDPO, shakkipulmat}
 \begin{abstractpage}[finnish]
-    Perinteisesti luovuutta on pidetty koneälykkyyden tärkeimpänä mittarina. Vaikka suurten kielimallien (LLM) viimeaikainen kehitys on mahdollistanut uusia sovelluksia, on luovuutta ja päättelykykyä vaativien vastauksien luominen edelleen haastavaa. Tämä tutkielma käsittelee tätä rajoitetta käyttämällä generatiivisia malleja shakkipulmien luomiseen. Shakkipulmat ovat luonnostaan herkkiä, sillä yhdenkin nappulan vaihtaminen voi hajottaa tehtävän. Tästä syystä shakkipulmien luominen on erinomainen ongelma kielimallien kykyjen testaamiseen ja parantamiseen.
+    Perinteisesti luovuutta on pidetty koneälykkyyden tärkeimpänä mittarina. Vaikka suurten kielimallien (LLM) viimeaikainen kehitys on mahdollistanut uusia sovelluksia, on luovuutta ja päättelykykyä vaativien vastauksien luominen edelleen haastavaa. Tämä tutkielma käsittelee tätä rajoitetta käyttämällä generatiivisia malleja shakkitehtävien luomiseen. Shakkitehtävät ovat luonnostaan herkkiä, sillä yhdenkin nappulan vaihtaminen voi hajottaa tehtävän. Tästä syystä shakkitehtävien luominen on erinomainen ongelma kielimallien kykyjen testaamiseen ja parantamiseen.
 
     % Traditionally, creativity has been considered a fundamental measure of machine intelligence. While the recent advancement of large language models (LLMs) has enabled a wide array of new, creative applications, generating outputs that demand both creativity and reasoning remains a significant challenge. This thesis addresses this limitation by utilizing generative models to create chess puzzles. Chess puzzles are inherently delicate, as altering even a single piece can completely invalidate the solution. Consequently, chess puzzle generation serves as an excellent playground to benchmark and enhance the reasoning and creative capabilities of language models.
 
-    Vaikka autoregressiiviset kielimallit hallitsevat kielien mallinnusta tällä hetkellä, diskreetit diffuusiomallit ovat kehittyneet varteenotettaviksi vaihtoehdoiksi viime vuosina. Erityisesti naamiodiffuusiomallit, jotka kirjoittavat tekstiä luomalla toistuvasti muutamia tavuja kerrallaan, tarjoavat joitakin etuja autoregressiivisiin kielimalleihin nähden. Ne muun muassa antavat käyttäjälle mahdollisuuden vaikuttaa tekstin luomisnopeuteen manuaalisesti, ylläpitäen vastaavaa tekstin laatua kuin autoregressiivisillakin malleilla. Niiden kouluttaminen kuitenkin vaatii enemmän laskentaa saman suorituskyvyn saavuttamiseksi. Tässä tutkielmassa käytämme naamiodiffuusiomalleja luomaan tiettyihin teemoihin ehdollistettuja, luovia ja epäintuitiivisia shakkipulmia.
+    Vaikka autoregressiiviset kielimallit hallitsevat kielen mallinnusta tällä hetkellä, diskreetit diffuusiomallit ovat kehittyneet varteenotettaviksi vaihtoehdoiksi viime vuosina. Erityisesti naamiodiffuusiomallit, jotka tuottavat tekstiä luomalla toistuvasti muutamia tavuja kerrallaan, tarjoavat joitakin etuja autoregressiivisiin kielimalleihin nähden. Ne muun muassa antavat käyttäjälle mahdollisuuden vaikuttaa tekstin luomisnopeuteen manuaalisesti ylläpitäen vastaavaa tekstin laatua kuin autoregressiivisillakin malleilla. Niiden kouluttaminen kuitenkin vaatii enemmän laskentaa saman suorituskyvyn saavuttamiseksi. Tässä tutkielmassa käytämme naamiodiffuusiomalleja luomaan tiettyihin teemoihin ehdollistettuja, luovia ja epäintuitiivisia shakkitehtäviä.
 
     % While autoregressive LLMs currently dominate language modelling, discrete diffusion models have recently emerged as a compelling alternative. In particular, masked diffusion models, which generate sequences through iterative unmasking, offer unique advantages. Notably, they grant the user manual control over inference speed while maintaining text quality comparable to traditional LLMs. They, however, require more pretraining to achieve the same performance. In this work, we employ masked diffusion models to generate creative and counter-intuitive chess puzzles conditioned on specific themes, granting users fine-grained control over the generated puzzle types.
 
@@ -176,7 +178,7 @@ All other rights are reserved.
 
 \mysection{Preface}
 
-I would like to express my sincere gratitude to my advisor, Adjunct Professor Eric Malmi, whose mentorship and ideas made this work possible. I am equally grateful for the privilege of working within his research group. Furthermore, I am also deeply grateful to Professor Nuutti Hyvönen for his advice and support throughout the writing process. Additionally, I would like to thank Dr. Severi Rissanen, on his guidance on the theory of diffusion models and the suggestion to utilize DDPO. Finally, I would like to thank my family and friends whose encouragement kept me going even when progress was slow. \\
+I would like to express my sincere gratitude to my advisor, Adjunct Professor Eric Malmi, whose mentorship and ideas made this work possible. I am equally grateful for the privilege of working within his research group. Furthermore, I am also deeply grateful to Professor Nuutti Hyvönen for his advice and support throughout the writing process. Additionally, I would like to thank Dr. Severi Rissanen on his guidance on the theory of diffusion models and the suggestion to utilize DDPO, as well as Dr. Tom Zahavy and Dr. Xidong Feng for showcasing their work and giving feedback on our research. Finally, I would like to thank my family and friends whose encouragement kept me going even when progress was slow. \\
 
 \vspace{5cm}
 Otaniemi, 3.7.2026

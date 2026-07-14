@@ -736,50 +736,31 @@
     % \end{table}
 \end{frame}
 
-% \begin{frame}{Reinforcement learning results}
-%     \begin{figure}[h]
-%         \begin{subfigure}[t]{0.32\textwidth}
-%             \centering
-%             \chessboard[
-%                 setfen=6k1/7p/pPp1P1pP/P4R2/6p1/r7/4r3/1K5R w - - 0 43, 
-%                 showmover=false, % 8 / 2606
-%                 boardfontsize=14pt
-%             ]
-%             \caption{Closest: \href{https://lichess.org/analysis/fromPosition/6nk/3R4/2p1p1P1/p1r4P/8/P7/2P2r2/2K4R_w_-_-_1_32}{[1]}, \href{https://lichess.org/analysis/fromPosition/6k1/7p/p6P/P5K1/8/8/8/8_w_-_-_11_60}{[2]}, \href{https://lichess.org/analysis/fromPosition/6k1/2R5/p2p1KP1/3P4/8/1p6/6r1/8_w_-_-_0_50}{[3]}\footnotemark[1]}
-%             \label{fig:final puzzle1}
-%         \end{subfigure}
-%         % \hfill
-%         \centering
-%         \begin{subfigure}[t]{0.32\textwidth}
-%             \centering
-%             \chessboard[
-%                 setfen=r1b2k1r/2B1ppb1/p4np1/1p5p/1q3Pn1/PBN5/2P2QPP/3R1R1K w - - 1 22, 
-%                 showmover=false, % 19 / 2606
-%                 boardfontsize=14pt
-%             ]
-%             \caption{Closest: \href{https://lichess.org/analysis/fromPosition/r2r2k1/3N1pp1/p2bp2p/1p6/1q3P2/8/PP2Q1PP/3R1R1K_w_-_-_4_23}{[1]}, \href{https://lichess.org/analysis/fromPosition/r1b2r1k/1p4pp/2p5/p7/4P3/1Bb5/PPP3PP/3R1R1K_w_-_-_0_19}{[2]}, \href{https://lichess.org/analysis/fromPosition/5k1r/1b3pp1/pq4r1/1p5p/1P3Bn1/2N3Q1/1PP3P1/3R1R1K_w_-_-_4_24}{[3]}\footnotemark[2]}
-%             \label{fig:final puzzle2}
-%         \end{subfigure}
-%         % \hfill
-%         \begin{subfigure}[t]{0.32\textwidth}
-%             \centering
-%             \chessboard[
-%                 setfen=2r1k3/4qpp1/1p2P2p/pP1Q1p2/2Np4/P1r2R2/2P3P1/7K w - - 1 34, 
-%                 showmover=false, % 21 / 2606
-%                 boardfontsize=14pt
-%             ]
-%             \caption{Closest: \href{https://lichess.org/analysis/fromPosition/4r1k1/5pp1/1p2P2p/p2Q1P2/2p5/2P1R1P1/2q2KP1/8_w_-_-_3_30}{[1]}, \href{https://lichess.org/analysis/fromPosition/2r5/p4kpp/8/1p6/2Np4/1P5P/P1P3P1/7K_w_-_-_0_25}{[2]}, \href{https://lichess.org/analysis/fromPosition/4r1k1/6bp/p2p2q1/3P3p/4NP2/8/2Q3PP/4R2K_w_-_-_3_32}{[3]}\footnotemark[3]}
-%             \label{fig:final puzzle3}
-%         \end{subfigure}
-%         \caption{Three example puzzles.}
-%         \label{fig:final puzzles}
-%     \end{figure}
 
-%     \footnotetext[1]{Principal variation: f5b5 c6b5 b6b7}
-%     \footnotetext[2]{Principal variation: f2d2 b4d6 c7d6}
-%     \footnotetext[3]{Principal variation: e6f7 e8f8 c4e5 e7e5 d5e5}
+\section{Conclusion}
 
-% \end{frame}
+\begin{frame}
+\begin{center}
+\Huge{\color{\thesiscolor} Conclusion}
+\end{center}
+\end{frame}
+
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item<1-> Masked diffusion models are an effective alternative to LLMs.
+        \item<2-> Puzzle generation can be accurately conditioned on specific tactical themes.
+        \item<3-> Performance of Masked diffusion models can be meaningfully improved through reinforcement learning, doubling the puzzle rate from 0.18\% to 0.37\%.
+        \item<4-> Integrating the auxiliary task of predicting the best move enhances the generative capabilities.
+        \item<5-> Future directions include generalization to other domains, exploring alternative RL algorithms (e.g., ESPO) and including chain-of-thought to puzzle generation.
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}[allowframebreaks]{References}
+    \bibliography{References.bib}
+\end{frame}
+
+
 
 
 \section{Example puzzles}
@@ -830,35 +811,6 @@
     \footnotetext[1]{Principal variation: f5b5 c6b5 b6b7}
     \footnotetext[2]{Principal variation: f2d2 b4d6 c7d6}
     \footnotetext[3]{Principal variation: e6f7 e8f8 c4e5 e7e5 d5e5}
-\end{frame}
-
-\section{Conclusion}
-
-\begin{frame}{Conclusion}
-    \begin{itemize}
-        \item<1-> Masked diffusion models are an effective alternative to LLMs.
-        \item<2-> Puzzle generation can be accurately conditioned on specific tactical themes.
-        \item<3-> Performance of Masked diffusion models can be meaningfully improved through reinforcement learning, doubling the puzzle rate from 0.18\% to 0.37\%.
-        \item<4-> Integrating the auxiliary task of predicting the best move enhances the generative capabilities.
-        \item<5-> Future directions include generalization to other domains, exploring alternative RL algorithms (e.g., ESPO) and including chain-of-thought to puzzle generation.
-    \end{itemize}
-\end{frame}
-
-
-\begin{frame}[allowframebreaks]{References}
-    \bibliography{References.bib}
-\end{frame}
-
-
-
-\begin{frame}{Conclusion}
-    \begin{itemize}
-        \item Masked diffusion models are an effective alternative to LLMs.
-        \item Puzzle generation can be accurately conditioned on specific tactical themes.
-        \item Performance of Masked diffusion models can be meaningfully improved through reinforcement learning, doubling the puzzle rate from 0.18\% to 0.37\%.
-        \item Integrating the auxiliary task of predicting the best move enhances the generative capabilities via more reasoning.
-        \item Future directions include generalization to other domains, exploring alternative RL algorithms and including chain-of-thought to puzzle generation.
-    \end{itemize}
 \end{frame}
 
 

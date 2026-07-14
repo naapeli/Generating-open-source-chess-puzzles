@@ -18,3 +18,7 @@ Stockfish/
 src/runs/
 
 *.csv
+
+!Thesis/build
+Thesis/build/*
+!Thesis/build/Thesis.pdf
