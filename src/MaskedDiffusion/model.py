@@ -105,12 +105,12 @@ class MaskedDiffusion(nn.Module):
         if not self.config.predict_moves:
             generate_move_last = False
         if generate_move_last:
-            phases = [(0, self.config.fen_length), (self.config.fen_length, self.seq_length)]
+            phases = [(0, self.config.fen_length, steps), (self.config.fen_length, self.seq_length, steps // 4)]
         else:
-            phases = [(0, self.seq_length)]
+            phases = [(0, self.seq_length, steps)]
 
-        for start_idx, end_idx in phases:
-            for i in range(steps, 0, -1):
+        for start_idx, end_idx, step_count in phases:
+            for i in range(step_count, 0, -1):
                 t = T_grid[i]
                 s = T_grid[i - 1]
                 alpha_t = self.config.masking_schedule(t)

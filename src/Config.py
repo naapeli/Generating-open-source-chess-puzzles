@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from MaskingSchedule.MaskingSchedule import string_to_schedule
 from tokenization.tokenization import FENTokens
@@ -7,7 +7,7 @@ from tokenization.tokenization import FENTokens
 @dataclass
 class Config:
     schedule: str = "linear"
-    masking_schedule = string_to_schedule(schedule)
+    # masking_schedule = string_to_schedule(schedule)
 
     # tokenization
     n_fen_tokens: int = 48
@@ -16,10 +16,21 @@ class Config:
     rating_dim: int = 1
     fen_length: int = 76
     move_length: int = 5
-    mask_token: FENTokens = FENTokens.mask
+    # mask_token: FENTokens = FENTokens.mask
+    mask_token: int = field(init=False)
     predict_moves: bool = True
     use_context: bool = True
-    n_tokens = n_fen_tokens + n_move_tokens if predict_moves else n_fen_tokens
+    # n_tokens = n_fen_tokens + n_move_tokens if predict_moves else n_fen_tokens
+    n_tokens: int = field(init=False)
+
+    def __post_init__(self):
+        self.n_tokens = self.n_fen_tokens + (self.n_move_tokens if self.predict_moves else 0)
+        self.mask_token = self.n_tokens
+        self.masking_schedule = string_to_schedule(self.schedule)
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.__post_init__()
 
     # model architecture
     n_heads: int = 8

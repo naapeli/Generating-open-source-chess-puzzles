@@ -44,8 +44,6 @@ def cook(puzzle: Puzzle, engine: SimpleEngine) -> List[TagKind]:
         tags.append("crushing")
     elif puzzle.cp > Cp(200):
         tags.append("advantage")
-    else:
-        tags.append("equality")
 
     if attraction(puzzle):
         tags.append("attraction")

@@ -16,6 +16,20 @@ from pathlib import Path
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import os
+import threading
+
+base_path = Path("./src")
+
+thread_local = threading.local()
+engines = []
+engines_lock = threading.Lock()
+
+def init_worker():
+    engine = SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish")
+    engine.configure({"Threads": 1, "Hash": 32})
+    thread_local.engine = engine
+    with engines_lock:
+        engines.append(engine)
 
 from MaskedDiffusion.model import MaskedDiffusion
 from tokenization.tokenization import theme_preprocessor, scale_ratings, unscale_ratings, tokens_to_fen, tokens_to_move, tokenize_fen, tokenize_move
@@ -23,7 +37,8 @@ from metrics.themes import legal , get_unique_puzzle_from_fen, counter_intuitive
 from metrics.diversity_filtering import ReplayBuffer
 from metrics.rewards import good_piece_counts, inter_batch_distances, intra_batch_distances
 from MaskingSchedule.MaskingSchedule import string_to_schedule
-from rl.espo import generate_random_themes
+from rl.espo import generate_random_themes, theme_reward
+from metrics.cook import cook
 
 
 def log_rewards(components: dict[str, float], rewards, step: int):
@@ -42,45 +57,48 @@ def log_metrics(total_loss, grad_norm, kl_divergence, clips, step, lr, reward=No
         writer.add_scalar("Loss/Entropy", entropy, step)
 
 def get_stockfish_data(fen, model_move):
-    if fen is None: return None, None, None, None, False, 0.0
-    if not legal(fen): return None, None, None, None, False, 0.0
-    with SimpleEngine.popen_uci(base_path / ".." / "Stockfish" / "src" / "stockfish") as stockfish:
-        stockfish.configure({"Threads": 1, "Hash": 32})
-        board = chess.Board(fen)
-        limit = Limit(depth=15, time=10, nodes=8_000_000)
-        
-        analysis = stockfish.analyse(board, limit=limit)
-        best_move = analysis["pv"][0] if "pv" in analysis else None
-        pv_string = " ".join([move.uci() for move in analysis["pv"]]) if "pv" in analysis else ""
-        player_to_move = board.turn
-        best_score = analysis["score"].pov(player_to_move) if "score" in analysis else None
-        
-        puzzle = get_unique_puzzle_from_fen(fen, stockfish)
-        
-        cp_loss = None
-        if model_move and best_score is not None:
-            try:
-                move = chess.Move.from_uci(model_move)
-                if move in board.legal_moves:
-                    if best_move and move == best_move:
-                        cp_loss = 0
-                    else:
-                        board.push(move)
-                        model_analysis = stockfish.analyse(board, limit=limit)
-                        model_score = model_analysis["score"].pov(player_to_move)
-                        board.pop()
-                        
-                        if not best_score.is_mate() and not model_score.is_mate():
-                            cp_loss = max(0, best_score.score() - model_score.score())
-            except:
-                pass
+    if fen is None: return None, None, None, None, False, 0.0, []
+    if not legal(fen): return None, None, None, None, False, 0.0, []
+    stockfish = thread_local.engine
+    board = chess.Board(fen)
+    limit = Limit(depth=15, time=10, nodes=8_000_000)
+    
+    analysis = stockfish.analyse(board, limit=limit)
+    best_move = analysis["pv"][0] if "pv" in analysis else None
+    pv_string = " ".join([move.uci() for move in analysis["pv"]]) if "pv" in analysis else ""
+    player_to_move = board.turn
+    best_score = analysis["score"].pov(player_to_move) if "score" in analysis else None
+    
+    puzzle = get_unique_puzzle_from_fen(fen, stockfish)
+    
+    cp_loss = None
+    if model_move and best_score is not None:
+        try:
+            move = chess.Move.from_uci(model_move)
+            if move in board.legal_moves:
+                if best_move and move == best_move:
+                    cp_loss = 0
+                else:
+                    board.push(move)
+                    model_analysis = stockfish.analyse(board, limit=limit)
+                    model_score = model_analysis["score"].pov(player_to_move)
+                    board.pop()
+                    
+                    if not best_score.is_mate() and not model_score.is_mate():
+                        cp_loss = max(0, best_score.score() - model_score.score())
+        except:
+            pass
 
-        stockfish.configure({"Clear Hash": None})
-        ci_sol, ci_val = counter_intuitive(fen, stockfish, return_value=True)
+    stockfish.configure({"Clear Hash": None})
+    ci_sol, ci_val = counter_intuitive(fen, stockfish, return_value=True)
 
-        if best_move is None:
-            return puzzle, None, cp_loss, pv_string, ci_sol, ci_val
-    return puzzle, best_move.uci(), cp_loss, pv_string, ci_sol, ci_val
+    generation_themes = []
+    if puzzle is not None:
+        generation_themes = cook(puzzle, stockfish)
+
+    if best_move is None:
+        return puzzle, None, cp_loss, pv_string, ci_sol, ci_val, generation_themes
+    return puzzle, best_move.uci(), cp_loss, pv_string, ci_sol, ci_val, generation_themes
 
 def save_board(fen, tag, step, themes=None, rating=None):
     try:
@@ -113,8 +131,11 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
     intra_batch_fen_dist = torch.zeros(batch_size, dtype=torch.float32)
     inter_batch_pv_dist = torch.zeros(batch_size, dtype=torch.float32)
     intra_batch_pv_dist = torch.zeros(batch_size, dtype=torch.float32)
+    intra_batch_opponent_pv_dist = torch.zeros(batch_size, dtype=torch.float32)
+    intra_batch_abstracted_pv_dist = torch.zeros(batch_size, dtype=torch.float32)
     move_matches = torch.zeros(batch_size, dtype=bool)
     cp_losses = torch.full((batch_size,), float("nan"), dtype=torch.float32)
+    themes_match = torch.zeros(batch_size, dtype=bool)
     # rating_penalty = torch.zeros(batch_size, dtype=torch.float32)
 
     if config.use_context and themes_tokens is not None:
@@ -135,14 +156,14 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
             generations.append((None, None))
     
     try:
-        with ThreadPoolExecutor(max_workers=cpu_count) as executor:
-            results = list(executor.map(lambda p: get_stockfish_data(p[0], p[1]), generations))
+        results = list(executor.map(lambda p: get_stockfish_data(p[0], p[1]), generations))
         puzzles = [r[0] for r in results]
         best_moves = [r[1] for r in results]
         found_cp_losses = [r[2] for r in results]
         pvs = [r[3] for r in results]
         ci_solutions = [r[4] for r in results]
         ci_values = [r[5] for r in results]
+        generation_themes_list = [r[6] for r in results]
     except TimeoutError:
         print("Stockfish timed out")
         return torch.zeros(batch_size, dtype=torch.float32)
@@ -150,7 +171,15 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
     valid_indices = []
 
     batch_fens = [fen for fen, move in generations]
-    batch_pvs = pvs
+    
+    unique_batch_fens = [
+        fen if (fen is not None and puzzles[idx] is not None) else None
+        for idx, (fen, move) in enumerate(generations)
+    ]
+    unique_batch_pvs = [
+        " ".join([node.move.uci() for node in puzzle.mainline]) if puzzle is not None else None
+        for puzzle in puzzles
+    ]
 
     sampled_fens, sampled_pvs, _, _ = buffer.sample(2000)
 
@@ -167,19 +196,30 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
 
         counter_intuitive_solution[i] = ci_solutions[i]
         counter_intuitive_values[i] = ci_values[i]
-        
-        pv = pvs[i]
-        intra_batch_fen_dist[i], intra_batch_pv_dist[i] = intra_batch_distances(fen, pv, batch_fens, batch_pvs, i)
-        inter_batch_fen_dist[i], inter_batch_pv_dist[i] = inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
 
         puzzle = puzzles[i]
         if puzzle is None:
             continue
         unique_solution[i] = 1
 
+        pv = unique_batch_pvs[i]
+        intra_batch_fen_dist[i], intra_batch_pv_dist[i], intra_batch_opponent_pv_dist[i], intra_batch_abstracted_pv_dist[i] = intra_batch_distances(fen, pv, unique_batch_fens, unique_batch_pvs, i)
+        inter_batch_fen_dist[i], inter_batch_pv_dist[i] = inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
+
+        generation_themes = generation_themes_list[i]
+        if config.use_context and themes[i] is not None:
+            themes_match[i] = theme_reward(themes[i], generation_themes)
+
         # if the position returns a high reward, add it to the buffer
-        good_distances = (intra_batch_fen_dist[i] >= 6) and (intra_batch_pv_dist[i] >= 1) and (inter_batch_fen_dist[i] >= 6)   # and (inter_batch_pv_dist[i] >= 1)
-        if unique_solution[i] and counter_intuitive_solution[i] and piece_counts[i] and good_distances:
+        good_distances = (
+            (intra_batch_fen_dist[i] >= 6) and 
+            (intra_batch_pv_dist[i] >= 1) and 
+            (inter_batch_fen_dist[i] >= 6) and 
+            (inter_batch_pv_dist[i] >= 1) and 
+            (intra_batch_opponent_pv_dist[i] >= 1) and 
+            (intra_batch_abstracted_pv_dist[i] >= 1)
+        )
+        if unique_solution[i] and counter_intuitive_solution[i] and piece_counts[i] and good_distances and themes_match[i]:
             buffer_themes = themes[i] if themes[i] is not None else []
             buffer_rating = true_ratings[i] if true_ratings[i] is not None else -1
             buffer.add(fen, pv, buffer_themes, buffer_rating)
@@ -195,12 +235,20 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
     good_intra_pv = intra_batch_pv_dist >= 1
     good_inter_fen = inter_batch_fen_dist >= 6
     good_inter_pv = inter_batch_pv_dist >= 1
+    good_intra_opponent_pv = intra_batch_opponent_pv_dist >= 1
+    good_intra_abstracted_pv = intra_batch_abstracted_pv_dist >= 1
 
     intra_distances = good_intra_fen & good_intra_pv
     inter_distances = good_inter_fen & good_inter_pv
     all_distances = intra_distances & inter_distances
 
-    pass_diversity_filtering = good_intra_fen & good_inter_fen & good_intra_pv & good_inter_pv & piece_counts & (entropy > 0.5)
+    pass_diversity_filtering = (
+        good_intra_fen & good_inter_fen & 
+        good_intra_pv & good_inter_pv & 
+        good_intra_opponent_pv & 
+        good_intra_abstracted_pv & 
+        (entropy > 5.352030263919617)   # & (entropy > 5.4520302639196165)
+    )
     # pass_diversity_filtering = torch.ones(batch_size, dtype=bool)
 
     components = {
@@ -212,25 +260,28 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
         "counter_intuitive_rate_given_unique": counter_intuitive_solution[is_valid].float().mean().item() if is_valid.any() else 0,
         "unique_and_counter_intuitive": unique_and_counter_intuitive.float().mean().item(),
         "piece_counts": piece_counts[legal_position].float().mean().item() if legal_position.any() else 0,
-        # "themes_match_rate": themes_match[is_valid].float().mean().item() if is_valid.any() and config.use_context else 0,
-        "dist_inter_fen": inter_batch_fen_dist[legal_position].float().mean().item() if legal_position.any() else 0,
-        "dist_intra_fen": intra_batch_fen_dist[legal_position].float().mean().item() if legal_position.any() else 0,
-        "dist_inter_pv": inter_batch_pv_dist[legal_position].float().mean().item() if legal_position.any() else 0,
-        "dist_intra_pv": intra_batch_pv_dist[legal_position].float().mean().item() if legal_position.any() else 0,
-        "intra_dist": intra_distances[legal_position].float().mean().item() if legal_position.any() else 0,
-        "inter_dist": inter_distances[legal_position].float().mean().item() if legal_position.any() else 0,
-        "all_dist": all_distances[legal_position].float().mean().item() if legal_position.any() else 0,
+        "themes_match_rate": themes_match[is_valid].float().mean().item() if is_valid.any() and config.use_context else 0,
+        "dist_inter_fen": inter_batch_fen_dist[is_valid].float().mean().item() if is_valid.any() else 0,
+        "dist_intra_fen": intra_batch_fen_dist[is_valid].float().mean().item() if is_valid.any() else 0,
+        "dist_inter_pv": inter_batch_pv_dist[is_valid].float().mean().item() if is_valid.any() else 0,
+        "dist_intra_pv": intra_batch_pv_dist[is_valid].float().mean().item() if is_valid.any() else 0,
+        "dist_intra_opponent_pv": intra_batch_opponent_pv_dist[is_valid].float().mean().item() if is_valid.any() else 0,
+        "dist_intra_abstracted_pv": intra_batch_abstracted_pv_dist[is_valid].float().mean().item() if is_valid.any() else 0,
+        "intra_dist": intra_distances[is_valid].float().mean().item() if is_valid.any() else 0,
+        "inter_dist": inter_distances[is_valid].float().mean().item() if is_valid.any() else 0,
+        "all_dist": all_distances[is_valid].float().mean().item() if is_valid.any() else 0,
         # "rating_abs_diff": (-1000 * rating_penalty[is_valid]).float().mean().item() if is_valid.any() and config.use_context else 0,
-        "pass_diversity_filtering": pass_diversity_filtering[legal_position].float().mean().item() if legal_position.any() else 0,
+        "pass_diversity_filtering": pass_diversity_filtering[is_valid].float().mean().item() if is_valid.any() else 0,
         "move_match_rate": move_matches[legal_position].float().mean().item() if legal_position.any() and config.predict_moves else 0,
         "cp_loss": cp_losses[is_valid & ~torch.isnan(cp_losses)].mean().item() if (is_valid & ~torch.isnan(cp_losses)).any() and config.predict_moves else 0,
     }
 
     rewards = torch.zeros(batch_size, dtype=torch.float32)
-    # rewards = torch.where(legal_position & pass_diversity_filtering & unique_and_counter_intuitive, 1.0, rewards)
-    # rewards = torch.where(legal_position & unique_solution, counter_intuitive_values, rewards)
-    # rewards = torch.where(legal_position & unique_and_counter_intuitive, 1.0, rewards)
-    rewards = torch.where(legal_position & pass_diversity_filtering & unique_solution, 10 * counter_intuitive_values, rewards)
+    # rewards = torch.where(legal_position & pass_diversity_filtering & piece_counts & themes_match & unique_solution, 10 * counter_intuitive_values, rewards)
+    # rewards = torch.where(legal_position & themes_match & unique_solution, torch.clamp(10 * counter_intuitive_values, min=0), rewards)
+    rewards = torch.where(legal_position & pass_diversity_filtering & piece_counts & themes_match & unique_solution, torch.clamp(10 * counter_intuitive_values, min=0.0, max=1.0), rewards)
+    # rewards = torch.where(legal_position & themes_match & unique_and_counter_intuitive, 1.0, rewards)
+    # rewards = torch.where(legal_position & ~piece_counts, -1.0, rewards)
     rewards = torch.where(~legal_position, -2.0, rewards)
     rewards = rewards.to(torch.float32)
 
@@ -251,11 +302,16 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
 
 def kl_divergence(model_log_probs, ref_log_probs, x_t, p_unmask, MASK_ID):
     mask = (x_t == MASK_ID).float()
+    model_log_probs = torch.clamp(model_log_probs, min=-20.0)
+    ref_log_probs = torch.clamp(ref_log_probs, min=-20.0)
     kl_div_vocab = F.kl_div(input=ref_log_probs, target=model_log_probs, log_target=True, reduction="none").sum(dim=2)
+    if isinstance(p_unmask, torch.Tensor) and p_unmask.dim() == 1:
+        p_unmask = p_unmask.unsqueeze(1)
     token_kl = kl_div_vocab * mask * p_unmask
     return token_kl.sum(dim=1)
 
 def seq_log_prob(log_probs, x_t, x_s, p_unmask, MASK_ID):
+    log_probs = torch.clamp(log_probs, min=-20.0)
     unmask_mask = ((x_t == MASK_ID) & (x_s != MASK_ID)).float()
     remain_masked_mask = ((x_t == MASK_ID) & (x_s == MASK_ID)).float()
     x_s_log_probs = log_probs.gather(dim=-1, index=x_s.clamp(max=log_probs.shape[-1]-1).unsqueeze(-1)).squeeze(-1)
@@ -268,14 +324,20 @@ def seq_log_prob(log_probs, x_t, x_s, p_unmask, MASK_ID):
 
 def entropy(log_probs, x_t, p_unmask, MASK_ID):
     mask = (x_t == MASK_ID).float()
+    log_probs = torch.clamp(log_probs, min=-20.0)
     entropy_vocab = -(torch.exp(log_probs) * log_probs).sum(dim=2)
     if isinstance(p_unmask, torch.Tensor) and p_unmask.dim() == 1:
         p_unmask = p_unmask.unsqueeze(1)
-    token_entropy = entropy_vocab * mask * p_unmask
+    
+    log_p_unmask = torch.log(p_unmask + 1e-13)
+    log_p_mask = torch.log(1.0 - p_unmask + 1e-13)
+    binary_entropy = -(p_unmask * log_p_unmask + (1.0 - p_unmask) * log_p_mask)
+
+    token_entropy = (entropy_vocab * p_unmask + binary_entropy) * mask
+    # token_entropy = entropy_vocab * mask * p_unmask  # this has correct gradient, but not the correct value, as the constant term is omitted here.
     return token_entropy.sum(dim=1)
 
 def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, step):
-    model.eval()
     with torch.no_grad():
         total_batch_size = args.batch_size * args.group_size
         x_t = torch.full((total_batch_size, model.seq_length), config.mask_token, dtype=torch.long, device=device)
@@ -310,11 +372,13 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             if s == 0.0:
                 alpha_s = torch.ones_like(alpha_s)
 
-            logits = model(x_t, themes_one_hot if config.use_context else None, scaled_ratings if config.use_context else None)
+            with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
+                logits = model(x_t, themes_one_hot if config.use_context else None, scaled_ratings if config.use_context else None)
             model_log_probs = F.log_softmax(logits / args.temperature, dim=2)
             model_probs = torch.exp(model_log_probs)
 
-            ref_logits = ref_model(x_t, themes_one_hot if config.use_context else None, scaled_ratings if config.use_context else None)
+            with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
+                ref_logits = ref_model(x_t, themes_one_hot if config.use_context else None, scaled_ratings if config.use_context else None)
             ref_log_probs = F.log_softmax(ref_logits / args.temperature, dim=2)
 
             log_p_unmask = torch.log(alpha_s - alpha_t) - torch.log(1.0 - alpha_t + 1e-13)
@@ -323,8 +387,10 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             log_p_mask_tensor = log_p_mask.view(1, 1, 1).expand(total_batch_size, model.seq_length, 1)
             log_probs = torch.cat([model_log_probs + log_p_unmask, log_p_mask_tensor], dim=2)
             
-            dist = torch.distributions.Categorical(logits=log_probs)
-            sampled_tokens = dist.sample()
+            # dist = torch.distributions.Categorical(logits=log_probs)
+            # sampled_tokens = dist.sample()
+            gumbel_noise = -torch.log(-torch.log(torch.rand_like(log_probs) + 1e-10) + 1e-10)
+            sampled_tokens = torch.argmax(log_probs + gumbel_noise, dim=-1)
             
             mask = (x_t == config.mask_token)
             x_s = torch.where(mask, sampled_tokens, x_t)
@@ -350,12 +416,10 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             
             # Clean up sampling step tensors to prevent peak memory growth
             del logits, ref_logits, model_log_probs, model_probs, ref_log_probs
-            del log_p_unmask, log_p_mask, log_p_mask_tensor, log_probs, dist, sampled_tokens, mask
+            del log_p_unmask, log_p_mask, log_p_mask_tensor, log_probs, sampled_tokens, mask
 
         rewards = torch.zeros((total_batch_size, args.steps), dtype=torch.float32, device=device)
         rewards[:, -1] = get_reward(x_t, total_entropy.cpu(), config, step, themes_one_hot if config.use_context else None, ratings if config.use_context else None)
-        
-        kl_divergences = torch.stack([t["step_kl"] for t in trajectories], dim=1)  # (batch_size, steps) (T => 0)
         
         returns = torch.zeros_like(rewards)
         running_return = torch.zeros(total_batch_size, dtype=torch.float32, device=device)
@@ -364,8 +428,6 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             running_return = rewards[:, t] + args.gamma * running_return
             returns[:, t] = running_return
             
-        returns = returns + args.entropy_coef * total_entropy.unsqueeze(1) - args.kl_coef * kl_divergences
-        
         reward_val = returns.float().mean().item()
 
         # Reshape returns to (num_groups, group_size, steps) to normalize over each group
@@ -374,7 +436,7 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             mean_other_returns = (returns_grouped.sum(dim=1, keepdim=True) - returns_grouped) / (args.group_size - 1)
         else:
             mean_other_returns = torch.zeros_like(returns_grouped)
-        advantages_grouped = (returns_grouped - mean_other_returns) / (returns_grouped.std(dim=(1, 2), keepdim=True) + 1e-5)
+        advantages_grouped = (returns_grouped - mean_other_returns) / (returns_grouped.std(dim=(1, 2), keepdim=True) + 1e-2)
         advantages = advantages_grouped.reshape(total_batch_size, args.steps).T.reshape(-1)
     
     x_t = torch.cat([t["x_t"] for t in trajectories], dim=0)
@@ -393,7 +455,7 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
     
     # Explicitly release large intermediate tensors/lists that are now in dataset
     del x_t, x_s, old_log_probs, advantages, p_unmasks, themes_one_hot_all, scaled_ratings_all
-    del trajectories, rewards, kl_divergences, returns, returns_grouped, advantages_grouped
+    del trajectories, rewards, returns, returns_grouped, advantages_grouped
     if args.group_size > 1:
         del mean_other_returns
     if config.use_context:
@@ -407,7 +469,6 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
 
     dataloader = DataLoader(dataset, batch_size=args.ppo_minibatch_size, shuffle=True)
 
-    model.train()
     total_loss = 0
     n_clips = 0
     total_norm = 0
@@ -429,13 +490,34 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             surr2 = torch.clamp(ratio, 1.0 - args.eps, 1.0 + args.eps) * advantages_batch
             
             loss_ppo = -torch.min(surr1, surr2).sum() / (args.steps * total_batch_size)
-            loss_ppo.backward()
+
+            entropy_batch = entropy(model_log_probs, x_t_batch, p_unmask_batch, config.mask_token)
+            loss_entropy = -args.entropy_coef * entropy_batch.sum() / (model.seq_length * args.steps * total_batch_size)
+            ref_logits = None
+            ref_log_probs = None
+            if args.kl_coef > 0:
+                with torch.no_grad():
+                    with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
+                        ref_logits = ref_model(
+                            x_t_batch,
+                            themes_batch if config.use_context else None,
+                            ratings_batch if config.use_context else None,
+                            checkpoint_activations=args.checkpoint_activations
+                        )
+                    ref_log_probs = F.log_softmax(ref_logits / args.temperature, dim=2)
+                kl_batch = kl_divergence(model_log_probs, ref_log_probs, x_t_batch, p_unmask_batch, config.mask_token)
+                loss_kl = args.kl_coef * kl_batch.sum() / (model.seq_length * args.steps * total_batch_size)
+            else:
+                loss_kl = torch.tensor(0.0, device=device)
+
+            loss_total = loss_ppo + loss_entropy + loss_kl
+            loss_total.backward()
             
-            total_loss += loss_ppo.item()
+            total_loss += loss_total.item()
             n_clips += (surr2 < surr1).float().mean().item()
             
             # Explicitly delete minibatch tensors to prevent VRAM accumulation
-            del logits, model_log_probs, new_log_probs, ratio, surr1, surr2, loss_ppo
+            del logits, model_log_probs, new_log_probs, ratio, surr1, surr2, loss_ppo, loss_total, loss_entropy, loss_kl, ref_logits, ref_log_probs
             del x_t_batch, x_s_batch, old_log_probs_batch, advantages_batch, p_unmask_batch, themes_batch, ratings_batch
             
         # supervised loss for puzzles in the buffer (that are known to be good)
@@ -506,13 +588,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--run_name", type=str, required=True)
     parser.add_argument("--reference_path", type=str, required=True)
+    parser.add_argument("--checkpoint_model", type=str, default=None)
+    parser.add_argument("--save_period", type=int, default=2000)
     parser.add_argument("--n_generations", type=int, default=20000)
     parser.add_argument("--lr", type=float, default=3e-5)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--n_artificial", type=int, default=4)
     parser.add_argument("--ppo_minibatch_size", type=int, default=4096)
     parser.add_argument("--checkpoint_activations", action="store_true", help="Use activation checkpointing to save GPU memory")
-    # parser.add_argument("--save_period", type=int, default=2000)
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--kl_coef", type=float, default=0.03)
     parser.add_argument("--entropy_coef", type=float, default=0.03)
@@ -522,12 +605,13 @@ if __name__ == "__main__":
     parser.add_argument("--ppo_epochs", type=int, default=1)
     parser.add_argument("--gamma", type=float, default=1.0)
     parser.add_argument("--group_size", type=int, default=4)
-    parser.add_argument("--lichess_distribution", type=bool, default=True)
+    parser.add_argument("--lichess_distribution", action="store_true", help="Use Lichess theme distribution instead of custom theme distribution")
     args = parser.parse_args()
 
     cpu_count = int(os.environ.get("SLURM_CPUS_PER_TASK")) * int(os.environ.get("SLURM_NTASKS")) - 2
 
-    base_path = Path("./src")
+    executor = ThreadPoolExecutor(max_workers=cpu_count, initializer=init_worker)
+
     path = base_path / "runs" / "rl" / args.run_name
     path.mkdir(parents=True, exist_ok=True)
     writer = SummaryWriter(path)
@@ -537,11 +621,14 @@ if __name__ == "__main__":
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    checkpoint = torch.load(args.reference_path, map_location="cpu", weights_only=False)
+    continue_from_checkpoint = args.checkpoint_model is not None
+    reference_checkpoint = torch.load(args.reference_path, map_location="cpu", weights_only=False)
+    if continue_from_checkpoint:
+        checkpoint = torch.load(path / args.checkpoint_model, map_location="cpu", weights_only=False)
+    else:
+        checkpoint = reference_checkpoint
 
     config = checkpoint["config"]
-    config.schedule = "linear"
-    config.masking_schedule = string_to_schedule(config.schedule)  # NOTE: remember that we are using a linear masking schedule
 
     buffer_folder = "rl_themes" if config.use_context else "rl"
     buffer = ReplayBuffer(capacity, base_path / "dataset" / buffer_folder)
@@ -549,15 +636,46 @@ if __name__ == "__main__":
     model = MaskedDiffusion(config)
     model.load_state_dict(checkpoint["model"])
     model.to(device=device)
+    model.train()
+    model = torch.compile(model)
 
-    reference_model = MaskedDiffusion(checkpoint["config"])
-    reference_model.load_state_dict(checkpoint["model"])
+    reference_model = MaskedDiffusion(reference_checkpoint["config"])
+    reference_model.load_state_dict(reference_checkpoint["model"])
     reference_model.to(device=device)
     reference_model.eval()
     reference_model.requires_grad_(False)
+    reference_model = torch.compile(reference_model)
 
     optimizer = AdamW(model.parameters(), lr=args.lr)
-    scheduler = LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=3)
+    if continue_from_checkpoint:
+        optimizer.load_state_dict(checkpoint["optimizer"])
 
-    for step in range(args.n_generations):
-        train_ddpo(model, reference_model, optimizer, scheduler, config, device, args, step)
+    start_step = checkpoint.get("step", 0) if continue_from_checkpoint else 0
+    scheduler = LinearLR(optimizer, start_factor=0.01, end_factor=1.0, total_iters=3, last_epoch=start_step if continue_from_checkpoint else -1)
+
+    def save_state(step_val):
+        checkpoint_path = path / f"model_{step_val:07d}.pt"
+        save_dict = {
+            "model": model.state_dict(),
+            "config": config,
+            "optimizer": optimizer.state_dict(),
+            "step": step_val
+        }
+        torch.save(save_dict, checkpoint_path)
+
+    try:
+        for step in range(start_step, args.n_generations):
+            train_ddpo(model, reference_model, optimizer, scheduler, config, device, args, step)
+            
+            if step > 0 and step % args.save_period == 0:
+                save_state(step)
+    finally:
+        executor.shutdown(wait=True)
+        for engine in engines:
+            try:
+                engine.quit()
+            except Exception:
+                pass
+
+    save_state(args.n_generations)
+    writer.close()

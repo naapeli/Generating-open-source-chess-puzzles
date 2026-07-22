@@ -89,6 +89,7 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device):
         "is_legal": False,
         "is_puzzle": False,
         "counter_intuitive": None,
+        "counter_intuitive_value": None,
         "actual_themes": None,
         "themes_match": None,
         "main_line": None
@@ -111,7 +112,7 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device):
         entry["is_legal"] = True
         
         engine.configure({"Clear Hash": None})
-        entry["counter_intuitive"] = counter_intuitive(fen, engine)
+        entry["counter_intuitive"], entry["counter_intuitive_value"] = counter_intuitive(fen, engine, return_value=True)
         puzzle = get_unique_puzzle_from_fen(fen, engine)
         
         if puzzle is not None:
@@ -141,12 +142,13 @@ try:
         
         config = checkpoint["config"]
         model = MaskedDiffusion(config)
-        model.load_state_dict(checkpoint["model"])
+        state_dict = {k.removeprefix("_orig_mod."): v for k, v in checkpoint["model"].items()}
+        model.load_state_dict(state_dict)
         model.to(device=device)
         
         results_list = []
         n = args.n_fens
-        batch_size = 5000
+        batch_size = 25000
         
         total_batches = (n + batch_size - 1) // batch_size
         

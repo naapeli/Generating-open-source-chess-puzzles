@@ -28,7 +28,8 @@ def main():
     parser.add_argument("--distributed", action="store_true")
     parser.add_argument("--checkpoint_name", type=str, default=None)
     parser.add_argument("--run_name", type=str, default=None)
-    parser.add_argument("--n_evaluation_positions", type=int, default=20000)
+    parser.add_argument("--n_evaluation_positions", type=int, default=50000)
+    parser.add_argument("--evaluation_interval", type=int, default=100_000)
     args = parser.parse_args()
     distributed = args.distributed
     continue_from_checkpoint = args.checkpoint_name != None
@@ -71,7 +72,7 @@ def main():
         config = checkpoint["config"]
         config.n_steps = 2_000_000
     else:
-        config = Config(train_logging_interval=10, validation_interval=10_000, n_steps=1_000_000, save_interval=100_000, batch_size=1024)
+        config = Config(train_logging_interval=10, validation_interval=10_000, n_steps=2_000_000, save_interval=100_000, batch_size=1024, predict_moves=False)
         
     # ====================== SEED AND PRECISION ======================
     torch.manual_seed(rank)
@@ -246,7 +247,9 @@ def main():
         stockfish_path = base_path / ".." / "Stockfish" / "src" / "stockfish"
         engine_pool = queue.Queue()
         for _ in range(n_jobs):
-            engine_pool.put(SimpleEngine.popen_uci(stockfish_path))
+            engine = SimpleEngine.popen_uci(stockfish_path)
+            engine.configure({"Threads": 1, "Hash": 32})
+            engine_pool.put(engine)
 
         def process_position(fen_tokens):
             engine = engine_pool.get()
@@ -254,9 +257,10 @@ def main():
                 fen = tokens_to_fen(fen_tokens.cpu())
                 if not legal(fen):
                     return False, False, False
+                engine.configure({"Clear Hash": None})
+                is_counter_intuitive = counter_intuitive(fen, engine)
                 puzzle = get_unique_puzzle_from_fen(fen, engine)
                 is_unique = (puzzle is not None)
-                is_counter_intuitive = counter_intuitive(fen, engine)
                 return True, is_unique, (is_unique and is_counter_intuitive)
             except Exception:
                 return False, False, False
@@ -285,7 +289,7 @@ def main():
                 
             with torch.no_grad():
                 with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
-                    tokens = unwrapped_model.sample(themes_one_hot, scaled_ratings, batch_size=b, steps=512)
+                    tokens = unwrapped_model.sample(themes_one_hot, scaled_ratings, batch_size=b, steps=256)
             
             if config.predict_moves:
                 fen_tokens = tokens[:, :config.fen_length]
@@ -384,9 +388,11 @@ def main():
 
                 model.train()
             
+            if step % args.evaluation_interval == 0:
+                evaluate_puzzles(step)
+            
             # create a checkpoint
             if step % config.save_interval == 0:
-                evaluate_puzzles(step)
                 if master_process:
                     save_state()
 
