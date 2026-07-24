@@ -18,5 +18,6 @@ Stockfish/
 src/runs/
 
 *.csv
+Generate_positions/
 
 *.out
