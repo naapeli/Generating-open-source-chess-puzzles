@@ -14,9 +14,11 @@ def fen_to_padded(fen):  # make the format the same as
     board, side, castling, enpassant = fen.split(" ")[:4]
     board = re.sub(r"\d", lambda digit: "." * int(digit.group()), board)
     board = re.sub("/", "", board)
-    castling = "".join([char if char in castling else "." for char in "KQkq"])
-    enpassant = ".." if enpassant == "-" else enpassant
-    return " ".join([board, side, castling, enpassant])
+    return "".join([side, board])
+    # return " ".join([board, side])
+    # castling = "".join([char if char in castling else "." for char in "KQkq"])
+    # enpassant = ".." if enpassant == "-" else enpassant
+    # return " ".join([board, side, castling, enpassant])
 
 def PV_distance(pv1: str, pv2: str) -> bool:
     return get_pv_distance(pv1, pv2) >= 1  # max length of edit_distance is max(len(pv1), len(pv2))

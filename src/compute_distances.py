@@ -43,6 +43,7 @@ def compute_dataset_distances(fens_A, fens_B, pvs_A, pvs_B, chunk_size=5000, is_
     """
     n_A = len(fens_A)
     n_B = len(fens_B)
+    print("Dataset lengths:", n_A, n_B)
     
     board_dists = np.empty(n_A, dtype=np.float32)
     pv_dists = np.empty(n_A, dtype=np.float32)
@@ -59,8 +60,10 @@ def compute_dataset_distances(fens_A, fens_B, pvs_A, pvs_B, chunk_size=5000, is_
         end_idx = min(start_idx + chunk_size, n_A)
         chunk_A = padded_A[start_idx:end_idx]
 
+        print(f"   [+] Processing chunk {start_idx} to {end_idx}...", flush=True)
+
         # Compute pairwise board Levenshtein distance matrix for the chunk
-        board_dist_matrix = cdist(chunk_A, padded_B, scorer=Levenshtein.distance, workers=-1).astype(np.float32)
+        board_dist_matrix = cdist(chunk_A, padded_B, scorer=Levenshtein.distance, workers=-1, score_hint=12, score_cutoff=65).astype(np.float32)
 
         if is_self:
             # For self-distance, set the diagonal element to a large value
@@ -148,22 +151,31 @@ def main():
         print(f"Loaded {len(df_lic)} rows from Lichess.", flush=True)
 
         if not args.no_filter:
-            # In dataset.csv, everything is a puzzle, but we check if we need to clean or filter
-            pass
+            filter_col = None
+            for col in ["is_puzzle_true", "is_puzzle"]:
+                if col in df_lic.columns:
+                    filter_col = col
+                    break
+            if filter_col is not None:
+                df_lic = df_lic[df_lic[filter_col] == True]
+                print(f"Filtered Lichess to {len(df_lic)} puzzles ({filter_col} == True).", flush=True)
 
     # 3. Sample and align sizes for Lichess
     lic_fens, lic_pvs = [], []
     if df_lic is not None:
         # Get first N Lichess puzzles
         # Map FEN column from 'Puzzle_FEN' or 'FEN'
-        fen_col = "Puzzle_FEN"
-        pv_col = "Moves"
+        fen_col = "Puzzle_FEN" if "Puzzle_FEN" in df_lic.columns else ("FEN" if "FEN" in df_lic.columns else "fen")
+        # fen_col = "FEN" if "FEN" in df_lic.columns else "fen"  # the positions just before the actual puzzle for the lichess dataset...
+        pv_col = "Moves" if "Moves" in df_lic.columns else "main_line"
         
         # Filter rows that have non-null FEN and Moves
         df_lic_valid = df_lic.dropna(subset=[fen_col, pv_col])
         n_lic = len(df_lic_valid)
         sample_n = args.lichess_sample_size if (args.lichess_sample_size > 0 and args.lichess_sample_size < n_lic) else n_lic
-        df_lic_sampled = df_lic_valid.head(sample_n) if sample_n < n_lic else df_lic_valid
+        # df_lic_valid = df_lic_valid.drop_duplicates(subset=[fen_col])
+        # df_lic_sampled = df_lic_valid.head(sample_n) if sample_n < n_lic else df_lic_valid
+        df_lic_sampled = df_lic_valid.sample(sample_n) if sample_n < n_lic else df_lic_valid
         
         lic_fens = df_lic_sampled[fen_col].tolist()
         lic_pvs = [extract_pv_moves(pv, is_lichess=True) for pv in df_lic_sampled[pv_col]]
@@ -191,7 +203,8 @@ def main():
             # Get first N generated positions
             n_gen = len(df_gen)
             sample_n = args.self_sample_size if (args.self_sample_size > 0 and args.self_sample_size < n_gen) else n_gen
-            df_gen_sampled = df_gen.head(sample_n) if sample_n < n_gen else df_gen
+            # df_gen_sampled = df_gen.head(sample_n) if sample_n < n_gen else df_gen
+            df_gen_sampled = df_gen.sample(sample_n) if sample_n < n_gen else df_gen
             
             gen_fens = df_gen_sampled["fen"].tolist()
             gen_pvs = [extract_pv_moves(pv, is_lichess=False) for pv in df_gen_sampled["main_line"]]
@@ -257,6 +270,32 @@ def main():
         output_csv_path = Path(args.generated_csv) / "distances.csv"
         df_results.to_csv(output_csv_path, index=False)
         print(f"\nSaved all distance results to {output_csv_path}", flush=True)
+
+    # 6. If no generated files are provided, but Lichess is provided, compute Lichess self-distance
+    if not generated_files and df_lic is not None:
+        # Sample to self_sample_size for self-distance computation
+        sample_n = args.self_sample_size if (args.self_sample_size > 0 and args.self_sample_size < len(lic_fens)) else len(lic_fens)
+        lic_fens_sampled = lic_fens[:sample_n]
+        lic_pvs_sampled = lic_pvs[:sample_n]
+
+        if len(lic_fens_sampled) > 1:
+            print("\n" + "="*80, flush=True)
+            print("Computing self-distances for Lichess dataset", flush=True)
+            print("="*80, flush=True)
+            print("\n" + "="*50, flush=True)
+            print("STARTING DISTANCE COMPUTATIONS", flush=True)
+            print("="*50, flush=True)
+            t0 = time.time()
+            print(f"Computing Lichess dataset self-distances (sample size={len(lic_fens_sampled)})...", flush=True)
+            lic_self_board, lic_self_pv = compute_dataset_distances(lic_fens_sampled, lic_fens_sampled, lic_pvs_sampled, lic_pvs_sampled, chunk_size=args.chunk_size, is_self=True)
+            mean_self_board, se_self_board = compute_mean_and_se(lic_self_board)
+            mean_self_pv, se_self_pv = compute_mean_and_se(lic_self_pv)
+            print(f"Done in {time.time() - t0:.2f}s.", flush=True)
+            print(f"  -> Lichess Self-Distance (Board): {mean_self_board:.4f} (SE: {se_self_board:.4f})", flush=True)
+            print(f"  -> Lichess Self-Distance (PV):    {mean_self_pv:.4f} (SE: {se_self_pv:.4f})", flush=True)
+            print("-"*50, flush=True)
+        else:
+            print("Lichess dataset has insufficient data for self-distance computation.", flush=True)
 
 
 if __name__ == "__main__":

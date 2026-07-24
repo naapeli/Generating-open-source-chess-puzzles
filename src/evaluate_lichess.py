@@ -147,7 +147,7 @@ def main():
                 df = df.head(args.n_puzzles)
 
             fen_col = None
-            for col in ["fen", "Puzzle_FEN", "FEN", "puzzle_fen"]:
+            for col in ["fen", "Puzzle_FEN"]:
                 if col in df.columns:
                     fen_col = col
                     break
