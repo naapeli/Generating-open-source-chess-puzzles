@@ -18,6 +18,8 @@ Stockfish/
 src/runs/
 
 *.csv
+Generate_positions/
+*.out
 
 !Thesis/build
 Thesis/build/*
