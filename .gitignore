@@ -18,7 +18,9 @@ Stockfish/
 src/runs/
 
 *.csv
+Generate_positions/
 
 !Thesis/build
 Thesis/build/*
 !Thesis/build/Thesis.pdf
+*.out
