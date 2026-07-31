@@ -66,8 +66,8 @@ One can find equations of the mentioned masking schedules and some experiments w
 During the reverse process, we reverse the masking process and attempt to convert each masked token into the true token. Using \eqref{eq:y_t dist cond y_s}, one can derive the following expression \cite{shi2025simplifiedgeneralizedmaskeddiffusion}:
 
 \begin{align}
-    q(y_s | y_t, y) &= \text{Cat}(y_s; \bar{R}^{y}(t, s)^\top y_t), \label{eq:reverse process y known}\\
-    \bar{R}^{y}(t, s) &= I + \frac{\alpha_s - \alpha_t}{1 - \alpha_t}e_m(y - e_m)^\top \text{ and } s < t.\nonumber
+    q(y_s | y_t, y)   & = \text{Cat}(y_s; \bar{R}^{y}(t, s)^\top y_t), \label{eq:reverse process y known}            \\
+    \bar{R}^{y}(t, s) & = I + \frac{\alpha_s - \alpha_t}{1 - \alpha_t}e_m(y - e_m)^\top \text{ and } s < t.\nonumber
 \end{align}
 Hence, if we know the original token sequence $y$ that has no masking, we can compute the distribution of a step closer to the unmasked state. However, if we want to sample new data points using this process, $y$ is unknown. To solve this problem, we introduce the denoising network $\mu_\theta(y_t, x)\in\Delta(V)^m$, which given a noisy state $y_t$ and a prompt $x$, outputs a probability distribution over the vocabulary $V$ for each masked state. Unmasked tokens remain the same with probability $1$. Using this network and \eqref{eq:reverse process y known}, we define the distribution for $y_s$ as
 
@@ -89,8 +89,8 @@ This formulation is called mean-parametrization, as the denoising network is att
 To optimize the outputs of the denoising network, an optimization objective is needed. While traditional LLMs are optimized by maximizing the likelihood function, for masked diffusion models, efficient computation of the likelihood is intractable. Hence, with diffusion models one usually optimizes for the lower bound of the log marginal likelihood called the evidence \cite{shi2025simplifiedgeneralizedmaskeddiffusion, austin2021structureddenoisingdiffusionmodels, kingma2021variationaldiffusionmodels}. If one optimizes the evidence lower bound (ELBO), the hope is that one also increases the likelihood. This usually happens in practice. Hence, this can be considered maximum likelihood optimization, although, one never explicitly optimizes the likelihood. In \cite{shi2025simplifiedgeneralizedmaskeddiffusion}, the authors prove that for masked diffusion models, the evidence lower bound can be expressed in the following form:
 
 \begin{align}
-    \log p_\theta(y | x) &\ge \mathcal{L}_\theta(y | x) \nonumber\\
-    &= -\int_{0}^{1}\frac{\alpha_t'}{1 - \alpha_t}\mathbb{E}_{q(y_t | y)}\left[\sum_{i=1}^{L}\bold{1}[y_t^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_t, x)^{(i)}\right] \mathrm{d}t,
+    \log p_\theta(y | x) & \ge \mathcal{L}_\theta(y | x) \nonumber                                                                                                                                                     \\
+                         & = -\int_{0}^{1}\frac{\alpha_t'}{1 - \alpha_t}\mathbb{E}_{q(y_t | y)}\left[\sum_{i=1}^{L}\bold{1}[y_t^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_t, x)^{(i)}\right] \mathrm{d}t,
     \label{eq:ELBO}
 \end{align}
 where $L$ is the sequence length, $y$ is answer to the prompt $x$ and $y_t$ is the same answer with some tokens masked according to the masking schedule. One may note that the ELBO is just the weighted sum of the cross-entropy losses over the masked tokens integrated over time. This makes it easy to implement in practice.
@@ -100,8 +100,8 @@ where $L$ is the sequence length, $y$ is answer to the prompt $x$ and $y_t$ is t
 To estimate the value of the ELBO, we employ Monte-Carlo (MC) sampling \cite{methodsofnumericalintegration} for the inner expression. For a given $t$, the expectation can be estimated by sampling $K$ different random masks, corrupting $y$ with them, computing the sum of the appropriate cross-entropies and finally averaging over the $K$ losses. The estimate of the expected value looks as follows:
 
 \begin{align*}
-    \mathbb{E}_{q(y_t | y)}\bigg[&\sum_{i=1}^{L}\bold{1}[(y_t^{(k)})^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_t^{(k)}, x)^{(i)}\bigg]\\
-    \approx&\frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(y_t^{(k)})^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_t^{(k)}, x)^{(i)}.
+    \mathbb{E}_{q(y_t | y)}\bigg[&\sum_{i=1}^{L}\bold{1}[(y_t^{(k)})^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_t^{(k)}, x)^{(i)}\bigg] \\
+    \approx & \frac{1}{K}\sum_{k=1}^{K}\sum_{i=1}^{L}\bold{1}[(y_t^{(k)})^{(i)} = [\mathtt{MASK}]](y^{(i)})^\top\log\mu_\theta(y_t^{(k)}, x)^{(i)}.
 \end{align*}
 
 In practice, we employ a 1-point MC estimate for the expectation. As the variance of the expectation estimate does not significantly affect the total variance of the ELBO estimate \cite{rojas2025improvingreasoningdiffusionlanguage}, we choose to use the available video memory (VRAM) to increase the batch size during supervised training.
@@ -144,18 +144,18 @@ When sampling from the masked diffusion model $\mu_\theta$, we employ the revers
         \State Initialize the time grid $\{ t(i) \}_{i=0}^T \leftarrow \mathrm{discretize}([0, 1])$.
         \State Initialize $y_T$ by setting it to all mask tokens.
         \For{$j = T, T-1, \dots, 1$}:
-            \State $t \leftarrow t(j)$, $s \leftarrow t(j - 1)$
-            \For{$i = 1, 2, \dots, L$}:
-                \If{$(y_t^{(i)}) = [\mathtt{MASK}]$}:
-                    % \State Sample $y_s^{(n)} \sim \mathrm{Cat}(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta^{(n)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
-                    \State $\log p_i \leftarrow \log(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta(y_t, x)^{(i)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
-                    \State \Comment{Sample from $\mathrm{Cat}(p_i)$ using the Gumbel-max trick.}
-                    \State $u^{(k)}\leftarrow\mathcal{U}([0, 1])$
-                    \State $y_s^{(i)} \leftarrow \mathrm{argmax}_k \left( \log p_i^{(k)} - \log(-\log u^{(k)})  \right)$
-                \Else :
-                    \State $y_s^{(i)} \leftarrow y_t^{(i)}$
-                \EndIf
-            \EndFor
+        \State $t \leftarrow t(j)$, $s \leftarrow t(j - 1)$
+        \For{$i = 1, 2, \dots, L$}:
+        \If{$(y_t^{(i)}) = [\mathtt{MASK}]$}:
+        % \State Sample $y_s^{(n)} \sim \mathrm{Cat}(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta^{(n)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
+        \State $\log p_i \leftarrow \log(\frac{\alpha_s - \alpha_t}{1 - \alpha_t}\mu_\theta(y_t, x)^{(i)} + \frac{1 - \alpha_s}{1 - \alpha_t}e_m)$
+        \State \Comment{Sample from $\mathrm{Cat}(p_i)$ using the Gumbel-max trick.}
+        \State $u^{(k)}\leftarrow\mathcal{U}([0, 1])$
+        \State $y_s^{(i)} \leftarrow \mathrm{argmax}_k \left( \log p_i^{(k)} - \log(-\log u^{(k)})  \right)$
+        \Else :
+        \State $y_s^{(i)} \leftarrow y_t^{(i)}$
+        \EndIf
+        \EndFor
         \EndFor
     \end{algorithmic}
 \end{algorithm}
@@ -203,9 +203,9 @@ In reinforcement learning, one often models the value function by function appro
 \begin{definition}[Expected episodic reward]
     For a given policy $\pi_\theta$ and a distribution of starting states $p_0$, the function $J(\theta)$ is called the expected episodic reward and is given by the following equation:
     \begin{align*}
-        J(\theta) &= \mathbb{E}_{s_0\sim p_0,\pi_\theta}[G_0]\\
-        &= \mathbb{E}_{s_0\sim p_0}[\mathbb{E}_{\pi_\theta}[G_t | S_t = s_0]]\\
-        &= \mathbb{E}_{s_0\sim p_0}[V_{\pi_\theta}(s_0)].
+        J(\theta) & = \mathbb{E}_{s_0\sim p_0,\pi_\theta}[G_0]                           \\
+                  & = \mathbb{E}_{s_0\sim p_0}[\mathbb{E}_{\pi_\theta}[G_t | S_t = s_0]] \\
+                  & = \mathbb{E}_{s_0\sim p_0}[V_{\pi_\theta}(s_0)].
     \end{align*}
 \end{definition}
 
@@ -284,8 +284,8 @@ This objective is designed to prevent model collapse. Since the samples generate
 Denoising diffusion policy optimization (DDPO) is an RL algorithm designed for diffusion models \cite{black2024trainingdiffusionmodelsreinforcement}. In their work, \citeauthor{black2024trainingdiffusionmodelsreinforcement} \cite{black2024trainingdiffusionmodelsreinforcement} define an MDP for a continuous diffusion models, which have a normal posterior distribution for each step. Although, our posterior distribution for each step is a categorical distribution, we can still take inspiration from their MDP formulation for our setup. We define the MDP for our problem as follows:
 
 \begin{align*}
-    &s_i = (x_{t(i)}, i), \quad a_i = x_{t(i - 1)}, \quad \pi_\theta(a_i | s_i) = p_\theta(x_{t(i - 1)} | x_{t(i)}), \\
-    &P(s_{i - 1}, r_i | s_i, a_i) = (\delta_{x_{t(i - 1)}}, \delta_{i - 1}, \delta_{r_i}), \quad p_0 = (x_{t(n_\mathrm{steps})}, n_\mathrm{steps}),
+     & s_i = (x_{t(i)}, i), \quad a_i = x_{t(i - 1)}, \quad \pi_\theta(a_i | s_i) = p_\theta(x_{t(i - 1)} | x_{t(i)}),                                \\
+     & P(s_{i - 1}, r_i | s_i, a_i) = (\delta_{x_{t(i - 1)}}, \delta_{i - 1}, \delta_{r_i}), \quad p_0 = (x_{t(n_\mathrm{steps})}, n_\mathrm{steps}),
 \end{align*}
 where $x_{t(i)}$ is the sequence of partially masked tokens and $a_i$ is the action of sampling a new sequence based on \eqref{eq:reverse process y unknown}. The transition following the action is deterministic with the reward function being described in Section \ref{sec:reward function}. Lastly, $p_0$ is the initial distribution of the MDP, which corresponds to the sequence with all mask tokens.
 
@@ -298,10 +298,10 @@ Due to the formulation of our problem, we further simplify the action probabilit
 where $M_i$ is the set of indices that transform from a masked token to an unmasked one during a transition and $K_i$ is the set of indices that stay as masked tokens. Using this decomposition, we may note that the probability $p_{\text{unmask}}^{t(i - 1)} = \frac{\alpha_{t(i - 1)} - \alpha_{t(i)}}{1 - \alpha_{t(i)}}$ is a constant for both the reference model and the trained policy at any given step $i$. This allows the following simplification:
 
 \begin{align*}
-    \rho_i &= \frac{\pi_\theta(a_i | s_i)}{\pi_{\theta_\text{old}}(a_i | s_i)} = \frac{(p_{\text{unmask}}^{t(i - 1)})^{\abs{M_i}}\cdot (1 - p_{\text{unmask}}^{t(i - 1)})^{\abs{K_i}}\prod_{j\in M_i} \mu_\theta(x_{t(i)})^{(j)}}{(p_{\text{unmask}}^{t(i - 1)})^{\abs{M_i}}\cdot (1 - p_{\text{unmask}}^{t(i - 1)})^{\abs{K_i}}\prod_{j\in M_i} \mu_{\theta_\text{old}}(x_{t(i)})^{(j)}}\\
-    &= \prod_{j\in M_i} \frac{\mu_\theta(x_{t(i)})^{(j)}}{\mu_{\theta_\text{old}}(x_{t(i)})^{(j)}}.
+    \rho_i & = \frac{\pi_\theta(a_i | s_i)}{\pi_{\theta_\text{old}}(a_i | s_i)} = \frac{(p_{\text{unmask}}^{t(i - 1)})^{\abs{M_i}}\cdot (1 - p_{\text{unmask}}^{t(i - 1)})^{\abs{K_i}}\prod_{j\in M_i} \mu_\theta(x_{t(i)})^{(j)}}{(p_{\text{unmask}}^{t(i - 1)})^{\abs{M_i}}\cdot (1 - p_{\text{unmask}}^{t(i - 1)})^{\abs{K_i}}\prod_{j\in M_i} \mu_{\theta_\text{old}}(x_{t(i)})^{(j)}} \\
+           & = \prod_{j\in M_i} \frac{\mu_\theta(x_{t(i)})^{(j)}}{\mu_{\theta_\text{old}}(x_{t(i)})^{(j)}}.
 \end{align*}
-Hence, for reinforcement learning, we can only compute the ratio of the tokens that were transformed from masked tokens to unmasked tokens. With this importance ratio, we can apply PPO described in Section \ref{sec:PPO} to our MDP. 
+Hence, for reinforcement learning, we can only compute the ratio of the tokens that were transformed from masked tokens to unmasked tokens. With this importance ratio, we can apply PPO described in Section \ref{sec:PPO} to our MDP.
 
 To prevent the policy from collapsing and to encourage exploration, we augment the standard PPO objective $L(\theta)$ with a Kullback-Leibler (KL) divergence penalty against the pretrained reference model $\pi_\text{ref}$ and an entropy bonus. The final objective we seek to maximize is given by the following equation:
 
@@ -338,18 +338,18 @@ Similarly to the KL divergence, while the sequence-level entropy remains intract
 
 To compute the step-wise KL divergence, we use \eqref{eq:reverse process y unknown} and the conditional independence between tokens on each step. The KL divergence simplifies as follows:
 {\allowdisplaybreaks
-\begin{align}
-    \mathbb{KL}(\pi_\theta\parallel\pi_\text{ref} \mid s_i) 
-    &= \sum_{a_i \in \mathcal{A}} \pi_\theta(a_i \mid s_i) \log \frac{\pi_\theta(a_i \mid s_i)}{\pi_\text{ref}(a_i \mid s_i)} \nonumber\\
-    &= \sum_{j=1}^L \mathbb{KL}\left(p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right) \parallel p_{\text{ref}}\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)\right) \nonumber\\
-    &= \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \mathbb{KL}\left(p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right) \parallel p_{\text{ref}}\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)\right) \nonumber\\
-    &\quad + \sum_{x_{t(i)}^{(j)} \neq [\mathtt{MASK}]} \underbrace{\mathbb{KL}\left(\underbrace{p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)}_{=\delta_{x_{t(i)}^{(j)}}} \parallel \underbrace{p_{\text{ref}}\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)}_{=\delta_{x_{t(i)}^{(j)}}}\right)}_{=0} \nonumber\\
-    &= \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \bigg( p_{\text{unmask}}^{t(i - 1)} (\mu_\theta(x_{t(i)})^{(j)})^\top \left( \log \mu_\theta(x_{t(i)})^{(j)} - \log \mu_\text{ref}(x_{t(i)})^{(j)} \right) \nonumber\\
-    &\quad + (1 - p_{\text{unmask}}^{t(i - 1)}) \underbrace{\log \frac{1 - p_{\text{unmask}}^{t(i - 1)}}{1 - p_{\text{unmask}}^{t(i - 1)}}}_{=0} \bigg) \nonumber\\
-    &= p_{\text{unmask}}^{t(i - 1)} \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} (\mu_\theta(x_{t(i)})^{(j)})^\top \left( \log \mu_\theta(x_{t(i)})^{(j)} - \log \mu_\text{ref}(x_{t(i)})^{(j)} \right)\nonumber\\
-    &= p_{\text{unmask}}^{t(i - 1)} \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \mathbb{KL}\left(\mu_\theta(x_{t(i)})^{(j)} \parallel \mu_\text{ref}(x_{t(i)})^{(j)}\right)
-    \label{eq:kl estimate}
-\end{align}
+    \begin{align}
+        \mathbb{KL}(\pi_\theta\parallel\pi_\text{ref} \mid s_i)
+         & = \sum_{a_i \in \mathcal{A}} \pi_\theta(a_i \mid s_i) \log \frac{\pi_\theta(a_i \mid s_i)}{\pi_\text{ref}(a_i \mid s_i)} \nonumber                                                                                                                                                                                 \\
+         & = \sum_{j=1}^L \mathbb{KL}\left(p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right) \parallel p_{\text{ref}}\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)\right) \nonumber                                                                                                                                       \\
+         & = \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \mathbb{KL}\left(p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right) \parallel p_{\text{ref}}\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)\right) \nonumber                                                                                                            \\
+         & \quad + \sum_{x_{t(i)}^{(j)} \neq [\mathtt{MASK}]} \underbrace{\mathbb{KL}\left(\underbrace{p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)}_{=\delta_{x_{t(i)}^{(j)}}} \parallel \underbrace{p_{\text{ref}}\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)}_{=\delta_{x_{t(i)}^{(j)}}}\right)}_{=0} \nonumber \\
+         & = \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \bigg( p_{\text{unmask}}^{t(i - 1)} (\mu_\theta(x_{t(i)})^{(j)})^\top \left( \log \mu_\theta(x_{t(i)})^{(j)} - \log \mu_\text{ref}(x_{t(i)})^{(j)} \right) \nonumber                                                                                                     \\
+         & \quad + (1 - p_{\text{unmask}}^{t(i - 1)}) \underbrace{\log \frac{1 - p_{\text{unmask}}^{t(i - 1)}}{1 - p_{\text{unmask}}^{t(i - 1)}}}_{=0} \bigg) \nonumber                                                                                                                                                       \\
+         & = p_{\text{unmask}}^{t(i - 1)} \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} (\mu_\theta(x_{t(i)})^{(j)})^\top \left( \log \mu_\theta(x_{t(i)})^{(j)} - \log \mu_\text{ref}(x_{t(i)})^{(j)} \right)\nonumber                                                                                                             \\
+         & = p_{\text{unmask}}^{t(i - 1)} \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \mathbb{KL}\left(\mu_\theta(x_{t(i)})^{(j)} \parallel \mu_\text{ref}(x_{t(i)})^{(j)}\right)
+        \label{eq:kl estimate}
+    \end{align}
 }Hence, similarly to the importance ratio in Section \ref{sec:DDPO}, we can almost fully compute the KL divergence by using the probability distributions given by the current model to the reference model, which is easy to compute as both distributions are categorical distributions.
 
 To monitor the training process of LLMs, it is customary to plot the mean token-level KL divergence. In autoregressive language models, this is often approximated using the $k_1$, $k_2$ or $k_3$ estimators \cite{schulman2020klblog}. In our masked diffusion setup, we obtain a similar estimate by computing the average of the exact step-wise KL divergences over the trajectory:
@@ -367,19 +367,19 @@ This makes the KL divergences comparable to normal LLMs and hence, we monitor th
 Similarly to the KL divergence, we can compute the exact step-wise entropy of the policy. The entropy of a distribution over each step factors into the sum of the token-wise entropies due to the conditional independence of the token transitions. The step-wise entropy is computed as follows:
 
 {\allowdisplaybreaks
-\begin{align}
-    H(\pi_\theta \mid s_i) 
-    &= -\sum_{a_i \in \mathcal{A}} \pi_\theta(a_i \mid s_i) \log \pi_\theta(a_i \mid s_i) \nonumber\\
-    &= \sum_{j=1}^L H\left(p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)\right) \nonumber\\
-    &= \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} H\left(p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)\right) + \sum_{x_{t(i)}^{(j)} \neq [\mathtt{MASK}]} \underbrace{H\left(\underbrace{p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)}_{=\delta_{x_{t(i)}^{(j)}}}\right)}_{=0} \nonumber\\
-    &= \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \bigg( -p_{\text{unmask}}^{t(i - 1)} (\mu_\theta(x_{t(i)})^{(j)})^\top \log \left( p_{\text{unmask}}^{t(i - 1)} \mu_\theta(x_{t(i)})^{(j)} \right) \nonumber\\
-    &\quad - (1 - p_{\text{unmask}}^{t(i - 1)}) \log (1 - p_{\text{unmask}}^{t(i - 1)}) \bigg) \nonumber\\
-    &= \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \bigg( -p_{\text{unmask}}^{t(i - 1)} (\mu_\theta(x_{t(i)})^{(j)})^\top \log \mu_\theta(x_{t(i)})^{(j)} \nonumber\\
-    &\quad - p_{\text{unmask}}^{t(i - 1)} \log p_{\text{unmask}}^{t(i - 1)} \underbrace{(\mu_\theta(x_{t(i)})^{(j)})^\top \bold{1}}_{=1} - (1 - p_{\text{unmask}}^{t(i - 1)}) \log (1 - p_{\text{unmask}}^{t(i - 1)}) \bigg) \nonumber\\
-    &= \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \bigg( p_{\text{unmask}}^{t(i - 1)} H\left(\mu_\theta(x_{t(i)})^{(j)}\right) + H_b(p_{\text{unmask}}^{t(i - 1)}) \bigg) \nonumber\\
-    &= p_{\text{unmask}}^{t(i - 1)} \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} H\left(\mu_\theta(x_{t(i)})^{(j)}\right) + \abs{M_{t(i)}} H_b(p_{\text{unmask}}^{t(i - 1)}),
-    \label{eq:entropy bonus}
-\end{align}
+    \begin{align}
+        H(\pi_\theta \mid s_i)
+         & = -\sum_{a_i \in \mathcal{A}} \pi_\theta(a_i \mid s_i) \log \pi_\theta(a_i \mid s_i) \nonumber                                                                                                                                                                                                     \\
+         & = \sum_{j=1}^L H\left(p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)\right) \nonumber                                                                                                                                                                                                       \\
+         & = \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} H\left(p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)\right) + \sum_{x_{t(i)}^{(j)} \neq [\mathtt{MASK}]} \underbrace{H\left(\underbrace{p_\theta\left(x_{t(i - 1)}^{(j)} \mid x_{t(i)}\right)}_{=\delta_{x_{t(i)}^{(j)}}}\right)}_{=0} \nonumber \\
+         & = \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \bigg( -p_{\text{unmask}}^{t(i - 1)} (\mu_\theta(x_{t(i)})^{(j)})^\top \log \left( p_{\text{unmask}}^{t(i - 1)} \mu_\theta(x_{t(i)})^{(j)} \right) \nonumber                                                                                             \\
+         & \quad - (1 - p_{\text{unmask}}^{t(i - 1)}) \log (1 - p_{\text{unmask}}^{t(i - 1)}) \bigg) \nonumber                                                                                                                                                                                                \\
+         & = \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \bigg( -p_{\text{unmask}}^{t(i - 1)} (\mu_\theta(x_{t(i)})^{(j)})^\top \log \mu_\theta(x_{t(i)})^{(j)} \nonumber                                                                                                                                         \\
+         & \quad - p_{\text{unmask}}^{t(i - 1)} \log p_{\text{unmask}}^{t(i - 1)} \underbrace{(\mu_\theta(x_{t(i)})^{(j)})^\top \bold{1}}_{=1} - (1 - p_{\text{unmask}}^{t(i - 1)}) \log (1 - p_{\text{unmask}}^{t(i - 1)}) \bigg) \nonumber                                                                  \\
+         & = \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} \bigg( p_{\text{unmask}}^{t(i - 1)} H\left(\mu_\theta(x_{t(i)})^{(j)}\right) + H_b(p_{\text{unmask}}^{t(i - 1)}) \bigg) \nonumber                                                                                                                        \\
+         & = p_{\text{unmask}}^{t(i - 1)} \sum_{x_{t(i)}^{(j)} = [\mathtt{MASK}]} H\left(\mu_\theta(x_{t(i)})^{(j)}\right) + \abs{M_{t(i)}} H_b(p_{\text{unmask}}^{t(i - 1)}),
+        \label{eq:entropy bonus}
+    \end{align}
 }where $H_b(\cdot)$ denotes the binary entropy function, $\mathbf{1}$ is the vector of ones and $\abs{M_{t(i)}}$ is the number of masked tokens at step $i$. This result shows that the total entropy is a combination of the entropy of the model's output distribution scaled by the unmasking probability, plus the uncertainty of whether the masked tokens will be unmasked at all.
 
 Notably, the second term of the entropy depends solely on the fixed masking schedule and is therefore constant with respect to the model parameters $\theta$. Consequently, it only affects the absolute magnitude of the entropy and does not influence its gradient during optimization. Thus, when an entropy bonus is employed during reinforcement learning, as discussed in Section \ref{sec:DDPO}, the gradients purely flow through the entropy of the network's output distribution $\mu_\theta$.
@@ -398,13 +398,14 @@ By summing the exact step-wise entropy across the trajectory and dividing by the
 
 To compute this constant analytically, we use the property from Section \ref{sec:discrete diffusion} that the expected fraction of masked tokens at step $i$ is exactly $q_i = 1 - \alpha_{t(i)}$. This means the expected number of masked tokens is $\abs{M_{t(i)}} = L q_i$, and the unmasking probability is $p_{\text{unmask}}^{t(i - 1)} = \frac{q_i - q_{i-1}}{q_i}$. By substituting these into the binary entropy formula $H_b(p) = -p\log(p) - (1-p)\log(1-p)$, we can expand the constant:
 
-\begin{align*}
-    C &= \frac{1}{L} \sum_{i=1}^{T} L q_i \left[ -\frac{q_i - q_{i-1}}{q_i}\log\left(\frac{q_i - q_{i-1}}{q_i}\right) - \left(1 - \frac{q_i - q_{i-1}}{q_i}\right)\log\left(1 - \frac{q_i - q_{i-1}}{q_i}\right) \right] \\
-    &= \sum_{i=1}^{T} \left[ -(q_i - q_{i-1})\left(\log(q_i - q_{i-1}) - \log q_i\right) - q_{i-1}\left(\log q_{i-1} - \log q_i\right) \right] \\
-    &= \sum_{i=1}^{T} \left[ -(q_i - q_{i-1})\log(q_i - q_{i-1}) + (q_i - q_{i-1})\log q_i - q_{i-1}\log q_{i-1} + q_{i-1}\log q_i \right] \\
-    &= \sum_{i=1}^{T} \left[ -(q_i - q_{i-1})\log(q_i - q_{i-1}) + q_i\log q_i - q_{i-1}\log q_{i-1} \right].
-\end{align*}
-The last two terms form a telescoping sum evaluating to $q_T \log q_T - q_0 \log q_0$. Because the process starts fully unmasked ($q_0 = 0$) and ends fully masked ($q_T = 1$), this term is exactly zero. Substituting back $\alpha_{t(i)} = 1 - q_i$, the constant evaluates to the following:
+{\allowdisplaybreaks
+    \begin{align*}
+        C & = \frac{1}{L} \sum_{i=1}^{T} L q_i \left[ -\frac{q_i - q_{i-1}}{q_i}\log\left(\frac{q_i - q_{i-1}}{q_i}\right) - \left(1 - \frac{q_i - q_{i-1}}{q_i}\right)\log\left(1 - \frac{q_i - q_{i-1}}{q_i}\right) \right] \\
+          & = \sum_{i=1}^{T} \left[ -(q_i - q_{i-1})\left(\log(q_i - q_{i-1}) - \log q_i\right) - q_{i-1}\left(\log q_{i-1} - \log q_i\right) \right]                                                                         \\
+          & = \sum_{i=1}^{T} \left[ -(q_i - q_{i-1})\log(q_i - q_{i-1}) + (q_i - q_{i-1})\log q_i - q_{i-1}\log q_{i-1} + q_{i-1}\log q_i \right]                                                                             \\
+          & = \sum_{i=1}^{T} \left[ -(q_i - q_{i-1})\log(q_i - q_{i-1}) + q_i\log q_i - q_{i-1}\log q_{i-1} \right].
+    \end{align*}
+}The last two terms form a telescoping sum evaluating to $q_T \log q_T - q_0 \log q_0$. Because the process starts fully unmasked ($q_0 = 0$) and ends fully masked ($q_T = 1$), this term is exactly zero. Substituting back $\alpha_{t(i)} = 1 - q_i$, the constant evaluates to the following:
 
 \begin{equation*}
     C = -\sum_{i=1}^{T} (\alpha_{t(i-1)} - \alpha_{t(i)}) \log(\alpha_{t(i-1)} - \alpha_{t(i)}).
@@ -490,8 +491,8 @@ A chess position can be compactly described with the Forsyth-Edwards Notation (F
 
 \begin{equation*}
     \resizebox{\textwidth}{!}{$
-        \underbrace{\text{rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR}}_{\text{board}} \underbrace{\text{b}}_{\text{side}} \underbrace{\text{KQkq}}_{\text{castling}} \underbrace{\text{e3}}_{\text{en passant}} \underbrace{0}_{\text{halfmove}} \underbrace{1}_{\text{fullmove}}
-    $}
+            \underbrace{\text{rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR}}_{\text{board}} \underbrace{\text{b}}_{\text{side}} \underbrace{\text{KQkq}}_{\text{castling}} \underbrace{\text{e3}}_{\text{en passant}} \underbrace{0}_{\text{halfmove}} \underbrace{1}_{\text{fullmove}}
+        $}
 \end{equation*}
 Although, the FEN notation captures most of the information about a chess position, for instance a three-fold repetition is not encoded.
 

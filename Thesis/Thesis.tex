@@ -1,5 +1,5 @@
 % !TEX root = Thesis.tex
-\documentclass[english, 12pt, a4paper, sci, utf8, a-1b, online]{aaltothesis}
+\documentclass[english, 12pt, a4paper, sci, utf8, a-2b, online]{aaltothesis}
 %\documentclass[finnish, 12pt, a4paper, sci, utf8, a-1b]{aaltothesis}
 
 \usepackage{physics}
@@ -107,22 +107,22 @@ All other rights are reserved.
 
 
 \begin{document}
-    \definecolor{aaltoBlack}{RGB}{0,0,0}
-    \definecolor{aaltoGray}{RGB}{140,133,123}
-    \definecolor{aaltoRed}{RGB}{239,51,64}
-    \definecolor{aaltoBlue}{RGB}{0,94,184}
-    \definecolor{aaltoYellow}{RGB}{255,205,0}
-    \definecolor{aaltoPurple}{RGB}{117,59,189}
-    \definecolor{aaltoGreen}{RGB}{0,150,94}
-    \definecolor{aaltoLightGreen}{RGB}{120,190,32}
-    \definecolor{aaltoOrange}{RGB}{255,103,31}
-    \definecolor{aaltoLightOrange}{RGB}{255,165,0}
-    \definecolor{aaltoFuchsia}{RGB}{187,22,163}
+\definecolor{aaltoBlack}{RGB}{0,0,0}
+\definecolor{aaltoGray}{RGB}{140,133,123}
+\definecolor{aaltoRed}{RGB}{239,51,64}
+\definecolor{aaltoBlue}{RGB}{0,94,184}
+\definecolor{aaltoYellow}{RGB}{255,205,0}
+\definecolor{aaltoPurple}{RGB}{117,59,189}
+\definecolor{aaltoGreen}{RGB}{0,150,94}
+\definecolor{aaltoLightGreen}{RGB}{120,190,32}
+\definecolor{aaltoOrange}{RGB}{255,103,31}
+\definecolor{aaltoLightOrange}{RGB}{255,165,0}
+\definecolor{aaltoFuchsia}{RGB}{187,22,163}
 %pagecolor{aaltoOrange} %Voit poistaa tämän, jollet halua värillistä kansilehteä
 {%\color{white}
-\uselogo{black}{''}
+    \uselogo{black}{''}
 
-\makecoverpage{}
+    \makecoverpage{}
 }
 \nopagecolor
 \uselogo{black}{''}
@@ -155,7 +155,7 @@ All other rights are reserved.
 \advisor{Adjunct Prof.\ Eric Malmi}
 \degreeprogram{Matematiikan ja operaatiotutkimuksen maisteriohjelma}
 \major{Soveltava matematiikka}
-\keywords{Naamiodiffuusio, dLLM:t, vahvistusoppiminen, DDPO, shakkipulmat}
+\keywords{Naamiodiffuusio, dLLM:t, vahvistusoppiminen, DDPO, shakkitehtävät}
 \begin{abstractpage}[finnish]
     Perinteisesti luovuutta on pidetty koneälykkyyden tärkeimpänä mittarina. Vaikka suurten kielimallien (LLM) viimeaikainen kehitys on mahdollistanut uusia sovelluksia, on luovuutta ja päättelykykyä vaativien vastauksien luominen edelleen haastavaa. Tämä tutkielma käsittelee tätä rajoitetta käyttämällä generatiivisia malleja shakkitehtävien luomiseen. Shakkitehtävät ovat luonnostaan herkkiä, sillä yhdenkin nappulan vaihtaminen voi hajottaa tehtävän. Tästä syystä shakkitehtävien luominen on erinomainen ongelma kielimallien kykyjen testaamiseen ja parantamiseen.
 
@@ -165,7 +165,7 @@ All other rights are reserved.
 
     % While autoregressive LLMs currently dominate language modelling, discrete diffusion models have recently emerged as a compelling alternative. In particular, masked diffusion models, which generate sequences through iterative unmasking, offer unique advantages. Notably, they grant the user manual control over inference speed while maintaining text quality comparable to traditional LLMs. They, however, require more pretraining to achieve the same performance. In this work, we employ masked diffusion models to generate creative and counter-intuitive chess puzzles conditioned on specific themes, granting users fine-grained control over the generated puzzle types.
 
-    Tutkimus alkaa mallin esikoulutuksella, jossa käytetään Lichess:n shakkipulma tietoaineistoa. Koska hyvien shakkipulmien tulee täyttää tietyt kriteerit, käytetään vahvistusoppimista pulmien ominaisuuksien parantamiseen. Mallissa parannetaan erityisesti sen kykyä luoda pulmia, joilla on yksikäsitteinen ratkaisu. Siihen käytetään Denoising Diffusion Policy Optimization (DDPO) algoritmia. Algoritmi optimoi muun muassa ratkaisun yksikäsitteisyyttä, epäintuitiivisuutta, teeman tarkkuutta, sekä luovuutta.
+    Tutkimus alkaa mallin esikoulutuksella, jossa käytetään Lichess:n shakkipulmatietokantaa. Koska hyvien shakkipulmien tulee täyttää tietyt kriteerit, käytetään vahvistusoppimista pulmien ominaisuuksien parantamiseen. Mallissa parannetaan erityisesti sen kykyä luoda pulmia, joilla on yksikäsitteinen ratkaisu. Siihen käytetään Denoising Diffusion Policy Optimization (DDPO) algoritmia. Algoritmi optimoi muun muassa ratkaisun yksikäsitteisyyttä, epäintuitiivisuutta, teeman tarkkuutta, sekä luovuutta.
 
     % Our methodology begins with pretraining on the Lichess puzzle dataset. Because valid chess puzzles must satisfy strict criteria, most importantly, possessing a unique best solution, we subsequently apply reinforcement learning (RL) to optimize the model directly for these constraints. We utilize Denoising Diffusion Policy Optimization (DDPO) for the optimization process. Our training specifically optimizes for solution uniqueness, counter-intuitiveness, theme accuracy, and creativity, among other metrics.
 
@@ -197,59 +197,59 @@ Otaniemi, 3.7.2026
 \subsection*{Symbols}
 
 \begin{tabular}{ll}
-    $e_i$ & Basis vector where the $i$-th element is one and the rest zeros. \\
-    $\text{Cat}(x; p)$ & Probability mass function of a categorical distribution. \\
-    $\alpha_t$ & Masking schedule of a diffusion model. \\
-    $\mu_\theta$ & Denoising network of a diffusion model. \\
-    $p_{\text{unmask}}$ & Probability of a masked token being unmasked. \\
-    $\mathcal{L}_\theta(y | x)$ & Evidence lower bound. \\
-    $\mathcal{M}$ & Markov decision process. \\
-    $\mathcal{S}$ & Set of states in an MDP. \\
-    $\mathcal{A}$ & Set of actions in an MDP. \\
-    $P$ & Transition function in an MDP. \\
-    $\Delta(S)$ & Set of probability distributions over a set $S$. \\
-    $\pi(s, a)$ & Policy (decision-making rule in an MDP). \\
-    $G_t$ & Cumulative reward on step $t$. \\
-    $V(s)$ & State-value function. \\
-    $Q(s, a)$ & Action-value function. \\
-    $J(\theta)$ & Expected episodic reward. \\
-    $\hat{A}_t$ & Advantage function. \\
-    $H(p)$ & Entropy of a distribution $p$. \\
-    $H_b(\cdot)$ & Binary entropy function. \\
-    $\mathbb{KL}(\pi_\theta\parallel\pi_{\text{ref}} | s_i)$ & KL divergence between the current and reference policies. \\
-    $pv(s)$ & Principal variation of a position $s$. \\
-    $w(a | s)$ & Winning chances after a move $a$ in position $s$ in a chess game. \\
-    $\mathbb{I}_{\text{legal}}(s)$ & Legality criterion. \\
-    $\mathbb{I}_{\text{unique}}(s)$ & Uniqueness criterion. \\
-    $\mathbb{I}_{\text{counter-intuitive}}(s)$ & Counter-intuitiveness criterion. \\
-    $r_{\text{counter-intuitive}}(s)$ & Counter-intuitiveness value function. \\
-    $\mathbb{I}_{\text{filter}}(s)$ & Diversity, realism and theme filter. \\
-    $R(s)$ & Reward function.
+    $e_i$                                                    & Basis vector where the $i$-th element is one and the rest zeros.  \\
+    $\text{Cat}(x; p)$                                       & Probability mass function of a categorical distribution.          \\
+    $\alpha_t$                                               & Masking schedule of a diffusion model.                            \\
+    $\mu_\theta$                                             & Denoising network of a diffusion model.                           \\
+    $p_{\text{unmask}}$                                      & Probability of a masked token being unmasked.                     \\
+    $\mathcal{L}_\theta(y | x)$                              & Evidence lower bound.                                             \\
+    $\mathcal{M}$                                            & Markov decision process.                                          \\
+    $\mathcal{S}$                                            & Set of states in an MDP.                                          \\
+    $\mathcal{A}$                                            & Set of actions in an MDP.                                         \\
+    $P$                                                      & Transition function in an MDP.                                    \\
+    $\Delta(S)$                                              & Set of probability distributions over a set $S$.                  \\
+    $\pi(s, a)$                                              & Policy (decision-making rule in an MDP).                          \\
+    $G_t$                                                    & Cumulative reward on step $t$.                                    \\
+    $V(s)$                                                   & State-value function.                                             \\
+    $Q(s, a)$                                                & Action-value function.                                            \\
+    $J(\theta)$                                              & Expected episodic reward.                                         \\
+    $\hat{A}_t$                                              & Advantage function.                                               \\
+    $H(p)$                                                   & Entropy of a distribution $p$.                                    \\
+    $H_b(\cdot)$                                             & Binary entropy function.                                          \\
+    $\mathbb{KL}(\pi_\theta\parallel\pi_{\text{ref}} | s_i)$ & KL divergence between the current and reference policies.         \\
+    $pv(s)$                                                  & Principal variation of a position $s$.                            \\
+    $w(a | s)$                                               & Winning chances after a move $a$ in position $s$ in a chess game. \\
+    $\mathbb{I}_{\text{legal}}(s)$                           & Legality criterion.                                               \\
+    $\mathbb{I}_{\text{unique}}(s)$                          & Uniqueness criterion.                                             \\
+    $\mathbb{I}_{\text{counter-intuitive}}(s)$               & Counter-intuitiveness criterion.                                  \\
+    $r_{\text{counter-intuitive}}(s)$                        & Counter-intuitiveness value function.                             \\
+    $\mathbb{I}_{\text{filter}}(s)$                          & Diversity, realism and theme filter.                              \\
+    $R(s)$                                                   & Reward function.
 \end{tabular}
 
 \subsection*{Abbreviations}
 
 \begin{tabular}{ll}
-    AI & Artificial Intelligence \\
-    CDF & Cumulative distribution function \\
-    DDPO & Denoising Diffusion Policy Optimization \\
-    dLLM & Diffusion Large Language Model \\
-    ELBO & Evidence Lower Bound \\
-    ESPO & ELBO-based Sequence-level Policy Optimization \\
-    FEN & Forsyth-Edwards Notation \\
-    GPU & Graphics Processing Unit \\
-    GSPO & Group Sequence Policy Optimization \\
-    KL & Kullback-Leibler \\
-    LLM & Large Language Model \\
-    MC & Monte-Carlo \\
-    MDP & Markov Decision Process \\
-    NLP & Natural Language Processing \\
-    PPO & Proximal Policy Optimization \\
-    PV & Principal Variation \\
-    RL & Reinforcement Learning \\
-    RLHF & Reinforcement Learning from Human Feedback \\
+    AI   & Artificial Intelligence                        \\
+    CDF  & Cumulative distribution function               \\
+    DDPO & Denoising Diffusion Policy Optimization        \\
+    dLLM & Diffusion Large Language Model                 \\
+    ELBO & Evidence Lower Bound                           \\
+    ESPO & ELBO-based Sequence-level Policy Optimization  \\
+    FEN  & Forsyth-Edwards Notation                       \\
+    GPU  & Graphics Processing Unit                       \\
+    GSPO & Group Sequence Policy Optimization             \\
+    KL   & Kullback-Leibler                               \\
+    LLM  & Large Language Model                           \\
+    MC   & Monte-Carlo                                    \\
+    MDP  & Markov Decision Process                        \\
+    NLP  & Natural Language Processing                    \\
+    PPO  & Proximal Policy Optimization                   \\
+    PV   & Principal Variation                            \\
+    RL   & Reinforcement Learning                         \\
+    RLHF & Reinforcement Learning from Human Feedback     \\
     RLVR & Reinforcement Learning with Verifiable Rewards \\
-    UCI & Universal Chess Interface \\
+    UCI  & Universal Chess Interface                      \\
     VRAM & Video Memory
 \end{tabular}
 
@@ -278,7 +278,7 @@ Otaniemi, 3.7.2026
 %TEM        & transverse eletromagnetic
 %\end{tabular}
 
- 
+
 \cleardoublepage
 
 
