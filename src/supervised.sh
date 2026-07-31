@@ -4,7 +4,6 @@
 #SBATCH --output=output.out
 #SBATCH --mem=256G
 #SBATCH --nodes=1
-#SBATCH --account=ellis_users
 #SBATCH --constraint="h200|b300"
 #SBATCH --ntasks=8
 #SBATCH --gpus=8

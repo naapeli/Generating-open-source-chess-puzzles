@@ -75,9 +75,6 @@ def counter_intuitive_value(fen, engine: SimpleEngine):
     score = (0.8 * v_critical_point) + (0.1 * v_capture_material)
     return score
 
-
-
-
 def get_unique_puzzle_from_fen(fen, engine: SimpleEngine):
     board = chess.Board(fen)
     if board.is_game_over(): return None  # NOTE: just check that the model has not generated a position that is checkmate already

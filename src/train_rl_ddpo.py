@@ -200,7 +200,7 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
         unique_solution[i] = 1
 
         pv = unique_batch_pvs[i]
-        intra_batch_fen_dist[i], intra_batch_pv_dist[i], _, _ = intra_batch_distances(fen, pv, unique_batch_fens, unique_batch_pvs, i)
+        intra_batch_fen_dist[i], intra_batch_pv_dist[i] = intra_batch_distances(fen, pv, unique_batch_fens, unique_batch_pvs, i)
         inter_batch_fen_dist[i], inter_batch_pv_dist[i] = inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
 
         generation_themes = generation_themes_list[i]

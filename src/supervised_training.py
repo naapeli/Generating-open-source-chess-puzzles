@@ -136,7 +136,6 @@ def main():
 
     # ====================== LOSS FUNCTION ======================
     def compute_loss(model: MaskedDiffusion, fens, moves, themes=None, ratings=None):
-        # could use the variance reduced version in rl.espo, but for supervised learning, this is good enough (variance is not a problem)
         tokens = torch.cat([fens, moves], dim=1) if config.predict_moves else fens
         batch_size = len(fens)
         t = (torch.rand(1) + torch.arange(1, batch_size + 1, 1) / batch_size) % 1

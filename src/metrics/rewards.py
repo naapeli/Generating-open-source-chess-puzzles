@@ -1,6 +1,6 @@
 import chess
 
-from .diversity_filtering import board_distance, PV_distance, get_board_distance, get_pv_distance, get_opponent_pv_distance, get_abstracted_pv, get_abstracted_pv_hamming_distance
+from .diversity_filtering import board_distance, PV_distance, get_board_distance, get_pv_distance
 
 
 piece_counts = {chess.PAWN: 8, chess.KNIGHT: 2, chess.BISHOP: 2, chess.ROOK: 2, chess.QUEEN: 1, chess.KING: 1}
@@ -45,32 +45,7 @@ def intra_batch_distances(fen, pv, fens, pvs, i):
                 if pd < min_pv_dist:
                     min_pv_dist = pd
     
-    min_opponent_pv_dist = float('inf')
-    if pv:
-        for index, other_pv in enumerate(pvs):
-            if other_pv is None or index == i:
-                continue
-            if other_pv:
-                opd = get_opponent_pv_distance(pv, other_pv)
-                if opd < min_opponent_pv_dist:
-                    min_opponent_pv_dist = opd
-
-    min_abstracted_pv_dist = float('inf')
-    if pv:
-        apv = get_abstracted_pv(fen, pv)
-        for index, other_pv in enumerate(pvs):
-            if other_pv is None or index == i:
-                continue
-            other_fen = fens[index]
-            if other_fen and other_pv:
-                other_apv = get_abstracted_pv(other_fen, other_pv)
-                apd = get_abstracted_pv_hamming_distance(apv, other_apv)
-                if apd < min_abstracted_pv_dist:
-                    min_abstracted_pv_dist = apd
-
     return (
         min_board_dist if min_board_dist != float('inf') else 0,
-        min_pv_dist if min_pv_dist != float('inf') else 0,
-        min_opponent_pv_dist if min_opponent_pv_dist != float('inf') else 0,
-        min_abstracted_pv_dist if min_abstracted_pv_dist != float('inf') else 0
+        min_pv_dist if min_pv_dist != float('inf') else 0
     )

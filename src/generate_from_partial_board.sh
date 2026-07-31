@@ -5,7 +5,6 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gpus=1
-#SBATCH --account=ellis_users
 #SBATCH --constraint="h200"
 #SBATCH --cpus-per-gpu=32
 

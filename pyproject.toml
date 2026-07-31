@@ -1,7 +1,7 @@
 [project]
-name = "dippatyo"
+name = "Generating opensource chess puzzles"
 version = "0.1.0"
-description = "Add your description here"
+description = ""
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

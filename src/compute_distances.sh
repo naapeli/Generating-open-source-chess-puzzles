@@ -11,7 +11,7 @@ module load mamba
 source activate environment
 
 srun python src/compute_distances.py \
-  --lichess_csv src/Generate_positions/Lichess/lichess_xidong_large.csv \
+  --lichess_csv src/Generate_positions/Lichess/lichess.csv \
   --self_sample_size 40000 \
   --lichess_sample_size 100000 \
   --chunk_size 40000
