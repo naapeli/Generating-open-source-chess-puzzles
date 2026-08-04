@@ -100,16 +100,30 @@ def get_stockfish_data(fen, model_move):
         return puzzle, None, cp_loss, pv_string, ci_sol, ci_val, generation_themes
     return puzzle, best_move.uci(), cp_loss, pv_string, ci_sol, ci_val, generation_themes
 
-def save_board(fen, tag, step, themes=None, rating=None):
+def save_board(fen, tag, step, themes=None, rating=None, counter_intuitive=None, reward=None):
     try:
         board = chess.Board(fen)
         svg_data = svg.board(board, size=300)
         png_data = cairosvg.svg2png(bytestring=svg_data.encode("utf-8"))
         board_img = Image.open(io.BytesIO(png_data)).convert("RGB")
-        text_height = 80 if themes is not None else 50
+        text_height = 80 if (themes is not None or counter_intuitive is not None or reward is not None) else 50
         info_pane = Image.new("RGB", (board_img.width, text_height), (255, 255, 255))
         draw = ImageDraw.Draw(info_pane)
-        text_content = f"{rating}\n{themes}\n{fen}" if themes is not None else fen
+        
+        parts = []
+        if rating is not None:
+            parts.append(f"Rating: {rating:.0f}")
+        if counter_intuitive is not None:
+            parts.append(f"CI: {counter_intuitive:.4f}")
+        if reward is not None:
+            parts.append(f"R: {reward:.2f}")
+        header = " | ".join(parts)
+
+        if themes is not None or counter_intuitive is not None or reward is not None:
+            text_content = f"{header}\n{themes}\n{fen}" if header else f"{themes}\n{fen}"
+        else:
+            text_content = fen
+
         draw.text((10, 10), text_content, fill=(0, 0, 0))
         combined_img = np.vstack((np.array(board_img), np.array(info_pane)))
         
@@ -133,9 +147,11 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
     intra_batch_pv_dist = torch.zeros(batch_size, dtype=torch.float32)
     intra_batch_opponent_pv_dist = torch.zeros(batch_size, dtype=torch.float32)
     intra_batch_abstracted_pv_dist = torch.zeros(batch_size, dtype=torch.float32)
+    inter_batch_abstracted_pv_dist = torch.zeros(batch_size, dtype=torch.float32)
     move_matches = torch.zeros(batch_size, dtype=bool)
     cp_losses = torch.full((batch_size,), float("nan"), dtype=torch.float32)
-    themes_match = torch.zeros(batch_size, dtype=bool)
+    # themes_match = torch.zeros(batch_size, dtype=bool)
+    themes_match = torch.zeros(batch_size, dtype=bool) if config.use_context else torch.ones(batch_size, dtype=bool)
     # rating_penalty = torch.zeros(batch_size, dtype=torch.float32)
 
     if config.use_context and themes_tokens is not None:
@@ -204,7 +220,7 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
 
         pv = unique_batch_pvs[i]
         intra_batch_fen_dist[i], intra_batch_pv_dist[i], intra_batch_opponent_pv_dist[i], intra_batch_abstracted_pv_dist[i] = intra_batch_distances(fen, pv, unique_batch_fens, unique_batch_pvs, i)
-        inter_batch_fen_dist[i], inter_batch_pv_dist[i] = inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
+        inter_batch_fen_dist[i], inter_batch_pv_dist[i], inter_batch_abstracted_pv_dist[i] = inter_batch_distances(fen, pv, sampled_fens, sampled_pvs)
 
         generation_themes = generation_themes_list[i]
         if config.use_context and themes[i] is not None:
@@ -213,11 +229,12 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
         # if the position returns a high reward, add it to the buffer
         good_distances = (
             (intra_batch_fen_dist[i] >= 6) and 
-            (intra_batch_pv_dist[i] >= 1) and 
+            # (intra_batch_pv_dist[i] >= 1) and 
             (inter_batch_fen_dist[i] >= 6) and 
-            (inter_batch_pv_dist[i] >= 1) and 
-            (intra_batch_opponent_pv_dist[i] >= 1) and 
-            (intra_batch_abstracted_pv_dist[i] >= 1)
+            # (inter_batch_pv_dist[i] >= 1) and 
+            # (intra_batch_opponent_pv_dist[i] >= 1) and 
+            (intra_batch_abstracted_pv_dist[i] >= 1) and
+            (inter_batch_abstracted_pv_dist[i] >= 1)
         )
         if unique_solution[i] and counter_intuitive_solution[i] and piece_counts[i] and good_distances and themes_match[i]:
             buffer_themes = themes[i] if themes[i] is not None else []
@@ -237,6 +254,7 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
     good_inter_pv = inter_batch_pv_dist >= 1
     good_intra_opponent_pv = intra_batch_opponent_pv_dist >= 1
     good_intra_abstracted_pv = intra_batch_abstracted_pv_dist >= 1
+    good_inter_abstracted_pv = inter_batch_abstracted_pv_dist >= 1
 
     intra_distances = good_intra_fen & good_intra_pv
     inter_distances = good_inter_fen & good_inter_pv
@@ -244,10 +262,11 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
 
     pass_diversity_filtering = (
         good_intra_fen & good_inter_fen & 
-        good_intra_pv & good_inter_pv & 
-        good_intra_opponent_pv & 
+        # good_intra_pv & good_inter_pv & 
+        # good_intra_opponent_pv & 
         good_intra_abstracted_pv & 
-        (entropy > 5.352030263919617)   # & (entropy > 5.4520302639196165)
+        good_inter_abstracted_pv# &
+        # (entropy > np.log(args.steps) + 0.6)
     )
     # pass_diversity_filtering = torch.ones(batch_size, dtype=bool)
 
@@ -267,6 +286,7 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
         "dist_intra_pv": intra_batch_pv_dist[is_valid].float().mean().item() if is_valid.any() else 0,
         "dist_intra_opponent_pv": intra_batch_opponent_pv_dist[is_valid].float().mean().item() if is_valid.any() else 0,
         "dist_intra_abstracted_pv": intra_batch_abstracted_pv_dist[is_valid].float().mean().item() if is_valid.any() else 0,
+        "dist_inter_abstracted_pv": inter_batch_abstracted_pv_dist[is_valid].float().mean().item() if is_valid.any() else 0,
         "intra_dist": intra_distances[is_valid].float().mean().item() if is_valid.any() else 0,
         "inter_dist": inter_distances[is_valid].float().mean().item() if is_valid.any() else 0,
         "all_dist": all_distances[is_valid].float().mean().item() if is_valid.any() else 0,
@@ -276,27 +296,32 @@ def get_reward(x_t, entropy, config, step, themes_tokens=None, ratings=None):
         "cp_loss": cp_losses[is_valid & ~torch.isnan(cp_losses)].mean().item() if (is_valid & ~torch.isnan(cp_losses)).any() and config.predict_moves else 0,
     }
 
+    if (is_valid & themes_match).any():
+        components["counter_intuitive_values_max_given_unique_and_theme"] = counter_intuitive_values[is_valid & themes_match].max().item()
+        components["counter_intuitive_values_given_unique_and_theme"] = counter_intuitive_values[is_valid & themes_match].mean().item()
+
     rewards = torch.zeros(batch_size, dtype=torch.float32)
-    # rewards = torch.where(legal_position & pass_diversity_filtering & piece_counts & themes_match & unique_solution, 10 * counter_intuitive_values, rewards)
-    # rewards = torch.where(legal_position & themes_match & unique_solution, torch.clamp(10 * counter_intuitive_values, min=0), rewards)
-    rewards = torch.where(legal_position & pass_diversity_filtering & piece_counts & themes_match & unique_solution, torch.clamp(10 * counter_intuitive_values, min=0.0, max=1.0), rewards)
-    # rewards = torch.where(legal_position & themes_match & unique_and_counter_intuitive, 1.0, rewards)
-    # rewards = torch.where(legal_position & ~piece_counts, -1.0, rewards)
+    rewards = torch.where(legal_position & pass_diversity_filtering & piece_counts & themes_match & unique_solution, torch.clamp(10 * counter_intuitive_values, min=0.0), rewards)
+    # rewards = torch.where(legal_position & pass_diversity_filtering & piece_counts & themes_match & unique_solution, 1e-4, rewards)
+    # rewards = torch.where(legal_position & pass_diversity_filtering & piece_counts & themes_match & unique_and_counter_intuitive, 1.0, rewards)
+    # rewards = torch.where(legal_position & pass_diversity_filtering & piece_counts & themes_match & unique_solution, 1.0 + 10 * counter_intuitive_values, rewards)
     rewards = torch.where(~legal_position, -2.0, rewards)
     rewards = rewards.to(torch.float32)
 
     log_rewards(components, rewards, step)
 
     index = torch.argmax(rewards).item()
-    save_board(batch_fens[index], "Generations", step, themes[index], true_ratings[index])
+    save_board(batch_fens[index], "Generations", step, themes[index], true_ratings[index], counter_intuitive=counter_intuitive_values[index].item(), reward=rewards[index].item())
     index = torch.argmin(rewards).item()
-    save_board(batch_fens[index], "Worst_Generations", step, themes[index], true_ratings[index])
+    save_board(batch_fens[index], "Worst_Generations", step, themes[index], true_ratings[index], counter_intuitive=counter_intuitive_values[index].item(), reward=rewards[index].item())
     index = torch.randint(0, batch_size, (1,)).item()
-    save_board(batch_fens[index], "Random_Generations", step, themes[index], true_ratings[index])
-    for index, reward in enumerate(rewards):
-        if not (unique_solution[index] & counter_intuitive_solution[index] & pass_diversity_filtering[index]):
-            continue
-        save_board(batch_fens[index], "Puzzles", step, themes[index], true_ratings[index])
+    save_board(batch_fens[index], "Random_Generations", step, themes[index], true_ratings[index], counter_intuitive=counter_intuitive_values[index].item(), reward=rewards[index].item())
+
+    valid_puzzles = unique_solution & counter_intuitive_solution & pass_diversity_filtering & themes_match
+    if valid_puzzles.any():
+        masked_ci = torch.where(valid_puzzles, counter_intuitive_values, torch.tensor(-float('inf'), device=counter_intuitive_values.device))
+        best_ci_index = torch.argmax(masked_ci).item()
+        save_board(batch_fens[best_ci_index], "Puzzles", step, themes[best_ci_index], true_ratings[best_ci_index], counter_intuitive=counter_intuitive_values[best_ci_index].item(), reward=rewards[best_ci_index].item())
     
     return rewards.to(x_t.device, dtype=torch.float32)
 
@@ -436,7 +461,8 @@ def train_ddpo(model, ref_model, optimizer, scheduler, config, device, args, ste
             mean_other_returns = (returns_grouped.sum(dim=1, keepdim=True) - returns_grouped) / (args.group_size - 1)
         else:
             mean_other_returns = torch.zeros_like(returns_grouped)
-        advantages_grouped = (returns_grouped - mean_other_returns) / (returns_grouped.std(dim=(1, 2), keepdim=True) + 1e-2)
+        # advantages_grouped = (returns_grouped - mean_other_returns) / (returns_grouped.std(dim=(1, 2), keepdim=True) + 1e-2)
+        advantages_grouped = returns_grouped - mean_other_returns
         advantages = advantages_grouped.reshape(total_batch_size, args.steps).T.reshape(-1)
     
     x_t = torch.cat([t["x_t"] for t in trajectories], dim=0)

@@ -41,7 +41,7 @@ def get_opponent_pv_distance(pv1: str, pv2: str) -> int:
     opponent_pv2 = pv2.split(" ")
     return Levenshtein.distance(opponent_pv1[1], opponent_pv2[1]) if len(opponent_pv1) >= 2 and len(opponent_pv2) >= 2 else 5
 
-def get_abstracted_pv(fen: str, pv: str) -> list:
+def get_abstracted_pv(fen: str, pv: str, max_moves: int = 1) -> list:
     if not fen or not pv:
         return []
     try:
@@ -50,9 +50,8 @@ def get_abstracted_pv(fen: str, pv: str) -> list:
         return []
 
     abstracted = []
-    for move_str in pv.split(" "):
-        if not move_str:
-            continue
+    moves = [m for m in pv.split(" ") if m]
+    for move_str in moves[:max_moves]:
         try:
             move = chess.Move.from_uci(move_str)
         except ValueError:
@@ -63,61 +62,41 @@ def get_abstracted_pv(fen: str, pv: str) -> list:
         piece = board.piece_at(move.from_square)
         if piece is None:
             break
-        piece_type = piece.piece_type
 
-        # Determine direction
-        from_file = chess.square_file(move.from_square)
-        from_rank = chess.square_rank(move.from_square)
-        to_file = chess.square_file(move.to_square)
-        to_rank = chess.square_rank(move.to_square)
-        dx = to_file - from_file
-        dy = to_rank - from_rank
+        source = chess.square_name(move.from_square)
+        target = chess.square_name(move.to_square)
 
-        if dx == 0:
-            direction = "V"
-        elif dy == 0:
-            direction = "H"
-        elif abs(dx) == abs(dy):
-            direction = "D"
-        elif (abs(dx) == 1 and abs(dy) == 2) or (abs(dx) == 2 and abs(dy) == 1):
-            direction = "N"
-        else:
-            direction = "O"
+        captured_piece = None
+        if board.is_capture(move):
+            if board.is_en_passant(move):
+                captured_piece = chess.Piece(chess.PAWN, not board.turn)
+            else:
+                captured_piece = board.piece_at(move.to_square)
+        captured_symbol = captured_piece.symbol() if captured_piece is not None else None
+
+        en_passant = True if board.is_en_passant(move) else None
+
+        promoted_symbol = chess.Piece(move.promotion, board.turn).symbol() if move.promotion is not None else None
 
         # Apply move to check state
         board.push(move)
         is_check = board.is_check()
-        is_mate = board.is_checkmate()
 
-        abstracted.append((piece_type, direction, is_check, is_mate))
+        abstracted.append((
+            piece.symbol(),
+            source,
+            target,
+            captured_symbol,
+            en_passant,
+            promoted_symbol,
+            is_check
+        ))
 
     return abstracted
 
 
 def abstract_moves_equal(move1: tuple, move2: tuple) -> bool:
-    piece1, dir1, ch1, mate1 = move1
-    piece2, dir2, ch2, mate2 = move2
-
-    # Basic flags must match
-    # if ch1 != ch2 or mate1 != mate2 or dir1 != dir2:
-    if ch1 != ch2 or mate1 != mate2:
-        return False
-
-    # Same piece type matches directly
-    if piece1 == piece2:
-        return True
-
-    # Queen and Rook are equivalent for straight moves
-    if dir1 == dir2 and dir1 in ("V", "H"):
-        if {piece1, piece2} <= {chess.ROOK, chess.QUEEN}:
-            return True
-
-    # Queen and Bishop are equivalent for diagonal moves
-    if dir1 == dir2 and dir1 == "D":
-        if {piece1, piece2} <= {chess.BISHOP, chess.QUEEN}:
-            return True
-
-    return False
+    return move1 == move2
 
 
 def get_abstracted_pv_hamming_distance(apv1: list, apv2: list) -> int:

@@ -13,7 +13,7 @@ from MaskedDiffusion.model import MaskedDiffusion
 from RatingModel.model import RatingModel
 from rl.espo import generate_random_themes, theme_reward
 from tokenization.tokenization import theme_preprocessor, scale_ratings, tokens_to_fen, tokens_to_move, unscale_ratings
-from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
+from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive, uniqueness
 from metrics.cook import cook
 from MaskingSchedule.MaskingSchedule import string_to_schedule
 from torch.distributed import init_process_group, destroy_process_group, barrier
@@ -28,7 +28,7 @@ parser.add_argument("--run_name", type=str, default=None)
 parser.add_argument("--temperature", type=float, default=1.0)
 parser.add_argument("--steps", type=int, default=512)
 parser.add_argument("--output_file", type=str, required=True)
-parser.add_argument("--context_dataset", choices=["train", "test"], default="test")
+parser.add_argument("--context_dataset", choices=["train", "test", "random"], default="test")
 parser.add_argument("--generate_move_last", action="store_true")
 parser.add_argument("--n_fens", type=int, default=10_000)
 parser.add_argument("--batch_size", type=int, default=1024)
@@ -95,8 +95,11 @@ for _ in range(n_jobs):
     engine_pool.put(engine)
 
 if config.use_context:
-    dataset_name = "trainset.pt" if args.context_dataset == "train" else "testset.pt"
-    dataset = torch.load(base_path / "dataset" / "with_best_move" / dataset_name, weights_only=False, map_location="cpu")
+    if args.context_dataset in ["train", "test"]:
+        dataset_name = "trainset.pt" if args.context_dataset == "train" else "testset.pt"
+        dataset = torch.load(base_path / "dataset" / "with_best_move" / dataset_name, weights_only=False, map_location="cpu")
+    else:
+        dataset = None
 else:
     dataset = None
 
@@ -122,16 +125,17 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device):
         
         engine.configure({"Clear Hash": None})
         entry["counter_intuitive"], entry["counter_intuitive_value"] = counter_intuitive(fen, engine, return_value=True)
-        puzzle = get_unique_puzzle_from_fen(fen, engine)
+        entry["is_puzzle"] = uniqueness(fen, engine)
         
-        if puzzle is not None:
-            entry["is_puzzle"] = True
-            entry["main_line"] = " ".join([move.uci() for move in puzzle.mainline])
-            existing_themes = cook(puzzle, engine)
-            entry["actual_themes"] = existing_themes
-            
-            if config.use_context:
-                entry["themes_match"] = theme_reward(base_theme, existing_themes)
+        if entry["is_puzzle"]:
+            puzzle = get_unique_puzzle_from_fen(fen, engine)
+            if puzzle is not None:
+                entry["main_line"] = " ".join([move.uci() for move in puzzle.mainline])
+                existing_themes = cook(puzzle, engine)
+                entry["actual_themes"] = existing_themes
+                
+                if config.use_context:
+                    entry["themes_match"] = theme_reward(base_theme, existing_themes)
 
         return entry
 
@@ -170,17 +174,24 @@ try:
             print(f"Iteration {iteration} / {total_iterations} (generating batch of size {current_batch_size})", flush=True)
         
         if config.use_context:
-            indices = torch.randint(0, len(dataset), (current_batch_size,)).tolist()
-            sampled_items = [dataset[idx] for idx in indices]
-            
-            sampled_themes = torch.stack([torch.as_tensor(item[2]) for item in sampled_items])
-            sampled_ratings = torch.stack([torch.as_tensor(item[3]) for item in sampled_items])
-            
-            base_themes = theme_preprocessor.inverse_transform(sampled_themes.numpy())
-            base_ratings = unscale_ratings(sampled_ratings).tolist()
-            
-            themes_one_hot = sampled_themes.to(device=device, dtype=torch.float32)
-            scaled_ratings = sampled_ratings.to(device=device, dtype=torch.float32)
+            if args.context_dataset == "random":
+                themes, ratings = generate_random_themes(current_batch_size, lichess_distribution=False)
+                base_themes = themes
+                base_ratings = ratings.tolist()
+                themes_one_hot = torch.from_numpy(theme_preprocessor.transform(themes)).to(device=device, dtype=torch.float32)
+                scaled_ratings = scale_ratings(ratings).to(device=device, dtype=torch.float32)
+            else:
+                indices = torch.randint(0, len(dataset), (current_batch_size,)).tolist()
+                sampled_items = [dataset[idx] for idx in indices]
+                
+                sampled_themes = torch.stack([torch.as_tensor(item[2]) for item in sampled_items])
+                sampled_ratings = torch.stack([torch.as_tensor(item[3]) for item in sampled_items])
+                
+                base_themes = theme_preprocessor.inverse_transform(sampled_themes.numpy())
+                base_ratings = unscale_ratings(sampled_ratings).tolist()
+                
+                themes_one_hot = sampled_themes.to(device=device, dtype=torch.float32)
+                scaled_ratings = sampled_ratings.to(device=device, dtype=torch.float32)
         else:
             themes_one_hot = None
             scaled_ratings = None

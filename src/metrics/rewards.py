@@ -24,7 +24,22 @@ def inter_batch_distances(fen, pv, sampled_fens, sampled_pvs):
             min_board_dist = bd
             best_pv = sampled_pv
     min_pv_dist = get_pv_distance(pv, best_pv) if (pv and best_pv) else 0
-    return min_board_dist if min_board_dist != float('inf') else 0, min_pv_dist
+
+    min_abstracted_pv_dist = float('inf')
+    if pv:
+        apv = get_abstracted_pv(fen, pv)
+        for other_fen, other_pv in zip(sampled_fens, sampled_pvs):
+            if other_fen and other_pv:
+                other_apv = get_abstracted_pv(other_fen, other_pv)
+                apd = get_abstracted_pv_hamming_distance(apv, other_apv)
+                if apd < min_abstracted_pv_dist:
+                    min_abstracted_pv_dist = apd
+
+    return (
+        min_board_dist if min_board_dist != float('inf') else 0,
+        min_pv_dist,
+        min_abstracted_pv_dist if min_abstracted_pv_dist != float('inf') else 0
+    )
 
 # def inter_batch_distances(fen, pv, sampled_fens, sampled_pvs):
 #     min_board_dist = float('inf')

@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --time=04:00:00
+#SBATCH --time=06:00:00
 #SBATCH --output=evaluate_checkpoints.out
 #SBATCH --mem=64G
 #SBATCH --nodes=1
@@ -15,10 +15,10 @@ module load triton/2024.1-gcc gcc/12.3.0
 source activate environment
 
 # CHECKPOINT_DIR=${CHECKPOINT_DIR:-"src/runs/supervised/final_model_no_move"}
-CHECKPOINT_DIR=${CHECKPOINT_DIR:-"src/runs/rl/final_large_runs/final_thesis_experiments/full_diversity18"}
+CHECKPOINT_DIR=${CHECKPOINT_DIR:-"src/runs/rl/final_large_runs/final_thesis_experiments/full_diversity11"}
 # OUTPUT_DIR=${OUTPUT_DIR:-"src/Generate_positions/final_model/supervised/training_progress/train_context"}
-OUTPUT_DIR=${OUTPUT_DIR:-"src/Generate_positions/final_model/rl/full_diversity18/training_progress/test_no_move_last"}
-N_FENS=${N_FENS:-50000}
+OUTPUT_DIR=${OUTPUT_DIR:-"src/Generate_positions/final_model/rl/training_progress/test_no_move_lastv3"}
+N_FENS=${N_FENS:-30000}
 TEMPERATURE=${TEMPERATURE:-1.0}
 STEPS=${STEPS:-256}
 CONTEXT_DATASET=${CONTEXT_DATASET:-"train"}

@@ -122,7 +122,8 @@ def main():
         # If it is a directory or not ending with '.csv', attempt to treat it as a directory
         if path.is_dir() or not args.generated_csv.endswith(".csv"):
             if path.is_dir():
-                generated_files = sorted(list(path.glob("*.csv")), key=natural_sort_key)
+                # generated_files = sorted(list(path.glob("*.csv")), key=natural_sort_key)
+                generated_files = sorted([f for f in path.glob("*.csv") if f.name != "distances.csv"], key=natural_sort_key)
                 if not generated_files:
                     print(f"Error: No CSV files found in directory {args.generated_csv}.", flush=True)
                     return
@@ -193,9 +194,16 @@ def main():
         print(f"Loaded {len(df_gen)} rows.", flush=True)
 
         # Filter by puzzle flag
-        if not args.no_filter and "is_puzzle" in df_gen.columns:
-            df_gen = df_gen[df_gen["is_puzzle"] == True]
-            print(f"Filtered to {len(df_gen)} puzzles (is_puzzle == True).", flush=True)
+        if not args.no_filter:
+            filter_col = None
+            if "is_puzzle_true" in df_gen.columns:
+                filter_col = "is_puzzle_true"
+            elif "is_puzzle" in df_gen.columns:
+                filter_col = "is_puzzle"
+                
+            if filter_col is not None:
+                df_gen = df_gen[df_gen[filter_col] == True]
+                print(f"Filtered to {len(df_gen)} puzzles ({filter_col} == True).", flush=True)
 
         # Prepare generated samples
         gen_fens, gen_pvs = [], []
@@ -215,7 +223,8 @@ def main():
         print("="*50, flush=True)
 
         # Extract checkpoint number (amount of training steps) from the file name
-        match = re.search(r'\d+', gen_path.name)
+        # match = re.search(r'\d+', gen_path.name)
+        match = re.search(r'(?<![a-zA-Z])\d+(?![a-zA-Z])', gen_path.name)
         checkpoint = int(match.group()) if match else gen_path.stem
 
         result_dict = {

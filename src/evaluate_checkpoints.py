@@ -12,7 +12,7 @@ import re
 from MaskedDiffusion.model import MaskedDiffusion
 from rl.espo import generate_random_themes, theme_reward
 from tokenization.tokenization import theme_preprocessor, scale_ratings, tokens_to_fen, tokens_to_move, unscale_ratings
-from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive
+from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive, uniqueness
 from metrics.cook import cook
 from MaskingSchedule.MaskingSchedule import string_to_schedule
 
@@ -113,16 +113,17 @@ def process_puzzle(fen_tokens, move_tokens, base_theme, base_rating, device):
         
         engine.configure({"Clear Hash": None})
         entry["counter_intuitive"], entry["counter_intuitive_value"] = counter_intuitive(fen, engine, return_value=True)
-        puzzle = get_unique_puzzle_from_fen(fen, engine)
+        entry["is_puzzle"] = uniqueness(fen, engine)
         
-        if puzzle is not None:
-            entry["is_puzzle"] = True
-            entry["main_line"] = " ".join([move.uci() for move in puzzle.mainline])
-            existing_themes = cook(puzzle, engine)
-            entry["actual_themes"] = existing_themes
-            
-            if base_theme is not None:
-                entry["themes_match"] = theme_reward(base_theme, existing_themes)
+        if entry["is_puzzle"]:
+            puzzle = get_unique_puzzle_from_fen(fen, engine)
+            if puzzle is not None:
+                entry["main_line"] = " ".join([move.uci() for move in puzzle.mainline])
+                existing_themes = cook(puzzle, engine)
+                entry["actual_themes"] = existing_themes
+                
+                if base_theme is not None:
+                    entry["themes_match"] = theme_reward(base_theme, existing_themes)
 
         return entry
     finally:
@@ -188,11 +189,12 @@ try:
                 )
             print("Sampling time:", perf_counter() - start, flush=True)
             
+            tokens_cpu = tokens.cpu()
             if config.predict_moves:
-                fen_tokens = tokens[:, :config.fen_length]
-                move_tokens = tokens[:, config.fen_length:]
+                fen_tokens = tokens_cpu[:, :config.fen_length]
+                move_tokens = tokens_cpu[:, config.fen_length:]
             else:
-                fen_tokens = tokens
+                fen_tokens = tokens_cpu
                 move_tokens = None
                 
             start2 = perf_counter()

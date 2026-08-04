@@ -18,10 +18,18 @@ mate_soon = Mate(15)
 # pair_limit = Limit(depth=50, time=30, nodes=25_000_000)
 # mate_defense_limit = Limit(depth=15, time=10, nodes=8_000_000)
 
-pair_limit = Limit(depth=15, time=10, nodes=8_000_000)
-mate_defense_limit = Limit(depth=8, time=5, nodes=4_000_000)
+# pair_limit = Limit(depth=15, time=10, nodes=8_000_000)
+# mate_defense_limit = Limit(depth=8, time=5, nodes=4_000_000)
+# counter_intuitive_limit = Limit(depth=50, time=1, nodes=50_000_000)
 
-counter_intuitive_limit = Limit(depth=50, time=1, nodes=50_000_000)
+# pair_limit = Limit(depth=15, time=0.1, nodes=8_000_000)
+# mate_defense_limit = Limit(depth=8, time=0.05, nodes=4_000_000)
+# counter_intuitive_limit = Limit(depth=50, time=0.1, nodes=50_000_000)
+
+uniqueness_limit = Limit(depth=50, time=0.2, nodes=50_000_000)
+pair_limit = Limit(depth=15, time=0.1, nodes=8_000_000)
+mate_defense_limit = Limit(depth=8, time=0.05, nodes=4_000_000)
+counter_intuitive_limit = Limit(depth=50, time=0.2, nodes=50_000_000)
 
 TAU_UNI = 0.5
 TAU_CNT = 0.1
@@ -37,7 +45,7 @@ def uniqueness(fen, engine: SimpleEngine):
     board = chess.Board(fen)
     if board.is_game_over(): return False  # NOTE: just check that the model has not generated a position that is checkmate already
     if board.legal_moves.count() == 1: return False  # NOTE: had a problem in this position without this: 8/8/p7/P7/1P6/6pk/6p1/7K w - - 0 52
-    info = engine.analyse(board, multipv = 2, limit = Limit(depth=50, time=1, nodes=5e7))
+    info = engine.analyse(board, multipv = 2, limit = uniqueness_limit)
     best = info[0]["score"].pov(board.turn)
     second = info[1]["score"].pov(board.turn)
     return win_chances(best) - win_chances(second) > TAU_UNI
@@ -46,7 +54,7 @@ def counter_intuitive_value(fen, engine: SimpleEngine):
     board = chess.Board(fen)
     if board.is_game_over(): return 0  # NOTE: just check that the model has not generated a position that is checkmate already
     history = []        
-    with engine.analysis(board, Limit(depth=50, time=1, nodes=5e7)) as analysis:
+    with engine.analysis(board, limit = counter_intuitive_limit) as analysis:
         for info in analysis:
             if "pv" in info and "depth" in info:
                 move_depth = info["depth"]
