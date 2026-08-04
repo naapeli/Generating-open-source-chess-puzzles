@@ -15,7 +15,7 @@ from metrics.util import material_diff, win_chances, game_phase
 
 # zugzwang_limit = Limit(depth=30, time=10, nodes=12_000_000)
 # zugzwang_limit = Limit(depth=15, time=10, nodes=8_000_000)
-zugzwang_limit = Limit(depth=8, time=5, nodes=4_000_000)
+zugzwang_limit = Limit(depth=8, time=0.1, nodes=4_000_000)
 
 def cook(puzzle: Puzzle, engine: SimpleEngine) -> List[TagKind]:
     tags: List[TagKind] = [game_phase(puzzle)]
