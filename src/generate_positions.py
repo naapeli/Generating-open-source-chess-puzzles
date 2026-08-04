@@ -10,7 +10,6 @@ import os
 import random
 
 from MaskedDiffusion.model import MaskedDiffusion
-from RatingModel.model import RatingModel
 from rl.espo import generate_random_themes, theme_reward
 from tokenization.tokenization import theme_preprocessor, scale_ratings, tokens_to_fen, tokens_to_move, unscale_ratings
 from metrics.themes import legal, get_unique_puzzle_from_fen, counter_intuitive, uniqueness
