@@ -5,7 +5,7 @@ import pandas as pd
 import random
 
 
-n_quadrature = 7
+n_quadrature = 3
 t_points, quadrature_weights = np.polynomial.legendre.leggauss(n_quadrature)  # estimate the integral with a gaussian quadrature (https://arxiv.org/pdf/2510.08554)
 t_points, quadrature_weights = torch.from_numpy(t_points), torch.from_numpy(quadrature_weights)
 t_points, quadrature_weights = (1 - 0) / 2 * t_points + (1 + 0) / 2, (1 - 0) / 2 * quadrature_weights  # https://en.wikipedia.org/wiki/Gaussian_quadrature#Change_of_interval
@@ -23,9 +23,9 @@ def entropy(elbo, sequence_length):
     entropy_vals = -elbo / sequence_length
     return entropy_vals
 
-def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
-    device = ratings.device
-    n_samples = len(ratings)
+def compute_elbo(model, fens, themes=None, ratings=None, mask=None, return_mask=False):
+    device = fens.device
+    n_samples = len(fens)
 
     config = model.module.config if hasattr(model, "module") else model.config
     module = model.module if hasattr(model, "module") else model
@@ -34,9 +34,12 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
     alpha_t = config.masking_schedule(t)
     quadrature_weight = quadrature_weights.unsqueeze(0).to(device)
 
-    fens = fens.repeat_interleave(n_quadrature, dim=0)
-    themes = themes.repeat_interleave(n_quadrature, dim=0)
-    ratings = ratings.repeat_interleave(n_quadrature, dim=0)
+    if themes is None:
+        fens = fens.repeat_interleave(n_quadrature, dim=0)
+    else:
+        fens = fens.repeat_interleave(n_quadrature, dim=0)
+        themes = themes.repeat_interleave(n_quadrature, dim=0)
+        ratings = ratings.repeat_interleave(n_quadrature, dim=0)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
     masked_fens = torch.where(random_mask, fens, config.mask_token)
@@ -50,21 +53,30 @@ def compute_elbo(model, fens, themes, ratings, mask=None, return_mask=False):
         return elbo, random_mask, t
     return elbo
 
-def compute_elbo_basic(model, fens, themes, ratings, mask=None, t=None, return_mask=False):
-    device = ratings.device
-    n_samples = len(ratings)
+def compute_elbo_basic(model, fens, themes=None, ratings=None, mask=None, t=None, return_mask=False, n_mc=n_quadrature):
+    device = fens.device
+    n_samples = len(fens)
 
     config = model.module.config if hasattr(model, "module") else model.config
     module = model.module if hasattr(model, "module") else model
 
-    t = ((torch.rand(1) + torch.arange(n_samples) / n_samples) % 1).to(device)[torch.randperm(n_samples, device=device)] if t is None else t
+    if themes is None:
+        fens = fens.repeat_interleave(n_mc, dim=0)
+    else:
+        fens = fens.repeat_interleave(n_mc, dim=0)
+        themes = themes.repeat_interleave(n_mc, dim=0)
+        ratings = ratings.repeat_interleave(n_mc, dim=0)
+
+    total_samples = n_samples * n_mc
+    t = ((torch.rand(1) + torch.arange(total_samples) / total_samples) % 1).to(device)[torch.randperm(total_samples, device=device)] if t is None else t
     alpha_t = config.masking_schedule(t)
 
     random_mask = torch.rand(fens.size(), device=device) < alpha_t.unsqueeze(1) if mask is None else mask
-    masked_fens = torch.where(random_mask, fens, model.config.mask_token)
+    masked_fens = torch.where(random_mask, fens, config.mask_token)
 
     logits = model(masked_fens, themes, ratings)
     elbo = module.elbo_loss(t, logits, fens, masked_fens)
+    elbo = elbo.reshape(n_samples, n_mc).mean(dim=1)
     elbo = -elbo  # model.elbo_loss returns an upper bound of the negative log likelihood, which we minimized during supervised training
     assert (elbo <= 0).all(), f"elbo should be a lower bound of a probability, {elbo}"
     if return_mask:
@@ -76,7 +88,7 @@ def espo_loss(model, reference_elbos, old_elbos, fens, themes, ratings, rewards,
     assert n_samples % group_size == 0
     batch_size = n_samples // group_size
 
-    device = ratings.device
+    device = fens.device
     elbo = compute_elbo(model, fens, themes, ratings, mask=mask, return_mask=False)
     # elbo = compute_elbo_basic(model, fens, themes, ratings, mask=mask, t=t, return_mask=False)
 
@@ -120,13 +132,15 @@ def critic_free_ppo_loss(model, reference_elbos, old_elbos, fens, themes, rating
     return -loss, kl, is_clipped  # maximize the loss above
 
 
-def generate_grouped_positions(model, themes, ratings, group_size, steps=256, temperature=1.0, generate_move_last=True):
-    themes = themes.repeat_interleave(group_size, dim=0)
-    ratings = ratings.repeat_interleave(group_size, dim=0)
+def generate_grouped_positions(model, themes, ratings, group_size, batch_size, steps=256, temperature=1.0, generate_move_last=True):
+    if themes is not None:
+        themes = themes.repeat_interleave(group_size, dim=0)
+    if ratings is not None:
+        ratings = ratings.repeat_interleave(group_size, dim=0)
 
     module = model.module if hasattr(model, "module") else model
 
-    fens = module.sample(themes, ratings, steps=steps, temperature=temperature, generate_move_last=generate_move_last)
+    fens = module.sample(themes, ratings, steps=steps, batch_size=batch_size * group_size, temperature=temperature, generate_move_last=generate_move_last)
     return fens, themes, ratings
 
 state_of_game_tokens = ("opening", "middlegame", "endgame")
@@ -142,39 +156,110 @@ winnings = ("crushing", "advantage")
 other = ("hangingPiece", "fork", "interference", "kingsideAttack", "zugzwang", "exposedKing", "skewer", "pin", "quietMove", "discoveredAttack", "sacrifice", "deflection", "advancedPawn", "attraction", "promotion", "queensideAttack", "defensiveMove", "attackingF2F7", "clearance", "intermezzo", "equality", "trappedPiece", "xRayAttack", "capturingDefender", "doubleCheck", "enPassant", "castling", "underPromotion")
 
 dataset = None
+# def generate_random_themes(batch_size, lichess_distribution=False):
+#     global dataset
+#     if lichess_distribution:
+#         if dataset is None:
+#             dataset = pd.read_csv("./src/dataset/dataset.csv")
+#         rows = dataset.sample(n=batch_size)
+#         themes = rows["Themes"].str.split(" ").to_list()
+#         ratings = torch.from_numpy(rows["Rating"].to_numpy())
+#     else:
+#         themes = []
+#         for _ in range(batch_size):
+#             position_themes = [random.choice(lengths)]
+#             state_of_game = random.choice(state_of_game_tokens)
+#             position_themes.append(state_of_game)
+
+#             if state_of_game == "endgame":
+#                 position_themes.append(random.choice(endgames))
+            
+#             if torch.rand(1) < 0.1:
+#                 position_themes.append(is_mate)
+#                 position_themes.append(random.choice(mate_lengths))
+#                 position_themes.append(random.choice(types_of_mate))
+#             else:
+#                 position_themes.append(random.choice(winnings))
+#                 position_themes.append(random.choice(other))
+
+#             themes.append(position_themes)
+        
+#         ratings = 3000 * torch.rand((batch_size,)) + 300
+
+#     return themes, ratings
 def generate_random_themes(batch_size, lichess_distribution=False):
     global dataset
     if lichess_distribution:
         if dataset is None:
-            dataset = pd.read_csv("./src/dataset/dataset.csv")  # , nrows=100_000
+            dataset = pd.read_csv("./src/dataset/dataset.csv")
         rows = dataset.sample(n=batch_size)
         themes = rows["Themes"].str.split(" ").to_list()
         ratings = torch.from_numpy(rows["Rating"].to_numpy())
     else:
         themes = []
         for _ in range(batch_size):
-            position_themes = [random.choice(lengths)]
-            state_of_game = random.choice(state_of_game_tokens)
-            position_themes.append(state_of_game)
+            position_themes = []
+            # length = random.choice(lengths)
+            length = random.choices(lengths, weights=[15, 25, 30, 30], k=1)[0]
+            if torch.rand(1) < 0.8: position_themes.append(length)
+            # state_of_game = random.choice(state_of_game_tokens)
+            state_of_game = random.choices(state_of_game_tokens, weights=[20, 40, 40], k=1)[0]
+            if torch.rand(1) < 0.8: position_themes.append(state_of_game)
 
-            if state_of_game == "endgame":
+            if state_of_game == "endgame" and torch.rand(1) < 0.8:
                 position_themes.append(random.choice(endgames))
             
-            if torch.rand(1) < 0.1:
+            if torch.rand(1) < 0.2:
                 position_themes.append(is_mate)
-                position_themes.append(random.choice(mate_lengths))
-                position_themes.append(random.choice(types_of_mate))
+                if torch.rand(1) < 0.8:
+                    i = lengths.index(length) + (1 if length == "veryLong" and torch.rand(1) < 0.5 else 0)
+                    position_themes.append(mate_lengths[i])
+                if torch.rand(1) < 0.8: position_themes.append(random.choice(types_of_mate))
             else:
-                position_themes.append(random.choice(winnings))
-                position_themes.append(random.choice(other))
+                if torch.rand(1) < 0.5: position_themes.append(random.choice(winnings))
+            
+            # n = random.randint(0, 2)
+            n = random.choices([1, 2], weights=[80, 20])[0]
+            position_themes.extend(random.sample(other, n))
 
             themes.append(position_themes)
-        # themes = [["middlegame", "sacrifice", "mate"] for _ in range(batch_size)]  # TODO: remove when not interested in only this spesific theme
         
+        # ratings = 3000 * torch.ones((batch_size,)) + 300
         ratings = 3000 * torch.rand((batch_size,)) + 300
 
     return themes, ratings
 
+# def theme_reward(base_themes, puzzle_themes):
+#     base_set = set(base_themes)
+#     puzzle_set = set(puzzle_themes)
+
+#     base_state = base_set.intersection(state_of_game_tokens)
+#     if not base_state.issubset(puzzle_set):
+#         return False
+
+#     if "endgame" in base_set:
+#         base_endgame = base_set.intersection(endgames)
+#         if not base_endgame.issubset(puzzle_set):
+#             return False
+    
+#     if "mate" in base_set:
+#         if "mate" not in puzzle_set:
+#             return False
+            
+#         base_mate_length = base_set.intersection(mate_lengths)
+#         if not base_mate_length.issubset(puzzle_set):
+#             return False
+            
+#         base_mate_type = base_set.intersection(types_of_mate)
+#         if not base_mate_type.issubset(puzzle_set):
+#             return False
+            
+#     else:
+#         base_other = base_set.intersection(other)
+#         if not base_other.issubset(puzzle_set):
+#             return False
+
+#     return True
 def theme_reward(base_themes, puzzle_themes):
     base_set = set(base_themes)
     puzzle_set = set(puzzle_themes)
@@ -183,10 +268,9 @@ def theme_reward(base_themes, puzzle_themes):
     if not base_state.issubset(puzzle_set):
         return False
 
-    if "endgame" in base_set:
-        base_endgame = base_set.intersection(endgames)
-        if not base_endgame.issubset(puzzle_set):
-            return False
+    base_endgame = base_set.intersection(endgames)
+    if not base_endgame.issubset(puzzle_set):
+        return False
     
     if "mate" in base_set:
         if "mate" not in puzzle_set:
@@ -199,10 +283,12 @@ def theme_reward(base_themes, puzzle_themes):
         base_mate_type = base_set.intersection(types_of_mate)
         if not base_mate_type.issubset(puzzle_set):
             return False
-            
     else:
-        base_other = base_set.intersection(other)
-        if not base_other.issubset(puzzle_set):
+        if "mate" in puzzle_set:  # if model generated a checkmate when we did not ask it to do so, return False
             return False
+            
+    base_other = base_set.intersection(other)
+    if not base_other.issubset(puzzle_set):
+        return False
 
     return True

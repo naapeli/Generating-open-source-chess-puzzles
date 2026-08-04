@@ -7,24 +7,108 @@ import numpy as np
 import torch
 # from torchaudio.functional import edit_distance
 from rapidfuzz.distance import Levenshtein
+import chess
 
 
 def fen_to_padded(fen):  # make the format the same as 
     board, side, castling, enpassant = fen.split(" ")[:4]
     board = re.sub(r"\d", lambda digit: "." * int(digit.group()), board)
     board = re.sub("/", "", board)
-    castling = "".join([char if char in castling else "." for char in "KQkq"])
-    enpassant = ".." if enpassant == "-" else enpassant
-    return " ".join([board, side, castling, enpassant])
+    return "".join([side, board])
+    # return " ".join([board, side])
+    # castling = "".join([char if char in castling else "." for char in "KQkq"])
+    # enpassant = ".." if enpassant == "-" else enpassant
+    # return " ".join([board, side, castling, enpassant])
 
 def PV_distance(pv1: str, pv2: str) -> bool:
-    pv1 = pv1.split(" ", 1)[0]  # only check if the first move is the same
-    pv2 = pv2.split(" ", 1)[0]  # only check if the first move is the same
-    # we do not divide by the max amount of moves in the pv, as they are both one.
-    return Levenshtein.distance(pv1, pv2) >= 1  # max length of edit_distance is max(len(pv1), len(pv2))
+    return get_pv_distance(pv1, pv2) >= 1  # max length of edit_distance is max(len(pv1), len(pv2))
 
 def board_distance(fen1: str, fen2: str) -> bool:
-    return Levenshtein.distance(fen_to_padded(fen1), fen_to_padded(fen2)) >= 6
+    return get_board_distance(fen1, fen2) >= 6
+
+def get_pv_distance(pv1: str, pv2: str) -> int:
+    if not pv1 or not pv2:
+        return 0
+    pv1 = pv1.split(" ", 1)[0]  # only check if the first move is the same
+    pv2 = pv2.split(" ", 1)[0]  # only check if the first move is the same
+    return Levenshtein.distance(pv1, pv2)
+
+def get_board_distance(fen1: str, fen2: str) -> int:
+    return Levenshtein.distance(fen_to_padded(fen1), fen_to_padded(fen2))
+
+def get_opponent_pv_distance(pv1: str, pv2: str) -> int:
+    opponent_pv1 = pv1.split(" ")
+    opponent_pv2 = pv2.split(" ")
+    return Levenshtein.distance(opponent_pv1[1], opponent_pv2[1]) if len(opponent_pv1) >= 2 and len(opponent_pv2) >= 2 else 5
+
+def get_abstracted_pv(fen: str, pv: str, max_moves: int = 1) -> list:
+    if not fen or not pv:
+        return []
+    try:
+        board = chess.Board(fen)
+    except Exception:
+        return []
+
+    abstracted = []
+    moves = [m for m in pv.split(" ") if m]
+    for move_str in moves[:max_moves]:
+        try:
+            move = chess.Move.from_uci(move_str)
+        except ValueError:
+            break
+        if not board.is_legal(move):
+            break
+
+        piece = board.piece_at(move.from_square)
+        if piece is None:
+            break
+
+        source = chess.square_name(move.from_square)
+        target = chess.square_name(move.to_square)
+
+        captured_piece = None
+        if board.is_capture(move):
+            if board.is_en_passant(move):
+                captured_piece = chess.Piece(chess.PAWN, not board.turn)
+            else:
+                captured_piece = board.piece_at(move.to_square)
+        captured_symbol = captured_piece.symbol() if captured_piece is not None else None
+
+        en_passant = True if board.is_en_passant(move) else None
+
+        promoted_symbol = chess.Piece(move.promotion, board.turn).symbol() if move.promotion is not None else None
+
+        # Apply move to check state
+        board.push(move)
+        is_check = board.is_check()
+
+        abstracted.append((
+            piece.symbol(),
+            source,
+            target,
+            captured_symbol,
+            en_passant,
+            promoted_symbol,
+            is_check
+        ))
+
+    return abstracted
+
+
+def abstract_moves_equal(move1: tuple, move2: tuple) -> bool:
+    return move1 == move2
+
+
+def get_abstracted_pv_hamming_distance(apv1: list, apv2: list) -> int:
+    if len(apv1) != len(apv2) or len(apv1) == 0 or len(apv2) == 0:
+        return max(len(apv1), len(apv2), 1)
+
+    dist = 0
+    for m1, m2 in zip(apv1, apv2):
+        if not abstract_moves_equal(m1, m2):
+            dist += 1
+    return dist
+
 
 def get_pv_distance(pv1: str, pv2: str) -> int:
     if not pv1 or not pv2:

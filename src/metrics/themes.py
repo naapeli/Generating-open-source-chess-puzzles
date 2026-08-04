@@ -18,10 +18,18 @@ mate_soon = Mate(15)
 # pair_limit = Limit(depth=50, time=30, nodes=25_000_000)
 # mate_defense_limit = Limit(depth=15, time=10, nodes=8_000_000)
 
-pair_limit = Limit(depth=15, time=10, nodes=8_000_000)
-mate_defense_limit = Limit(depth=8, time=5, nodes=4_000_000)
+# pair_limit = Limit(depth=15, time=10, nodes=8_000_000)
+# mate_defense_limit = Limit(depth=8, time=5, nodes=4_000_000)
+# counter_intuitive_limit = Limit(depth=50, time=1, nodes=50_000_000)
 
-counter_intuitive_limit = Limit(depth=50, time=1, nodes=50_000_000)
+# pair_limit = Limit(depth=15, time=0.1, nodes=8_000_000)
+# mate_defense_limit = Limit(depth=8, time=0.05, nodes=4_000_000)
+# counter_intuitive_limit = Limit(depth=50, time=0.1, nodes=50_000_000)
+
+uniqueness_limit = Limit(depth=50, time=0.2, nodes=50_000_000)
+pair_limit = Limit(depth=15, time=0.1, nodes=8_000_000)
+mate_defense_limit = Limit(depth=8, time=0.05, nodes=4_000_000)
+counter_intuitive_limit = Limit(depth=50, time=0.2, nodes=50_000_000)
 
 TAU_UNI = 0.5
 TAU_CNT = 0.1
@@ -32,6 +40,52 @@ def legal(fen):
         return board.is_valid()
     except ValueError:
         return False
+
+def uniqueness(fen, engine: SimpleEngine):
+    board = chess.Board(fen)
+    if board.is_game_over(): return False  # NOTE: just check that the model has not generated a position that is checkmate already
+    if board.legal_moves.count() == 1: return False  # NOTE: had a problem in this position without this: 8/8/p7/P7/1P6/6pk/6p1/7K w - - 0 52
+    info = engine.analyse(board, multipv = 2, limit = uniqueness_limit)
+    best = info[0]["score"].pov(board.turn)
+    second = info[1]["score"].pov(board.turn)
+    return win_chances(best) - win_chances(second) > TAU_UNI
+
+def counter_intuitive_value(fen, engine: SimpleEngine):
+    board = chess.Board(fen)
+    if board.is_game_over(): return 0  # NOTE: just check that the model has not generated a position that is checkmate already
+    history = []        
+    with engine.analysis(board, limit = counter_intuitive_limit) as analysis:
+        for info in analysis:
+            if "pv" in info and "depth" in info:
+                move_depth = info["depth"]
+                best_move = info["pv"][0]
+                history.append((move_depth, best_move))
+
+    critical_point = 50
+    final_best_move = history[-1][1]
+    max_depth = history[-1][0]
+    for move_depth, move in history:
+        if move == final_best_move:
+            critical_point = move_depth
+            break
+    v_critical_point = critical_point / 50
+    
+    v_capture_material = 0
+    if board.is_capture(final_best_move):
+        if board.is_en_passant(final_best_move):
+            captured_value = 1
+        else:
+            captured_piece = board.piece_at(final_best_move.to_square)
+            values = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5, chess.QUEEN: 9}
+            captured_value = values.get(captured_piece.piece_type, 0)
+        
+        v_capture_material = -captured_value / 9
+
+    score = (0.8 * v_critical_point) + (0.1 * v_capture_material)
+    return score
+
+
+
 
 def get_unique_puzzle_from_fen(fen, engine: SimpleEngine):
     board = chess.Board(fen)
@@ -65,6 +119,7 @@ def get_unique_puzzle_from_fen(fen, engine: SimpleEngine):
 
         return Puzzle(game, score)
 
+<<<<<<< HEAD
 def counter_intuitive(fen, engine: SimpleEngine):
     board = chess.Board(fen)
     if board.is_game_over(): return False  # NOTE: just check that the model has not generated a position that is checkmate already
@@ -107,7 +162,47 @@ def counter_intuitive(fen, engine: SimpleEngine):
         v_capture_material = -captured_value / 9
 
     score = (0.8 * v_critical_point) + (0.1 * v_capture_material)
+=======
+def counter_intuitive(fen, engine: SimpleEngine, return_value=False):
+    score = counter_intuitive_value(fen, engine)
+    if return_value:
+        return score > TAU_CNT, score
+>>>>>>> 7e90b1af7506925d851c7b5c5072c22103d6fae8
     return score > TAU_CNT
+
+# def counter_intuitive_value(fen, engine: SimpleEngine):
+#     board = chess.Board(fen)
+#     if board.is_game_over(): return 0  # NOTE: just check that the model has not generated a position that is checkmate already
+#     history = []        
+#     with engine.analysis(board, counter_intuitive_limit) as analysis:
+#         for info in analysis:
+#             if "pv" in info and "depth" in info:
+#                 move_depth = info["depth"]
+#                 best_move = info["pv"][0]
+#                 history.append((move_depth, best_move))
+
+#     critical_point = counter_intuitive_limit.depth
+#     final_best_move = history[-1][1]
+#     max_depth = history[-1][0]
+#     for move_depth, move in history:
+#         if move == final_best_move:
+#             critical_point = move_depth
+#             break
+#     v_critical_point = (critical_point - 1) / counter_intuitive_limit.depth
+    
+#     v_capture_material = 0
+#     if board.is_capture(final_best_move):
+#         if board.is_en_passant(final_best_move):
+#             captured_value = 1
+#         else:
+#             captured_piece = board.piece_at(final_best_move.to_square)
+#             values = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3, chess.ROOK: 5, chess.QUEEN: 9}
+#             captured_value = values.get(captured_piece.piece_type, 0)
+        
+#         v_capture_material = -captured_value / 9
+
+#     score = (0.8 * v_critical_point) + (0.1 * v_capture_material)
+#     return score
 
 def is_valid_attack(pair: NextMovePair, engine: SimpleEngine) -> bool:
     return (
