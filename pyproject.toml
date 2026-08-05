@@ -5,10 +5,21 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "chess>=1.11.2",
+    "chess==1.11.2",
     "pytest>=9.1.1",
-    "torch>=2.9.1",
+    "torch==2.9.1",
+    "numpy==2.4.0",
+    "pandas==2.3.3",
+    "scikit-learn==1.8.0",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
