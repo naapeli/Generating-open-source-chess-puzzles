@@ -1,8 +1,6 @@
 import torch
 
-from ChessGeneration.Config import Config
-from ChessGeneration.MaskedDiffusion import MaskedDiffusion
-from ChessGeneration.generate import prepare_input, generate
+from ChessGeneration import prepare_input, generate, MaskedDiffusion, Config
 
 
 def test_prepare_input():
@@ -13,7 +11,7 @@ def test_prepare_input():
     
     model = MaskedDiffusion(config)
     
-    themes = ['fork', 'pin']
+    themes = ["fork", "pin"]
     rating = 1500.0
     n_attempts = 4
     

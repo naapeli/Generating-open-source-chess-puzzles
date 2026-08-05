@@ -39,6 +39,6 @@ def generate(themes: list[TagKind], rating: float, model: MaskedDiffusion, n_att
             move = tokens_to_move(move_tokens[i]) if move_tokens is not None else None
             positions.append(Position(fen=fen, move=move, base_rating=rating, base_themes=themes))
         except:
-            continue
+            positions.append(Position(fen="", move="", base_rating=rating, base_themes=themes))
     
     return positions

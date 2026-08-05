@@ -2,8 +2,7 @@ import os
 import pytest
 from chess.engine import SimpleEngine
 
-from ChessGeneration.utils import Position, Evaluation, EvaluationFlag
-from ChessGeneration.evaluate import evaluate_position, choose_best_evaluations, evaluation_good_enough
+from ChessGeneration import Position, Evaluation, EvaluationFlag, evaluate_position, evaluate_positions, choose_best_evaluations, is_evaluation_good_enough
 
 
 def test_choose_best_evaluations():
@@ -45,28 +44,26 @@ def test_evaluation_good_enough():
     e_no_unique = Evaluation(position=pos, legal=True, unique_solution=False, counter_intuitive_solution=True, counter_intuitive_value=0.8, themes_match=True)
 
     # UNIQUE_SOLUTION flag
-    assert evaluation_good_enough(e_all, EvaluationFlag.UNIQUE_SOLUTION) is True
-    assert evaluation_good_enough(e_no_unique, EvaluationFlag.UNIQUE_SOLUTION) is False
+    assert is_evaluation_good_enough(e_all, EvaluationFlag.UNIQUE_SOLUTION) is True
+    assert is_evaluation_good_enough(e_no_unique, EvaluationFlag.UNIQUE_SOLUTION) is False
 
     # UNIQUE_AND_THEMES flag
-    assert evaluation_good_enough(e_all, EvaluationFlag.UNIQUE_AND_THEMES) is True
-    assert evaluation_good_enough(e_no_themes, EvaluationFlag.UNIQUE_AND_THEMES) is False
+    assert is_evaluation_good_enough(e_all, EvaluationFlag.UNIQUE_AND_THEMES) is True
+    assert is_evaluation_good_enough(e_no_themes, EvaluationFlag.UNIQUE_AND_THEMES) is False
 
     # UNIQUE_AND_THEMES_AND_COUNTER_INTUITIVE flag
-    assert evaluation_good_enough(e_all, EvaluationFlag.UNIQUE_AND_THEMES_AND_COUNTER_INTUITIVE) is True
-    assert evaluation_good_enough(e_no_counter, EvaluationFlag.UNIQUE_AND_THEMES_AND_COUNTER_INTUITIVE) is False
+    assert is_evaluation_good_enough(e_all, EvaluationFlag.UNIQUE_AND_THEMES_AND_COUNTER_INTUITIVE) is True
+    assert is_evaluation_good_enough(e_no_counter, EvaluationFlag.UNIQUE_AND_THEMES_AND_COUNTER_INTUITIVE) is False
 
 
 def test_evaluate_position():
-    # Spawns real Stockfish engine
     stockfish_path = "./Stockfish/src/stockfish"
     assert os.path.exists(stockfish_path), f"Stockfish binary not found at {stockfish_path}"
     
     engine = SimpleEngine.popen_uci(stockfish_path)
-    engine.configure({"Threads": 1}) # keep it lightweight for tests
+    engine.configure({"Threads": 1})
     
     try:
-        # A known legal position (starting board)
         pos = Position(
             fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             move="e2e4",
@@ -76,7 +73,6 @@ def test_evaluate_position():
         
         evaluation = evaluate_position(pos, engine)
         
-        # Verify correctness of output types and fields
         assert evaluation.position == pos
         assert evaluation.legal is True
         assert isinstance(evaluation.unique_solution, bool)
@@ -85,3 +81,43 @@ def test_evaluate_position():
         assert isinstance(evaluation.themes_match, bool)
     finally:
         engine.quit()
+
+
+def test_evaluate_positions():
+    stockfish_path = "./Stockfish/src/stockfish"
+    assert os.path.exists(stockfish_path), f"Stockfish binary not found at {stockfish_path}"
+
+    # pos1 = Position(
+    #     fen="3r2k1/1p4p1/p1p1P1r1/2bqn3/3PnN2/3B1pPp/PP5P/RQ1R2K1 w - - 4 29",
+    #     move="-",
+    #     base_rating=-1,
+    #     base_themes=["long", "middlegame"]
+    # )
+    pos1 = Position(
+        fen="3r3r/pR1nkp2/4p1p1/P1P5/8/2n5/5PPQ/5RK1 b - - 0 30",
+        move="-",
+        base_rating=-1,
+        base_themes=["long", "middlegame", "mate", "attraction", "anastasiaMate"]
+    )
+    pos2 = Position(
+        fen="2r1n1k1/p4ppp/1p2p3/6q1/8/3QP2P/4BPPK/R3N3 b - - 2 39",
+        move="-",
+        base_rating=-1,
+        base_themes=["middlegame", "advantage", "short", "fork"]
+    )
+
+
+    # Run with 2 threads
+    evaluations = evaluate_positions([pos1, pos2], n_jobs=2, stockfish_path=stockfish_path)
+
+    assert len(evaluations) == 2
+    assert evaluations[0].position == pos1
+    assert evaluations[0].legal is True
+    assert evaluations[0].unique_solution is True
+    assert evaluations[0].themes_match is True
+    assert evaluations[0].counter_intuitive_solution is True
+    assert evaluations[1].position == pos2
+    assert evaluations[1].legal is True
+    assert evaluations[1].unique_solution is True
+    assert evaluations[1].themes_match is True
+    assert evaluations[1].counter_intuitive_solution is False

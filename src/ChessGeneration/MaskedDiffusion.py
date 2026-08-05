@@ -82,7 +82,7 @@ class MaskedDiffusion(nn.Module):
         loss = -torch.sum(mask * weight * F.cross_entropy(torch.movedim(logits, 2, 1), true_tokens, reduction="none"), dim=1)
         return loss
     
-    @torch.compile
+    # @torch.compile
     @torch.no_grad()
     def sample(self, theme_tokens=None, ratings=None, batch_size=1, steps=256, temperature=1.0, generate_move_last=True, compute_kl=False, compute_entropy=False, ref_model=None):
         if theme_tokens is not None:
