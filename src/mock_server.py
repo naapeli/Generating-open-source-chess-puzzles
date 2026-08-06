@@ -28,7 +28,7 @@ MOCK_POSITIONS = [
         "move": "c3e2",
         "base_rating": 2000.0,
         "base_themes": ["long", "middlegame", "mate", "attraction", "anastasiaMate"],
-        "mainline": ["Ne2+", "Kh1" "Rxh2+", "Kxh2", "Rh8#"]
+        "mainline": ["Ne2+", "Kh1", "Rxh2+", "Kxh2", "Rh8#"]
     },
     {
         "fen": "2r1n1k1/p4ppp/1p2p3/6q1/8/3QP2P/4BPPK/R3N3 b - - 2 39",
