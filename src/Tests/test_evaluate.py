@@ -79,6 +79,7 @@ def test_evaluate_position():
         assert isinstance(evaluation.counter_intuitive_solution, bool)
         assert isinstance(evaluation.counter_intuitive_value, float)
         assert isinstance(evaluation.themes_match, bool)
+        assert isinstance(evaluation.mainline, list)
     finally:
         engine.quit()
 
@@ -116,8 +117,15 @@ def test_evaluate_positions():
     assert evaluations[0].unique_solution is True
     assert evaluations[0].themes_match is True
     assert evaluations[0].counter_intuitive_solution is True
+    assert isinstance(evaluations[0].mainline, list)
+    assert len(evaluations[0].mainline) > 0
+    assert evaluations[0].mainline[0] == "Ne2+"
+
     assert evaluations[1].position == pos2
     assert evaluations[1].legal is True
     assert evaluations[1].unique_solution is True
     assert evaluations[1].themes_match is True
     assert evaluations[1].counter_intuitive_solution is False
+    assert isinstance(evaluations[1].mainline, list)
+    assert len(evaluations[1].mainline) > 0
+    assert evaluations[1].mainline[0] == "Qe5+"

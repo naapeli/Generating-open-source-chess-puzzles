@@ -11,6 +11,8 @@ dependencies = [
     "numpy==2.4.0",
     "pandas==2.3.3",
     "scikit-learn==1.8.0",
+    "fastapi>=0.141.1",
+    "uvicorn>=0.52.1",
 ]
 
 [tool.pytest.ini_options]

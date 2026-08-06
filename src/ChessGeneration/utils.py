@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Optional
 
@@ -18,6 +18,7 @@ class Evaluation:
     counter_intuitive_solution: bool
     counter_intuitive_value: float
     themes_match: bool
+    mainline: list[str] = field(default_factory=list)
 
 class EvaluationFlag(Enum):
     UNIQUE_SOLUTION = auto()
