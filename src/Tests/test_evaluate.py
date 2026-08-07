@@ -88,12 +88,6 @@ def test_evaluate_positions():
     stockfish_path = "./Stockfish/src/stockfish"
     assert os.path.exists(stockfish_path), f"Stockfish binary not found at {stockfish_path}"
 
-    # pos1 = Position(
-    #     fen="3r2k1/1p4p1/p1p1P1r1/2bqn3/3PnN2/3B1pPp/PP5P/RQ1R2K1 w - - 4 29",
-    #     move="-",
-    #     base_rating=-1,
-    #     base_themes=["long", "middlegame"]
-    # )
     pos1 = Position(
         fen="3r3r/pR1nkp2/4p1p1/P1P5/8/2n5/5PPQ/5RK1 b - - 0 30",
         move="-",

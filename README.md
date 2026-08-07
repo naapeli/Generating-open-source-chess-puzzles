@@ -8,7 +8,7 @@ This repository provides tools to generate and evaluate chess puzzles using a pr
 ## Setup
 * Install backend dependencies: `uv sync`
 * Install frontend dependencies: `cd frontend && npm ci`
-* Run the backend: `uv run python src/mock_server.py`
+* Run the backend: `uv run src/mock_server.py`
 * Run the frontend: `cd frontend && npm run dev`
 ---
 

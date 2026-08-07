@@ -18,6 +18,7 @@ class Evaluation:
     counter_intuitive_solution: bool
     counter_intuitive_value: float
     themes_match: bool
+    actual_themes: list[str] = field(default_factory=list)
     mainline: list[str] = field(default_factory=list)
 
 class EvaluationFlag(Enum):

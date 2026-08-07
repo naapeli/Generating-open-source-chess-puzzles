@@ -39,6 +39,7 @@ def evaluate_position(position: Position, engine: SimpleEngine) -> Evaluation:
     counter_intuitive_solution = False
     counter_intuitive_value = 0
     themes_match = False
+    actual_themes = []
     mainline = []
     if is_legal:
         engine.configure({"Clear Hash": None})
@@ -57,6 +58,7 @@ def evaluate_position(position: Position, engine: SimpleEngine) -> Evaluation:
         counter_intuitive_solution=counter_intuitive_solution,
         counter_intuitive_value=counter_intuitive_value,
         themes_match=themes_match,
+        actual_themes=actual_themes,
         mainline=mainline
     )
 

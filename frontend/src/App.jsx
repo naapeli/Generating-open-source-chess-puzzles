@@ -119,14 +119,14 @@ function App() {
         if (res.status === 'completed' && res.puzzle) {
           setJobStatus('completed');
           setActiveJobId(null);
-          
+
           // Preprocess mainline to handle any concatenated moves (e.g. "Kh1Rxh2+")
           const processedPuzzle = {
             ...res.puzzle,
             mainline: preprocessMainline(res.puzzle.mainline)
           };
           setPuzzleDetails(processedPuzzle);
-          
+
           // Reset puzzle solving state machine
           setPuzzleSolved(false);
           setPuzzleFeedback(null);
@@ -138,7 +138,7 @@ function App() {
           const newGame = new Chess(processedPuzzle.position.fen);
           setGame(newGame);
           setGameFen(newGame.fen());
-          
+
           // Auto-flip board to the perspective of the solver (active turn of the loaded position)
           const solverColor = newGame.turn() === 'b' ? 'black' : 'white';
           setBoardOrientation(solverColor);
@@ -202,7 +202,7 @@ function App() {
       if (currentMoveIndex % 2 !== 0) return false; // opponent's turn to play (odd indices belong to opponent)
 
       const expectedMove = puzzleDetails.mainline[currentMoveIndex];
-      
+
       // Determine if the user's move matches the expected SAN move by trying to execute it on a temp board
       const tempGame = new Chess(game.fen());
       let expectedResult = null;
@@ -253,9 +253,9 @@ function App() {
 
         setGame(gameCopy);
         setGameFen(gameCopy.fen());
-        
+
         const nextIndex = currentMoveIndex + 1;
-        
+
         if (nextIndex === puzzleDetails.mainline.length) {
           setPuzzleSolved(true);
           setShowSolutionForce(true);
@@ -279,10 +279,10 @@ function App() {
                 console.error("Could not execute opponent reply SAN move:", opponentReply, e2);
               }
             }
-            
+
             setGame(opponentGame);
             setGameFen(opponentGame.fen());
-            
+
             const postOpponentIndex = nextIndex + 1;
             setCurrentMoveIndex(postOpponentIndex);
             setPuzzleFeedback(null);
@@ -512,8 +512,8 @@ function App() {
             {jobStatus === 'generating' ? (
               <div className="loading-overlay">
                 <div className="spinner"></div>
-                <div className="loading-text">Generating Puzzle...</div>
-                <div className="loading-subtext">Running stockfish and AI generation models (takes ~5s)</div>
+                <div className="loading-text">Generating Puzzle</div>
+                <div className="loading-subtext">Running AI model and filtering positions</div>
                 <button className="btn-cancel" onClick={handleCancel}>Cancel Job</button>
               </div>
             ) : (
@@ -549,7 +549,7 @@ function App() {
                     {startTurn === 'w' ? 'White to move' : 'Black to move'}
                   </span>
                 </div>
-                
+
                 {puzzleFeedback && (
                   <div className={`puzzle-feedback-banner ${puzzleFeedback}`}>
                     {puzzleFeedback === 'correct' && 'Correct! Keep going...'}
@@ -560,10 +560,10 @@ function App() {
 
                 <div className="fen-display-container">
                   <span className="fen-label">FEN:</span>
-                  <input 
-                    type="text" 
-                    readOnly 
-                    value={gameFen} 
+                  <input
+                    type="text"
+                    readOnly
+                    value={gameFen}
                     className="fen-input"
                     onClick={(e) => e.target.select()}
                     title="Click to select FEN"
@@ -648,8 +648,8 @@ function App() {
                   <span className="placeholder-icon">🎯</span>
                   <span className="placeholder-text">Solve the puzzle to reveal the solution!</span>
                   {hasFailed && (
-                    <button 
-                      className="btn-secondary" 
+                    <button
+                      className="btn-secondary"
                       onClick={() => setShowSolutionForce(true)}
                       style={{ marginTop: '0.75rem', width: 'auto', padding: '0.5rem 1rem' }}
                     >
