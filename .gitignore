@@ -24,3 +24,5 @@ Generate_positions/
 !Thesis/build
 Thesis/build/*
 !Thesis/build/Thesis.pdf
+
+frontend/
