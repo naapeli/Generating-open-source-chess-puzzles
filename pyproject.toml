@@ -5,20 +5,6 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "chess>=1.11.2",
-    "ipykernel>=7.1.0",
-    "ipywidgets>=8.1.8",
-    "matplotlib>=3.10.8",
-    "natsort>=8.4.0",
-    "optuna>=4.8.0",
-    "pandas>=2.3.3",
-    "rapidfuzz>=3.14.3",
-    "scienceplots>=2.2.1",
-    "scikit-learn>=1.8.0",
-    "seaborn>=0.13.2",
-    "statsmodels>=0.14.6",
-    "tensorboard>=2.20.0",
+    "diffusers>=0.39.0",
     "torch>=2.9.1",
-    "torchaudio>=2.9.1",
-    "tqdm>=4.67.1",
 ]
