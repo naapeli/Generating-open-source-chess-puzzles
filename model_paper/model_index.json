@@ -1,0 +1,11 @@
+{
+  "_class_name": [
+    "pipeline",
+    "ChessPuzzlePipeline"
+  ],
+  "_diffusers_version": "0.39.0",
+  "model": [
+    "model",
+    "MaskedDiffusion"
+  ]
+}

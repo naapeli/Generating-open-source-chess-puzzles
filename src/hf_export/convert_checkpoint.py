@@ -1,13 +1,12 @@
-import os
 import sys
 import json
 import shutil
 import pickle
+from pathlib import Path
 import torch
 
 from hf_export.model import MaskedDiffusion as HFMaskedDiffusion
 from hf_export.pipeline import ChessPuzzlePipeline
-
 
 
 class DummyConfig:
@@ -63,14 +62,16 @@ class SafePickleModule:
 # ==========================================================
 
 def convert(checkpoint_path, output_dir):
-    print(f"Loading checkpoint from: {checkpoint_path}...")
-    # Check if checkpoint exists
-    if not os.path.exists(checkpoint_path):
-        print(f"Error: Checkpoint file '{checkpoint_path}' not found.")
+    checkpoint_file = Path(checkpoint_path)
+    output_path = Path(output_dir)
+
+    print(f"Loading checkpoint from: {checkpoint_file}...")
+    if not checkpoint_file.exists():
+        print(f"Error: Checkpoint file '{checkpoint_file}' not found.")
         return
 
     # Load using our SafePickleModule to bypass missing dependency errors
-    checkpoint = torch.load(checkpoint_path, map_location="cpu", pickle_module=SafePickleModule)
+    checkpoint = torch.load(checkpoint_file, map_location="cpu", pickle_module=SafePickleModule)
     local_config = checkpoint.get("config", DummyConfig())
 
     print("Mapping model parameters and configuration...")
@@ -105,53 +106,39 @@ def convert(checkpoint_path, output_dir):
     pipeline = ChessPuzzlePipeline(model=hf_model)
 
     # Save pretrained components to output folder
-    print(f"Saving Diffusers pretrained format to: {output_dir}...")
-    pipeline.save_pretrained(output_dir)
+    print(f"Saving Diffusers pretrained format to: {output_path}...")
+    output_path.mkdir(parents=True, exist_ok=True)
+    pipeline.save_pretrained(output_path)
 
-    # Set up AutoClass registry mapping so HF loads custom scripts
-    HFMaskedDiffusion.register_for_auto_class("AutoModel")
-    ChessPuzzlePipeline.register_for_auto_class("AutoPipeline")
+    # Copy pipeline.py to root and model.py to model/ for Diffusers custom module loader
+    current_dir = Path(__file__).resolve().parent
+    shutil.copy(current_dir / "pipeline.py", output_path / "pipeline.py")
+    (output_path / "model").mkdir(parents=True, exist_ok=True)
+    shutil.copy(current_dir / "model.py", output_path / "model" / "model.py")
 
-    # Copy pipeline.py and model.py to the export directory
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    shutil.copy(os.path.join(current_dir, "model.py"), os.path.join(output_dir, "model.py"))
-    shutil.copy(os.path.join(current_dir, "pipeline.py"), os.path.join(output_dir, "pipeline.py"))
-
-    # Inject auto_map into model/config.json
-    model_config_path = os.path.join(output_dir, "model", "config.json")
-    if os.path.exists(model_config_path):
-        with open(model_config_path, "r") as f:
-            config_data = json.load(f)
-        config_data["auto_map"] = {
-            "AutoModel": "model.MaskedDiffusion"
-        }
-        with open(model_config_path, "w") as f:
-            json.dump(config_data, f, indent=2)
-
-    # Inject auto_map into model_index.json
-    model_index_path = os.path.join(output_dir, "model_index.json")
-    if os.path.exists(model_index_path):
-        with open(model_index_path, "r") as f:
+    # Inject module class references into model_index.json
+    model_index_path = output_path / "model_index.json"
+    if model_index_path.exists():
+        with open(model_index_path, "r", encoding="utf-8") as f:
             index_data = json.load(f)
-        index_data["auto_map"] = {
-            "AutoPipeline": "pipeline.ChessPuzzlePipeline"
-        }
-        # Set custom _class_name
-        index_data["_class_name"] = "ChessPuzzlePipeline"
-        with open(model_index_path, "w") as f:
+        index_data.pop("auto_map", None)
+        # Point class references to exported standalone files (pipeline.py and model/model.py)
+        index_data["_class_name"] = ["pipeline", "ChessPuzzlePipeline"]
+        index_data["model"] = ["model", "MaskedDiffusion"]
+        with open(model_index_path, "w", encoding="utf-8") as f:
             json.dump(index_data, f, indent=2)
 
     print("\nConversion successfully completed!")
-    print(f"Export directory '{output_dir}' is now ready to upload to Hugging Face Hub.")
+    print(f"Export directory '{output_path}' is now ready to upload to Hugging Face Hub.")
     print("Files ready to be published:")
-    for root, dirs, files in os.walk(output_dir):
-        for file in files:
-            print(f" - {os.path.relpath(os.path.join(root, file), output_dir)}")
+    for file_path in sorted(output_path.rglob("*")):
+        if file_path.is_file():
+            print(f" - {file_path.relative_to(output_path)}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python convert_checkpoint.py <path_to_checkpoint.pt> [output_directory]")
-        print("Example: python convert_checkpoint.py ../src/runs/supervised/final_model/best_model.pt ./huggingface_repo")
+        print("Usage: uv run --directory src python -m hf_export.convert_checkpoint <path_to_checkpoint.pt> [output_directory]")
+        print("Example: uv run --directory src python -m hf_export.convert_checkpoint ./runs/rl/final_large_runs/ownThemeDistribution/run10/model_0020000.pt ./test_hf_export")
         sys.exit(1)
     
     chk_path = sys.argv[1]

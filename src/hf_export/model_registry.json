@@ -1,0 +1,12 @@
+{
+    "naapeli/chess-puzzle-generator": {
+        "main": {
+            "checkpoint_path": "src/runs/rl/final_large_runs/ownThemeDistribution/run10/model_0020000.pt",
+            "export_folder": "model_main"
+        },
+        "paper": {
+            "checkpoint_path": "src/runs/rl/final_large_runs/final_thesis_experiments/full_diversity11/model_0003500.pt",
+            "export_folder": "model_paper"
+        }
+    }
+}

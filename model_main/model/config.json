@@ -1,0 +1,15 @@
+{
+  "_class_name": "MaskedDiffusion",
+  "_diffusers_version": "0.39.0",
+  "embed_dim": 1024,
+  "fen_length": 76,
+  "move_length": 5,
+  "n_fen_tokens": 48,
+  "n_heads": 8,
+  "n_layers": 16,
+  "n_move_tokens": 4,
+  "n_themes": 66,
+  "predict_moves": true,
+  "rating_dim": 1,
+  "use_context": true
+}
