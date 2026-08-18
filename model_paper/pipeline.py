@@ -1,8 +1,82 @@
 import re
+from enum import IntEnum, StrEnum, auto
+from dataclasses import dataclass
+
 import torch
 import torch.nn.functional as F
-from enum import IntEnum, auto
 from diffusers import DiffusionPipeline
+
+
+class PuzzleTheme(StrEnum):
+    crushing = "crushing"
+    hangingPiece = "hangingPiece"
+    long = "long"
+    middlegame = "middlegame"
+    advantage = "advantage"
+    endgame = "endgame"
+    short = "short"
+    rookEndgame = "rookEndgame"
+    fork = "fork"
+    pawnEndgame = "pawnEndgame"
+    mate = "mate"
+    mateIn2 = "mateIn2"
+    master = "master"
+    interference = "interference"
+    kingsideAttack = "kingsideAttack"
+    veryLong = "veryLong"
+    zugzwang = "zugzwang"
+    exposedKing = "exposedKing"
+    skewer = "skewer"
+    mateIn1 = "mateIn1"
+    oneMove = "oneMove"
+    opening = "opening"
+    pin = "pin"
+    quietMove = "quietMove"
+    backRankMate = "backRankMate"
+    discoveredAttack = "discoveredAttack"
+    sacrifice = "sacrifice"
+    bishopEndgame = "bishopEndgame"
+    bodenMate = "bodenMate"
+    deflection = "deflection"
+    smotheredMate = "smotheredMate"
+    advancedPawn = "advancedPawn"
+    attraction = "attraction"
+    promotion = "promotion"
+    mateIn3 = "mateIn3"
+    masterVsMaster = "masterVsMaster"
+    superGM = "superGM"
+    queensideAttack = "queensideAttack"
+    knightEndgame = "knightEndgame"
+    cornerMate = "cornerMate"
+    defensiveMove = "defensiveMove"
+    queenEndgame = "queenEndgame"
+    attackingF2F7 = "attackingF2F7"
+    queenRookEndgame = "queenRookEndgame"
+    clearance = "clearance"
+    intermezzo = "intermezzo"
+    equality = "equality"
+    trappedPiece = "trappedPiece"
+    hookMate = "hookMate"
+    xRayAttack = "xRayAttack"
+    capturingDefender = "capturingDefender"
+    doubleBishopMate = "doubleBishopMate"
+    doubleCheck = "doubleCheck"
+    arabianMate = "arabianMate"
+    mateIn4 = "mateIn4"
+    enPassant = "enPassant"
+    vukovicMate = "vukovicMate"
+    dovetailMate = "dovetailMate"
+    triangleMate = "triangleMate"
+    balestraMate = "balestraMate"
+    killBoxMate = "killBoxMate"
+    anastasiaMate = "anastasiaMate"
+    blindSwineMate = "blindSwineMate"
+    castling = "castling"
+    mateIn5 = "mateIn5"
+    underPromotion = "underPromotion"
+
+unique_themes = [theme.value for theme in PuzzleTheme]
+theme_to_idx = {theme.value: idx for idx, theme in enumerate(PuzzleTheme)}
 
 # ==========================================
 # 1. Custom Masking Schedules
@@ -41,6 +115,17 @@ class PolynomialSchedule(MaskingSchedule):
     def alpha(self, t):
         val = 1.0 - t ** self.exponent
         return (1.0 - 2 * self.eps) * val + self.eps
+
+class Schedule(StrEnum):
+    linear = "linear"
+    cosine = "cosine"
+    geometric = "geometric"
+    polynomial = "polynomial"
+
+@dataclass(frozen=True)
+class Position:
+    fen: str
+    move: str | None
 
 # ==========================================
 # 2. Chess Tokenization Utilities
@@ -116,20 +201,6 @@ promote_token_mapping = [
 ]
 promote_str_2_token = {char: token for char, token in promote_token_mapping}
 promote_token_2_str = {token: char for char, token in promote_token_mapping}
-
-unique_themes = [
-    'crushing', 'hangingPiece', 'long', 'middlegame', 'advantage', 'endgame', 'short', 'rookEndgame', 'fork',
-    'pawnEndgame', 'mate', 'mateIn2', 'master', 'interference', 'kingsideAttack', 'veryLong', 'zugzwang',
-    'exposedKing', 'skewer', 'mateIn1', 'oneMove', 'opening', 'pin', 'quietMove', 'backRankMate',
-    'discoveredAttack', 'sacrifice', 'bishopEndgame', 'bodenMate', 'deflection', 'smotheredMate',
-    'advancedPawn', 'attraction', 'promotion', 'mateIn3', 'masterVsMaster', 'superGM', 'queensideAttack',
-    'knightEndgame', 'cornerMate', 'defensiveMove', 'queenEndgame', 'attackingF2F7', 'queenRookEndgame',
-    'clearance', 'intermezzo', 'equality', 'trappedPiece', 'hookMate', 'xRayAttack', 'capturingDefender',
-    'doubleBishopMate', 'doubleCheck', 'arabianMate', 'mateIn4', 'enPassant', 'vukovicMate', 'dovetailMate',
-    'triangleMate', 'balestraMate', 'killBoxMate', 'anastasiaMate', 'blindSwineMate', 'castling',
-    'mateIn5', 'underPromotion'
-]
-theme_to_idx = {theme: idx for idx, theme in enumerate(unique_themes)}
 
 MIN_RATING = 399
 MAX_RATING = 3395
@@ -305,28 +376,29 @@ def partial_fen_to_tokens(partial_fen: str, config, mask_token: int, best_move: 
 # ==========================================
 
 class ChessPuzzlePipeline(DiffusionPipeline):
+    Theme = PuzzleTheme
+    Schedule = Schedule
+
     def __init__(self, model):
         super().__init__()
         self.register_modules(model=model)
+        self.Theme = PuzzleTheme
+        self.Schedule = Schedule
 
     @torch.no_grad()
     def __call__(
         self,
-        themes: str,
-        rating: float,
+        themes: str | list[str | PuzzleTheme] | PuzzleTheme = None,
+        rating: float = 1500.0,
         partial_board: str = None,
         best_move: str = None,
         batch_size: int = 1,
         steps: int = 256,
         temperature: float = 1.0,
-        schedule: str = "linear",
+        schedule: str | Schedule = Schedule.linear,
         generate_move_last: bool = True,
-        device: str = None
     ):
-        if device is None:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            
-        self.model.to(device)
+        device = self.device
         self.model.eval()
 
         # 1. Preprocess context inputs (themes & rating)
@@ -335,18 +407,27 @@ class ChessPuzzlePipeline(DiffusionPipeline):
 
         themes_tensor = torch.zeros((batch_size, len(unique_themes)), dtype=torch.float32, device=device)
         if themes:
-            for t in themes.split():
+            theme_list = []
+            if isinstance(themes, (list, tuple)):
+                for t in themes:
+                    theme_list.append(t.value if isinstance(t, StrEnum) else str(t))
+            elif isinstance(themes, StrEnum):
+                theme_list.append(themes.value)
+            elif isinstance(themes, str):
+                theme_list.extend(themes.strip().split())
+
+            for t in theme_list:
                 if t in theme_to_idx:
                     themes_tensor[:, theme_to_idx[t]] = 1.0
 
         # 2. Setup schedule
-        if schedule == "linear":
+        if schedule == Schedule.linear:
             masking_schedule = LinearSchedule()
-        elif schedule == "cosine":
+        elif schedule == Schedule.cosine:
             masking_schedule = CosineSchedule()
-        elif schedule == "geometric":
+        elif schedule == Schedule.geometric:
             masking_schedule = GeometricSchedule()
-        elif schedule == "polynomial":
+        elif schedule == Schedule.polynomial:
             masking_schedule = PolynomialSchedule()
         else:
             raise ValueError(f"Unknown schedule: {schedule}")
@@ -413,6 +494,7 @@ class ChessPuzzlePipeline(DiffusionPipeline):
         for idx in range(batch_size):
             fen = tokens_to_fen(tokens_cpu[idx][:self.model.config.fen_length])
             move = tokens_to_move(tokens_cpu[idx][self.model.config.fen_length:]) if self.model.config.predict_moves else None
-            results.append({"fen": fen, "move": move})
+            # results.append({"fen": fen, "move": move})
+            results.append(Position(fen=fen, move=move))
             
         return results
