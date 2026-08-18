@@ -26,3 +26,5 @@ Thesis/build/*
 !Thesis/build/Thesis.pdf
 
 frontend/
+
+*.safetensors
